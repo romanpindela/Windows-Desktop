@@ -35,18 +35,18 @@ param (
 )
 
 function Show-ScriptHelp {
-    Write-Host "`n=== SCRIPT: Copy-ToSession ===" -ForegroundColor Cyan
+    Write-Host "`n=== SCRIPT: copy-to-session ===" -ForegroundColor Cyan
     Write-Host "Description: Intelligently copies files or whole folders to a remote server using PSSession."
     Write-Host "Author: Roman Pindela (roman.pindela@gmail.com) | https://github.com/romanpindela"
     Write-Host "Version: 1.1.0"
     Write-Host "`nUsage Examples:"
     Write-Host "  # Copying a single file:"
-    Write-Host "  .\Copy-ToSession.ps1 -ComputerName 'SRV1' -LocalPath 'C:\temp\data.txt' -RemotePath 'C:\remote_temp\'"
+    Write-Host "  .\copy-to-session.ps1 -ComputerName 'SRV1' -LocalPath 'C:\temp\data.txt' -RemotePath 'C:\remote_temp\'"
     Write-Host "  `n  # Copying multiple files at once:"
-    Write-Host "  .\Copy-ToSession.ps1 -ComputerName 'SRV1' -LocalPath 'C:\temp\a.txt', 'C:\temp\b.txt' -RemotePath 'C:\remote_temp\'"
+    Write-Host "  .\copy-to-session.ps1 -ComputerName 'SRV1' -LocalPath 'C:\temp\a.txt', 'C:\temp\b.txt' -RemotePath 'C:\remote_temp\'"
     Write-Host "  `n  # Copying an entire directory with its contents:"
-    Write-Host "  .\Copy-ToSession.ps1 -ComputerName 'SRV1' -LocalPath 'C:\LocalFolder' -RemotePath 'C:\remote_temp\'"
-    Write-Host "`n  .\Copy-ToSession.ps1 -h`n"
+    Write-Host "  .\copy-to-session.ps1 -ComputerName 'SRV1' -LocalPath 'C:\LocalFolder' -RemotePath 'C:\remote_temp\'"
+    Write-Host "`n  .\copy-to-session.ps1 -h`n"
 }
 
 if ($ShowHelp -or [string]::IsNullOrWhiteSpace($ComputerName) -or -not $LocalPath -or [string]::IsNullOrWhiteSpace($RemotePath)) {

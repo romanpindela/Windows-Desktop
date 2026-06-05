@@ -1,4 +1,4 @@
-# Copy-ToSession.ps1
+# copy-to-session.ps1
 
 A utility script to seamlessly, intelligently, and securely transfer local files and directories to a remote machine using PowerShell Remoting (PSSession).
 
@@ -23,16 +23,16 @@ A utility script to seamlessly, intelligently, and securely transfer local files
 
 ### 1. Copying a single file
 ```powershell
-.\Copy-ToSession.ps1 -ComputerName "192.168.1.100" -LocalPath "C:\Data\Logs\error.log" -RemotePath "C:\Backup\Logs\"
+.\copy-to-session.ps1 -ComputerName "192.168.1.100" -LocalPath "C:\Data\Logs\error.log" -RemotePath "C:\Backup\Logs\"
 
 
 
 2. Copying multiple files simultaneously
 PowerShell
-.\Copy-ToSession.ps1 -ComputerName "192.168.1.100" -LocalPath "C:\Data\1.txt", "C:\Data\2.txt" -RemotePath "C:\Backup\Logs\"
+.\copy-to-session.ps1 -ComputerName "192.168.1.100" -LocalPath "C:\Data\1.txt", "C:\Data\2.txt" -RemotePath "C:\Backup\Logs\"
 3. Copying a complete directory (and its contents)
 PowerShell
-.\Copy-ToSession.ps1 -ComputerName "192.168.1.100" -LocalPath "C:\Data\FullFolder" -RemotePath "C:\Backup\Logs\"
+.\copy-to-session.ps1 -ComputerName "192.168.1.100" -LocalPath "C:\Data\FullFolder" -RemotePath "C:\Backup\Logs\"
 Author Information
 Author: Roman Pindela
 
