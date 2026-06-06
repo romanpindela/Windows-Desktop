@@ -1,27 +1,62 @@
 # get-wifi-profiles
 
-Displays saved Wi-Fi profiles, passwords, security settings and active network configuration.
+Professional PowerShell script for auditing saved Wi-Fi profiles and displaying active wireless network configuration.
 
 ## Features
 
+### Saved Wi-Fi Profiles
+
 - Lists all saved Wi-Fi profiles
-- Shows stored Wi-Fi passwords
-- Displays Wi-Fi authentication/security type
-- Shows active IPv4 configuration
-- Displays:
-  - IPv4 address
-  - Prefix length
-  - Default gateway
-  - DNS servers
+- Displays stored Wi-Fi passwords
+- Displays authentication/security type
+- Identifies currently connected Wi-Fi network
+
+### Active Wi-Fi Information
+
+For the currently connected Wi-Fi network:
+
+- IPv4 Address
+- Prefix Length
+- Default Gateway
+- DNS Servers
+- Signal Strength
+- Radio Type
+- Channel Number
+
+### Other Features
+
 - Built-in help system
-- Clean Code compliant
-- No hardcoded environment-specific values
+- PowerShell CmdletBinding support
+- Clean Code implementation
+- No environment-specific hardcoded values
+- Safe handling of empty or unavailable data
+
+---
 
 ## Requirements
 
-- Windows 10 / Windows 11
-- PowerShell 5.1+
-- Administrator privileges recommended
+### Supported Operating Systems
+
+- Windows 10
+- Windows 11
+- Windows Server 2019+
+- Windows Server 2022+
+
+### PowerShell
+
+- PowerShell 5.1 or newer
+
+### Permissions
+
+Recommended:
+
+```powershell
+Run as Administrator
+```
+
+Administrator privileges may be required to display stored Wi-Fi passwords.
+
+---
 
 ## Usage
 
@@ -43,27 +78,63 @@ Run scan:
 .\get-wifi-profiles.ps1
 ```
 
+---
+
 ## Example Output
 
-| SSID | Password | Security | IPv4 | Prefix | Gateway |
-|--------|--------|--------|--------|--------|--------|
-| HomeWiFi | Secret123 | WPA2-Personal | 192.168.1.100 | /24 | 192.168.1.1 |
+| Connected | SSID | Security | Password | IPv4 |
+|------------|--------|--------|--------|--------|
+| ✔ | HomeWiFi | WPA3-Personal | ******** | 192.168.1.100 |
+| | MobileHotspot | WPA2-Personal | ******** | |
+| | HotelWiFi | Open | | |
+
+---
 
 ## Security Notes
 
-The script only reads information already stored on the local Windows machine.
+This script:
 
-No credentials are transmitted outside the computer.
+- Reads data stored locally on the machine
+- Does not transmit any data externally
+- Does not modify Wi-Fi profiles
+- Does not require internet access
+
+Stored passwords are displayed in clear text if Windows allows access to the profile keys.
+
+---
 
 ## Version
 
-1.0.0
+### 2.0.0
+
+Added:
+
+- Current Wi-Fi detection
+- IPv4 address
+- Prefix length
+- Default gateway
+- DNS servers
+- Signal strength
+- Radio type
+- Channel information
+- Connected network indicator
+
+---
 
 ## Author
 
-**Roman Pindela**
+### Roman Pindela
 
-Email: roman.pindela@gmail.com
+**Email**
 
-GitHub:
+roman.pindela@gmail.com
+
+**GitHub**
+
 https://github.com/romanpindela
+
+---
+
+## License
+
+MIT License

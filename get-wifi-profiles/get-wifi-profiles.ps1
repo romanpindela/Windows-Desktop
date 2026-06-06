@@ -1,11 +1,22 @@
 <#
 .SYNOPSIS
-    Displays saved Wi-Fi profiles, passwords and network configuration.
+    Displays saved Wi-Fi profiles, passwords and active Wi-Fi configuration.
 
 .DESCRIPTION
-    Retrieves all saved Wi-Fi profiles from Windows,
-    including passwords, security types and current
-    network configuration of active Wi-Fi adapters.
+    Retrieves saved Wi-Fi profiles from Windows and displays:
+    - SSID
+    - Stored password
+    - Security type
+    - Current connection status
+
+    For the currently connected Wi-Fi profile additionally displays:
+    - IPv4 address
+    - Prefix length
+    - Default gateway
+    - DNS servers
+    - Signal strength
+    - Radio type
+    - Channel
 
 .AUTHOR
     Roman Pindela
@@ -13,7 +24,7 @@
     GitHub: https://github.com/romanpindela
 
 .VERSION
-    1.0.0
+    2.0.0
 #>
 
 [CmdletBinding()]
@@ -26,10 +37,11 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 function Show-Help {
+
     Write-Host ""
     Write-Host "get-wifi-profiles.ps1"
     Write-Host ""
-    Write-Host "Displays saved Wi-Fi profiles, passwords and network settings."
+    Write-Host "Displays saved Wi-Fi profiles and active Wi-Fi configuration."
     Write-Host ""
     Write-Host "Usage:"
     Write-Host "    .\get-wifi-profiles.ps1"
@@ -37,18 +49,72 @@ function Show-Help {
     Write-Host "    .\get-wifi-profiles.ps1 -h"
     Write-Host ""
     Write-Host "Author : Roman Pindela"
-    Write-Host "Version: 1.0.0"
+    Write-Host "Version: 2.0.0"
     Write-Host "GitHub : https://github.com/romanpindela"
     Write-Host ""
 }
 
-function get-wifi-profiles {
-    $profilesOutput = netsh wlan show profiles
+function Get-CurrentWifiInformation {
 
-    $profiles = $profilesOutput |
-        Select-String "All User Profile|Wszystkie profile użytkowników" |
+    $wifiInterfaceData = netsh wlan show interfaces
+
+    $ssid = (
+        $wifiInterfaceData |
+        Select-String '^ *SSID *:' |
+        Select-Object -First 1
+    )
+
+    if (-not $ssid) {
+        return $null
+    }
+
+    $currentSsid = ($ssid.Line -split ':',2)[1].Trim()
+
+    $signal = (
+        $wifiInterfaceData |
+        Select-String '^ *Signal *:' |
+        Select-Object -First 1
+    )
+
+    $radioType = (
+        $wifiInterfaceData |
+        Select-String '^ *Radio type *:' |
+        Select-Object -First 1
+    )
+
+    $channel = (
+        $wifiInterfaceData |
+        Select-String '^ *Channel *:' |
+        Select-Object -First 1
+    )
+
+    $ipConfig = Get-NetIPConfiguration |
+        Where-Object {
+            $_.NetAdapter.Status -eq "Up" -and
+            $_.IPv4DefaultGateway -ne $null
+        } |
+        Select-Object -First 1
+
+    [PSCustomObject]@{
+        SSID       = $currentSsid
+        Signal     = if($signal){($signal.Line -split ':',2)[1].Trim()}else{""}
+        RadioType  = if($radioType){($radioType.Line -split ':',2)[1].Trim()}else{""}
+        Channel    = if($channel){($channel.Line -split ':',2)[1].Trim()}else{""}
+        IPv4       = $ipConfig.IPv4Address.IPAddress
+        Prefix     = $ipConfig.IPv4Address.PrefixLength
+        Gateway    = $ipConfig.IPv4DefaultGateway.NextHop
+        DNS        = ($ipConfig.DNSServer.ServerAddresses -join ", ")
+    }
+}
+
+function Get-SavedWifiProfiles {
+
+    $currentWifi = Get-CurrentWifiInformation
+
+    $profiles = netsh wlan show profiles |
+        Select-String 'All User Profile|Wszystkie profile użytkowników' |
         ForEach-Object {
-            ($_ -split ":")[1].Trim()
+            ($_ -split ':',2)[1].Trim()
         }
 
     foreach ($profile in $profiles) {
@@ -57,80 +123,48 @@ function get-wifi-profiles {
             continue
         }
 
-        $profileDetails = netsh wlan show profile name="$profile" key=clear
+        $details = netsh wlan show profile name="$profile" key=clear
 
-        $passwordLine = $profileDetails |
-            Select-String "Key Content|Zawartość klucza"
+        $passwordLine = $details |
+            Select-String 'Key Content|Zawartość klucza'
 
-        $securityLine = $profileDetails |
-            Select-String "Authentication|Uwierzytelnianie"
+        $securityLine = $details |
+            Select-String 'Authentication|Uwierzytelnianie'
 
         $password = if ($passwordLine) {
-            ($passwordLine -split ":")[1].Trim()
+            ($passwordLine -split ':',2)[1].Trim()
         }
         else {
             ""
         }
 
         $security = if ($securityLine) {
-            ($securityLine -split ":")[1].Trim()
+            ($securityLine -split ':',2)[1].Trim()
         }
         else {
             "Unknown"
         }
 
-        $wifiAdapter = Get-NetAdapter |
-            Where-Object {
-                $_.Status -eq "Up" -and $_.InterfaceDescription -match "Wireless|Wi-Fi|802.11"
-            } |
-            Select-Object -First 1
+        $isConnected = $false
 
-        $ipv4 = ""
-        $prefix = ""
-        $gateway = ""
-        $dns = ""
-
-        if ($wifiAdapter) {
-
-            $ipInfo = Get-NetIPAddress `
-                -InterfaceIndex $wifiAdapter.ifIndex `
-                -AddressFamily IPv4 `
-                -ErrorAction SilentlyContinue |
-                Select-Object -First 1
-
-            $gwInfo = Get-NetRoute `
-                -InterfaceIndex $wifiAdapter.ifIndex `
-                -DestinationPrefix "0.0.0.0/0" `
-                -ErrorAction SilentlyContinue |
-                Select-Object -First 1
-
-            $dnsInfo = Get-DnsClientServerAddress `
-                -InterfaceIndex $wifiAdapter.ifIndex `
-                -AddressFamily IPv4 `
-                -ErrorAction SilentlyContinue
-
-            if ($ipInfo) {
-                $ipv4 = $ipInfo.IPAddress
-                $prefix = "/$($ipInfo.PrefixLength)"
-            }
-
-            if ($gwInfo) {
-                $gateway = $gwInfo.NextHop
-            }
-
-            if ($dnsInfo) {
-                $dns = $dnsInfo.ServerAddresses -join ", "
-            }
+        if ($currentWifi) {
+            $isConnected = $profile -eq $currentWifi.SSID
         }
 
         [PSCustomObject]@{
-            SSID     = $profile
-            Password = $password
-            Security = $security
-            IPv4     = $ipv4
-            Prefix   = $prefix
-            Gateway  = $gateway
-            DNS      = $dns
+            Connected = if ($isConnected) { "✔" } else { "" }
+            SSID      = $profile
+            Password  = $password
+            Security  = $security
+
+            IPv4      = if ($isConnected) { $currentWifi.IPv4 } else { "" }
+            Prefix    = if ($isConnected) { "/$($currentWifi.Prefix)" } else { "" }
+            Gateway   = if ($isConnected) { $currentWifi.Gateway } else { "" }
+            DNS       = if ($isConnected) { $currentWifi.DNS } else { "" }
+
+            Signal    = if ($isConnected) { $currentWifi.Signal } else { "" }
+            RadioType = if ($isConnected) { $currentWifi.RadioType } else { "" }
+            Channel   = if ($isConnected) { $currentWifi.Channel } else { "" }
         }
     }
 }
@@ -141,9 +175,25 @@ if ($Help -or $h) {
 }
 
 if ($PSBoundParameters.Count -eq 0) {
+
     Show-Help
+
     Write-Host ""
-    Write-Host "Running profile scan..." -ForegroundColor Yellow
+    Write-Host "Scanning saved Wi-Fi profiles..." -ForegroundColor Yellow
+    Write-Host ""
 }
 
-get-wifi-profiles | Format-Table -AutoSize
+Get-SavedWifiProfiles |
+    Sort-Object Connected -Descending |
+    Format-Table `
+        Connected,
+        SSID,
+        Security,
+        Password,
+        IPv4,
+        Prefix,
+        Gateway,
+        Signal,
+        Channel,
+        RadioType `
+        -AutoSize
