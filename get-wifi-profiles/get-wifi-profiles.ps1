@@ -37,7 +37,6 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 function Show-Help {
-
     Write-Host ""
     Write-Host "get-wifi-profiles.ps1"
     Write-Host ""
@@ -55,7 +54,6 @@ function Show-Help {
 }
 
 function Get-CurrentWifiInformation {
-
     $wifiInterfaceData = netsh wlan show interfaces
 
     $ssid = (
@@ -108,7 +106,6 @@ function Get-CurrentWifiInformation {
 }
 
 function Get-SavedWifiProfiles {
-
     $currentWifi = Get-CurrentWifiInformation
 
     $profiles = netsh wlan show profiles |
@@ -118,7 +115,6 @@ function Get-SavedWifiProfiles {
         }
 
     foreach ($profile in $profiles) {
-
         if ([string]::IsNullOrWhiteSpace($profile)) {
             continue
         }
@@ -151,17 +147,18 @@ function Get-SavedWifiProfiles {
             $isConnected = $profile -eq $currentWifi.SSID
         }
 
+        # Safely outputting the checkmark using its unicode escape sequence to avoid file encoding bugs
+        $checkmark = [char]0x2714
+
         [PSCustomObject]@{
-            Connected = if ($isConnected) { "✔" } else { "" }
+            Connected = if ($isConnected) { $checkmark } else { "" }
             SSID      = $profile
             Password  = $password
             Security  = $security
-
             IPv4      = if ($isConnected) { $currentWifi.IPv4 } else { "" }
             Prefix    = if ($isConnected) { "/$($currentWifi.Prefix)" } else { "" }
             Gateway   = if ($isConnected) { $currentWifi.Gateway } else { "" }
             DNS       = if ($isConnected) { $currentWifi.DNS } else { "" }
-
             Signal    = if ($isConnected) { $currentWifi.Signal } else { "" }
             RadioType = if ($isConnected) { $currentWifi.RadioType } else { "" }
             Channel   = if ($isConnected) { $currentWifi.Channel } else { "" }
@@ -175,9 +172,7 @@ if ($Help -or $h) {
 }
 
 if ($PSBoundParameters.Count -eq 0) {
-
     Show-Help
-
     Write-Host ""
     Write-Host "Scanning saved Wi-Fi profiles..." -ForegroundColor Yellow
     Write-Host ""
