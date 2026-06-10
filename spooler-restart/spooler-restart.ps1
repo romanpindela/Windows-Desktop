@@ -5,9 +5,13 @@
 .DESCRIPTION
     Stops the Print Spooler service, removes all pending print jobs
     from the spool directory, and starts the service again.
+    It also checks for paused printers and resumes them by default.
 
 .PARAMETER Help
     Displays help information.
+
+.PARAMETER SkipPrinterResume
+    Skips the automatic resuming of paused printers.
 
 .EXAMPLE
     .\spooler-restart.ps1
@@ -15,19 +19,23 @@
 .EXAMPLE
     .\spooler-restart.ps1 -Help
 
+.EXAMPLE
+    .\spooler-restart.ps1 -SkipPrinterResume
+
 .NOTES
-    Version : 1.0.0
+    Version : 1.1.1
     Author  : Roman Pindela
     Email   : roman.pindela@gmail.com
     GitHub  : https://github.com/romanpindela
 #>
 
 param(
+    [switch]$SkipPrinterResume,
     [switch]$Help,
     [switch]$H
 )
 
-$ScriptVersion = "1.0.0"
+$ScriptVersion = "1.1.1"
 
 function Show-Help {
 
@@ -38,8 +46,9 @@ function Show-Help {
 
     Write-Host "DESCRIPTION"
     Write-Host "    Stops the Windows Print Spooler service,"
-    Write-Host "    removes pending print jobs, and starts"
-    Write-Host "    the service again."
+    Write-Host "    removes pending print jobs, starts"
+    Write-Host "    the service again, and optionally resumes"
+    Write-Host "    any paused printers."
     Write-Host ""
 
     Write-Host "USAGE"
@@ -47,6 +56,9 @@ function Show-Help {
     Write-Host ""
 
     Write-Host "OPTIONS"
+    Write-Host "    -SkipPrinterResume"
+    Write-Host "        Do not attempt to automatically resume"
+    Write-Host "        printers that are in a 'Paused' state."
     Write-Host "    -Help"
     Write-Host "    -H"
     Write-Host "        Display this help screen."
@@ -106,6 +118,69 @@ try {
 
     Write-Host ""
     Write-Host "Print Spooler successfully restarted." -ForegroundColor Green
+
+    Write-Host ""
+    Write-Host "Checking printer statuses..." -ForegroundColor Yellow
+    
+    # Give the spooler a brief moment to initialize before querying printers
+    Start-Sleep -Seconds 2
+    
+    $Printers = Get-Printer -ErrorAction SilentlyContinue
+    
+    if ($Printers) {
+        $PausedPrinters = @()
+        Write-Host "--- Printer Status List ---" -ForegroundColor Cyan
+        foreach ($Printer in $Printers) {
+            if ($Printer.PrinterStatus -eq 'Paused') {
+                Write-Host "  > $($Printer.Name) - Status: $($Printer.PrinterStatus)" -ForegroundColor Red
+                $PausedPrinters += $Printer
+            } else {
+                Write-Host "  > $($Printer.Name) - Status: $($Printer.PrinterStatus)" -ForegroundColor Gray
+            }
+        }
+
+        if ($PausedPrinters.Count -gt 0) {
+            if (-not $SkipPrinterResume) {
+                Write-Host ""
+                Write-Host "Attempting to resume paused printers..." -ForegroundColor Yellow
+                foreach ($Paused in $PausedPrinters) {
+                    try {
+                        $CimPrinter = Get-CimInstance -ClassName Win32_Printer -ErrorAction Stop | Where-Object { $_.Name -eq $Paused.Name }
+                        if ($CimPrinter) {
+                            Invoke-CimMethod -InputObject $CimPrinter -MethodName Resume -ErrorAction Stop | Out-Null
+                            Write-Host "  [OK] Resumed: $($Paused.Name)" -ForegroundColor Green
+                        } else {
+                            Write-Host "  [FAIL] Could not resume: $($Paused.Name) - WMI object not found." -ForegroundColor Red
+                        }
+                    } catch {
+                        Write-Host "  [FAIL] Could not resume: $($Paused.Name) - $($_.Exception.Message)" -ForegroundColor Red
+                    }
+                }
+
+                Write-Host ""
+                Write-Host "--- Final Printer Statuses ---" -ForegroundColor Cyan
+                $FinalPrinters = Get-Printer -ErrorAction SilentlyContinue
+                foreach ($Printer in $FinalPrinters) {
+                    if ($Printer.PrinterStatus -eq 'Paused') {
+                        Write-Host "  > $($Printer.Name) - Status: $($Printer.PrinterStatus)" -ForegroundColor Red
+                    } else {
+                        Write-Host "  > $($Printer.Name) - Status: $($Printer.PrinterStatus)" -ForegroundColor Green
+                    }
+                }
+            } else {
+                Write-Host ""
+                Write-Host "Skipping resume of paused printers (-SkipPrinterResume specified)." -ForegroundColor DarkGray
+            }
+        } else {
+            Write-Host ""
+            Write-Host "No paused printers detected." -ForegroundColor Green
+        }
+    } else {
+        Write-Host "No printers found or unable to query printers." -ForegroundColor DarkGray
+    }
+
+    Write-Host ""
+    Write-Host "Operation completed." -ForegroundColor Green
     Write-Host ""
 
 }

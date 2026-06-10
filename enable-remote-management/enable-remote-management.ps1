@@ -16,7 +16,7 @@
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
     GitHub: https://github.com/romanpindela
-    Version: 1.4.0
+    Version: 1.5.0
     ATTENTION: This script provisions WinRM with default firewall scope (Any/Any). 
     If subnet restrictions are required, custom network firewall inbound rules must be manually deployed.
 #>
@@ -32,7 +32,7 @@ param (
     [switch]$ShowHelp
 )
 
-$ScriptVersion = "1.4.0"
+$ScriptVersion = "1.5.0"
 
 function Show-Help {
     Write-Host ""
@@ -132,16 +132,18 @@ try {
 
     # 5. Adding Specified User to the Security Group
     Write-Host "[3/4] Provisioning access rights for user '$TargetUser'..." -ForegroundColor Yellow
-    $TargetGroup = "Remote Management Users"
+    # Resolving local group dynamically via SID (S-1-5-32-580) to support Polish/English OS
+    $TargetGroupObj = Get-LocalGroup -SID "S-1-5-32-580" -ErrorAction Stop
+    $TargetGroupName = $TargetGroupObj.Name
     
     # Check if user is already a member to prevent non-breaking noise errors
-    $GroupCheck = Get-LocalGroupMember -Group $TargetGroup -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*$TargetUser*" }
+    $GroupCheck = Get-LocalGroupMember -Group $TargetGroupName -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*$TargetUser*" }
 
     if (-not $GroupCheck) {
-        Add-LocalGroupMember -Group $TargetGroup -Member $TargetUser -ErrorAction Stop
-        Write-Host "STATUS: User '$TargetUser' successfully assigned to the '$TargetGroup' group." -ForegroundColor Green
+        Add-LocalGroupMember -Group $TargetGroupName -Member $TargetUser -ErrorAction Stop
+        Write-Host "STATUS: User '$TargetUser' successfully assigned to the '$TargetGroupName' group." -ForegroundColor Green
     } else {
-        Write-Host "STATUS: User '$TargetUser' is already a member of '$TargetGroup'." -ForegroundColor Cyan
+        Write-Host "STATUS: User '$TargetUser' is already a member of '$TargetGroupName'." -ForegroundColor Cyan
     }
 
     # 6. Optional TrustedHosts Configuration Matrix
@@ -169,21 +171,29 @@ finally {
     Write-Host "The following local/domain accounts have native rights to start remote sessions:" -ForegroundColor Gray
     Write-Host ""
     
-    Write-Host "--- [Group: Remote Management Users] ---" -ForegroundColor Yellow
-    $RemoteUsers = Get-LocalGroupMember -Group "Remote Management Users" -ErrorAction SilentlyContinue
-    if ($RemoteUsers) {
-        foreach ($User in $RemoteUsers) {
-            Write-Host "  > $($User.Name) ($($User.PrincipalSource))" -ForegroundColor Green
+    $RemoteGroupObj = Get-LocalGroup -SID "S-1-5-32-580" -ErrorAction SilentlyContinue
+    if ($RemoteGroupObj) {
+        Write-Host "--- [Group: $($RemoteGroupObj.Name)] ---" -ForegroundColor Yellow
+        $RemoteUsers = Get-LocalGroupMember -Group $RemoteGroupObj.Name -ErrorAction SilentlyContinue
+        if ($RemoteUsers) {
+            foreach ($User in $RemoteUsers) {
+                Write-Host "  > $($User.Name) ($($User.PrincipalSource))" -ForegroundColor Green
+            }
+        } else {
+            Write-Host "  (No explicit members found in this group)" -ForegroundColor Gray
         }
-    } else {
-        Write-Host "  (No explicit members found in this group)" -ForegroundColor Gray
     }
 
     Write-Host ""
-    Write-Host "--- [Group: Administrators (Implicit Access)] ---" -ForegroundColor Yellow
-    $AdminUsers = Get-LocalGroupMember -Group "Administrators" -ErrorAction SilentlyContinue
-    foreach ($Admin in $AdminUsers) {
-        Write-Host "  > $($Admin.Name) ($($Admin.PrincipalSource))" -ForegroundColor Cyan
+    $AdminGroupObj = Get-LocalGroup -SID "S-1-5-32-544" -ErrorAction SilentlyContinue
+    if ($AdminGroupObj) {
+        Write-Host "--- [Group: $($AdminGroupObj.Name) (Implicit Access)] ---" -ForegroundColor Yellow
+        $AdminUsers = Get-LocalGroupMember -Group $AdminGroupObj.Name -ErrorAction SilentlyContinue
+        if ($AdminUsers) {
+            foreach ($Admin in $AdminUsers) {
+                Write-Host "  > $($Admin.Name) ($($Admin.PrincipalSource))" -ForegroundColor Cyan
+            }
+        }
     }
     
     Write-Host ""
@@ -194,4 +204,3 @@ finally {
     }
     Write-Host ""
 }
-
