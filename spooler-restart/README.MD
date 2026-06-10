@@ -1,6 +1,6 @@
 # Spooler Restart
 
-**Version:** 1.1.1
+**Version:** 1.2.0
 
 Windows Print Spooler recovery utility for clearing stuck print jobs and restarting the Print Spooler service.
 
@@ -16,6 +16,7 @@ The script automatically:
 2. Removes all pending print jobs
 3. Restarts the Print Spooler service
 4. Checks for paused printers and automatically attempts to resume them
+5. Prompts for UAC elevation if not run as Administrator
 
 ---
 
@@ -25,6 +26,7 @@ The script automatically:
 * Restarts the Print Spooler service
 * Automatically detects and resumes paused printers via WMI/CIM
 * Multi-language OS support (language-agnostic Administrator privilege validation)
+* Automatic UAC elevation prompt
 * Built-in help system
 * Error handling
 * Lightweight and portable
@@ -40,7 +42,7 @@ Skip automatic resuming of paused printers:
 ## Requirements
 
 * Windows PowerShell 5.1 or PowerShell 7+
-* Local Administrator privileges
+* Local Administrator privileges (script automatically prompts for elevation)
 * Windows Print Spooler service installed
 
 ### Resume Paused Printers (Default)
@@ -53,7 +55,7 @@ Invoke-CimMethod -InputObject $CimPrinter -MethodName Resume
 
 ## Usage
 
-Run PowerShell as Administrator:
+Run the script (will automatically prompt for Administrator privileges if needed):
 
 ```powershell
 .\spooler-restart.ps1
@@ -106,7 +108,7 @@ Start-Service Spooler
 ## Example Output
 
 ```text
-Spooler-Restart v1.1.1
+Spooler-Restart v1.2.0
 
 Stopping Print Spooler service...
 Removing pending print jobs...
@@ -126,6 +128,11 @@ Attempting to resume paused printers...
 ---
 
 ## Version History
+
+### v1.2.0
+
+* Added automatic UAC elevation request using language-independent SID
+* Removed redundant manual admin check code
 
 ### v1.0.0
 

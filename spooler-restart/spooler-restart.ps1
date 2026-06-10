@@ -6,6 +6,7 @@
     Stops the Print Spooler service, removes all pending print jobs
     from the spool directory, and starts the service again.
     It also checks for paused printers and resumes them by default.
+    Automatically requests Administrator privileges if not already elevated.
 
 .PARAMETER Help
     Displays help information.
@@ -23,7 +24,7 @@
     .\spooler-restart.ps1 -SkipPrinterResume
 
 .NOTES
-    Version : 1.1.1
+    Version : 1.2.0
     Author  : Roman Pindela
     Email   : roman.pindela@gmail.com
     GitHub  : https://github.com/romanpindela
@@ -35,7 +36,7 @@ param(
     [switch]$H
 )
 
-$ScriptVersion = "1.1.1"
+$ScriptVersion = "1.2.0"
 
 function Show-Help {
 
@@ -49,6 +50,7 @@ function Show-Help {
     Write-Host "    removes pending print jobs, starts"
     Write-Host "    the service again, and optionally resumes"
     Write-Host "    any paused printers."
+    Write-Host "    Auto-elevates to Administrator if required."
     Write-Host ""
 
     Write-Host "USAGE"
@@ -65,7 +67,7 @@ function Show-Help {
     Write-Host ""
 
     Write-Host "REQUIREMENTS"
-    Write-Host "    - Run PowerShell as Administrator"
+    Write-Host "    - Administrator privileges (auto-prompts for UAC elevation)"
     Write-Host ""
 
     Write-Host "AUTHOR"
@@ -84,16 +86,18 @@ if ($Help -or $H) {
     exit
 }
 
-$IsAdmin = ([Security.Principal.WindowsPrincipal] `
-    [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
-    [Security.Principal.WindowsBuiltInRole]::Administrator
-)
+# Check if the script is already running with Administrator privileges using SID (language-independent)
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = New-Object Security.Principal.WindowsPrincipal($identity)
+$adminSid = New-Object Security.Principal.SecurityIdentifier([Security.Principal.WellKnownSidType]::BuiltInAdministratorsSid, $null)
 
-if (-not $IsAdmin) {
-    Write-Host ""
-    Write-Host "ERROR: Administrator privileges are required." -ForegroundColor Red
-    Write-Host ""
-    exit 1
+$isAdmin = $principal.IsInRole($adminSid)
+
+if (-not $isAdmin) {
+    # If not running as Admin, prompt for UAC consent and relaunch the script with elevated privileges
+    Write-Host "Missing Administrator privileges. Requesting elevation..." -ForegroundColor Yellow
+    Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Exit
 }
 
 try {
