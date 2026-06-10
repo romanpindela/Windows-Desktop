@@ -8,6 +8,8 @@ A clean, robust, and enterprise-grade PowerShell utility designed to be executed
 
 - **Identity Verification Check:** Proactively queries the local security subsystem or Active Directory identity services to verify that the target user exists before performing system changes. If the target identity is invalid, the script prints a clear red alert and terminates.
 - **Local Infrastructure Initialization:** Invokes `Enable-PSRemoting` to handle the local WinRM listener footprint and setup default firewall paths.
+- **Execution Policy Configuration:** Automatically sets the PowerShell `ExecutionPolicy` to `RemoteSigned` for the `CurrentUser` scope to prevent local script execution blocks and displays a colorized list of current system policies.
+- **Auto-Elevation (UAC):** Automatically detects if the terminal lacks Administrator privileges and prompts the user to relaunch the script with elevated permissions.
 - **Access Delegation Control:** Automatically binds the confirmed user identity to the local `Remote Management Users` group.
 - **Live Auditing Block:** Compiles a terminal diagnostic report listing both implicit (Administrators) and explicit (Remote Management Users) accounts permitted to establish network shells.
 - **Colorized Output Metrics:** Leverages colorized logs to stream environment states, warning logs, or critical termination signals.
@@ -21,7 +23,7 @@ A clean, robust, and enterprise-grade PowerShell utility designed to be executed
 ## Requirements
 
 - **PowerShell Version:** PowerShell 5.1 or PowerShell Core (7.x+).
-- **Execution Level:** Must be executed **locally** within an **Elevated (Run as Administrator)** terminal window.
+- **Execution Level:** Must be executed locally. If the session is not elevated, the script will automatically request **Administrator privileges** via a UAC prompt.
 
 ## Usage
 

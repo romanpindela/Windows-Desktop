@@ -81,12 +81,11 @@ $CurrentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $Principal = New-Object Security.Principal.WindowsPrincipal($CurrentIdentity)
 $IsAdmin = $Principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-if (-not $IsAdmin) {
-    Write-Host "" -BackgroundColor Black
-    Write-Host "ALERT - SECURITY EXCEPTION" -ForegroundColor Red -BackgroundColor Black
-    Write-Error "Access Denied: Current session lacks sufficient privileges to modify security groups or initialize WinRM system components. Please relaunch as Administrator."
-    Write-Host ""
-    exit
+if (-not $isAdmin) {
+    # If not running as Admin, prompt for UAC consent and relaunch the script with elevated privileges
+    Write-Host "Missing Administrator privileges. Requesting elevation..." -ForegroundColor Yellow
+    Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Exit
 }
 
 $ScriptSuccess = $false
@@ -97,8 +96,24 @@ try {
     Write-Host "Target Authorization User: $TargetUser"
     Write-Host "--------------------------------------------------"
 
+    # 3. Execution Policy Configuration
+    Write-Host "[1/5] Setting Execution Policy to RemoteSigned for CurrentUser..." -ForegroundColor Yellow
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+    
+    Write-Host "--- Execution Policy List ---" -ForegroundColor Cyan
+    $Policies = Get-ExecutionPolicy -List
+    foreach ($Policy in $Policies) {
+        if ($Policy.ExecutionPolicy -eq 'Undefined') {
+            Write-Host "  > $($Policy.Scope): $($Policy.ExecutionPolicy)" -ForegroundColor DarkGray
+        } elseif ($Policy.ExecutionPolicy -eq 'RemoteSigned' -or $Policy.ExecutionPolicy -eq 'Bypass' -or $Policy.ExecutionPolicy -eq 'Unrestricted') {
+            Write-Host "  > $($Policy.Scope): $($Policy.ExecutionPolicy)" -ForegroundColor Green
+        } else {
+            Write-Host "  > $($Policy.Scope): $($Policy.ExecutionPolicy)" -ForegroundColor Yellow
+        }
+    }
+
     # 3. User Existence Verification Block
-    Write-Host "[1/4] Verifying account existence for '$TargetUser'..." -ForegroundColor Yellow
+    Write-Host "`n[2/5] Verifying account existence for '$TargetUser'..." -ForegroundColor Yellow
     
     $UserExists = $false
     if ($TargetUser -like "*\*") {
@@ -127,11 +142,11 @@ try {
     Write-Host "Account validated successfully." -ForegroundColor Green
 
     # 4. Explicitly Turning on PowerShell Remoting locally
-    Write-Host "[2/4] Enabling local PowerShell Remoting infrastructure..." -ForegroundColor Yellow
+    Write-Host "`n[3/5] Enabling local PowerShell Remoting infrastructure..." -ForegroundColor Yellow
     Enable-PSRemoting -Force -ErrorAction Stop
 
     # 5. Adding Specified User to the Security Group
-    Write-Host "[3/4] Provisioning access rights for user '$TargetUser'..." -ForegroundColor Yellow
+    Write-Host "[4/5] Provisioning access rights for user '$TargetUser'..." -ForegroundColor Yellow
     # Resolving local group dynamically via SID (S-1-5-32-580) to support Polish/English OS
     $TargetGroupObj = Get-LocalGroup -SID "S-1-5-32-580" -ErrorAction Stop
     $TargetGroupName = $TargetGroupObj.Name
@@ -148,10 +163,10 @@ try {
 
     # 6. Optional TrustedHosts Configuration Matrix
     if (-not [string]::IsNullOrWhiteSpace($TrustedHostPattern)) {
-        Write-Host "[4/4] Committing TrustedHosts client pattern: $TrustedHostPattern" -ForegroundColor Yellow
+        Write-Host "[5/5] Committing TrustedHosts client pattern: $TrustedHostPattern" -ForegroundColor Yellow
         Set-Item -Path "WSMan:\localhost\Client\TrustedHosts" -Value $TrustedHostPattern -Force -ErrorAction Stop
     } else {
-        Write-Host "[4/4] Skipping TrustedHosts client step (No pattern specified)." -ForegroundColor Gray
+        Write-Host "[5/5] Skipping TrustedHosts client step (No pattern specified)." -ForegroundColor Gray
     }
 
     $ScriptSuccess = $true
