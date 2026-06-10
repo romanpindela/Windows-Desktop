@@ -1,6 +1,6 @@
 # Spooler Restart
 
-**Version:** 1.0.0
+**Version:** 1.1.1
 
 Windows Print Spooler recovery utility for clearing stuck print jobs and restarting the Print Spooler service.
 
@@ -15,6 +15,7 @@ The script automatically:
 1. Stops the Print Spooler service
 2. Removes all pending print jobs
 3. Restarts the Print Spooler service
+4. Checks for paused printers and automatically attempts to resume them
 
 ---
 
@@ -22,10 +23,17 @@ The script automatically:
 
 * Clears stuck print jobs
 * Restarts the Print Spooler service
-* Administrator privilege validation
+* Automatically detects and resumes paused printers via WMI/CIM
+* Multi-language OS support (language-agnostic Administrator privilege validation)
 * Built-in help system
 * Error handling
 * Lightweight and portable
+
+Skip automatic resuming of paused printers:
+
+```powershell
+.\spooler-restart.ps1 -SkipPrinterResume
+```
 
 ---
 
@@ -34,6 +42,12 @@ The script automatically:
 * Windows PowerShell 5.1 or PowerShell 7+
 * Local Administrator privileges
 * Windows Print Spooler service installed
+
+### Resume Paused Printers (Default)
+
+```powershell
+Invoke-CimMethod -InputObject $CimPrinter -MethodName Resume
+```
 
 ---
 
@@ -92,13 +106,21 @@ Start-Service Spooler
 ## Example Output
 
 ```text
-Spooler-Restart v1.0.0
+Spooler-Restart v1.1.1
 
 Stopping Print Spooler service...
 Removing pending print jobs...
 Starting Print Spooler service...
 
 Print Spooler successfully restarted.
+
+Checking printer statuses...
+--- Printer Status List ---
+  > Brother DCP-L2550DN series - Status: Normal
+  > KONICA MINOLTA C224e Pracownia - Status: Paused
+
+Attempting to resume paused printers...
+  [OK] Resumed: KONICA MINOLTA C224e Pracownia
 ```
 
 ---
