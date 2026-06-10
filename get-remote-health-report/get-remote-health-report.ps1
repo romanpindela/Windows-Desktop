@@ -39,9 +39,7 @@ if ($ComputerName -ne $env:COMPUTERNAME -and -not $Credential) {
     $Credential = Get-Credential -UserName "$env:USERDOMAIN\$env:USERNAME" -Message "Enter credentials for $($ComputerName)"
 }
 
-$sessionParams = @{ ComputerName = $ComputerName }
-if ($Credential) { $sessionParams.Credential = $Credential }
-
+$sessionParams = @{}
 $session = $null
 
 try {
@@ -54,10 +52,9 @@ try {
     }
 
     if ($ComputerName -ne $env:COMPUTERNAME) {
-        $session = New-CimSession @sessionParams -ErrorAction Stop
-        $sessionParams.Remove("ComputerName")
-        # NAPRAWA: Musimy usunąć Credential, ponieważ Get-CimInstance nie przyjmuje tego parametru!
-        if ($sessionParams.ContainsKey("Credential")) { $sessionParams.Remove("Credential") }
+        $cimSessionArgs = @{ ComputerName = $ComputerName }
+        if ($Credential) { $cimSessionArgs.Credential = $Credential }
+        $session = New-CimSession @cimSessionArgs -ErrorAction Stop
         $sessionParams.CimSession = $session
     }
 
@@ -67,6 +64,10 @@ try {
     $proc = Get-CimInstance @sessionParams -ClassName Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
     $gpu = Get-CimInstance @sessionParams -ClassName Win32_VideoController -ErrorAction SilentlyContinue
     $ramChips = Get-CimInstance @sessionParams -ClassName Win32_PhysicalMemory -ErrorAction SilentlyContinue
+
+    if (-not $os) {
+        Write-Host "  [!] WARNING: Core WMI query failed. No data returned from Win32_OperatingSystem." -ForegroundColor Red
+    }
     
     $uptime = if ($os -and $os.LastBootUpTime) { (Get-Date) - $os.LastBootUpTime } else { [TimeSpan]::Zero }
     $gpuDetails = if ($gpu) { ($gpu | ForEach-Object { "$($_.Name) ($([math]::Round($_.AdapterRAM/1GB, 1)) GB)" }) -join " | " } else { "Unknown" }
@@ -102,7 +103,7 @@ try {
             }
         }
         $diskData | Format-Table -AutoSize
-    } catch { Write-Host "  [-] Failed to retrieve logical disks." -ForegroundColor Red }
+    } catch { Write-Host "  [-] Failed to retrieve logical disks: $($_.Exception.Message)" -ForegroundColor Red }
 
     try {
         $physParams = $sessionParams.Clone(); $physParams.Namespace = "Root\Microsoft\Windows\Storage"
@@ -116,7 +117,7 @@ try {
                                        @{Name="Interface"; Expression={$busMap[[int]$_.BusType]}}, 
                                        @{Name="Size (GB)"; Expression={[math]::Round($_.Size/1GB, 2)}} | Format-Table -AutoSize
     } catch { 
-        Write-Host "  [-] Advanced physical disk info requires Administrator privileges." -ForegroundColor Yellow 
+        Write-Host "  [-] Advanced physical disk info requires Administrator privileges or failed: $($_.Exception.Message)" -ForegroundColor Yellow 
     }
 
     # --- 2. PERFORMANCE (TOP 10 PROCESSES) ---
