@@ -100,7 +100,8 @@ try {
     Write-Host "[1/5] Setting Execution Policy to RemoteSigned for CurrentUser..." -ForegroundColor Yellow
     Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
     
-    Write-Host "--- Execution Policy List ---" -ForegroundColor Cyan
+    $EffectivePolicy = Get-ExecutionPolicy
+    Write-Host "--- Execution Policy List (Effective: $EffectivePolicy) ---" -ForegroundColor Cyan
     $Policies = Get-ExecutionPolicy -List
     foreach ($Policy in $Policies) {
         if ($Policy.ExecutionPolicy -eq 'Undefined') {
