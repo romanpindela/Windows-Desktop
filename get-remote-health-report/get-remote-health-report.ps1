@@ -68,21 +68,21 @@ try {
     $gpu = Get-CimInstance @sessionParams -ClassName Win32_VideoController -ErrorAction SilentlyContinue
     $ramChips = Get-CimInstance @sessionParams -ClassName Win32_PhysicalMemory -ErrorAction SilentlyContinue
     
-    $uptime = (Get-Date).Subtract($os.LastBootUpTime)
+    $uptime = if ($os -and $os.LastBootUpTime) { (Get-Date) - $os.LastBootUpTime } else { [TimeSpan]::Zero }
     $gpuDetails = if ($gpu) { ($gpu | ForEach-Object { "$($_.Name) ($([math]::Round($_.AdapterRAM/1GB, 1)) GB)" }) -join " | " } else { "Unknown" }
     
     $ramTypeMap = @{ 20="DDR"; 21="DDR2"; 24="DDR3"; 26="DDR4"; 34="DDR5" }
     $ramType = if ($ramChips) { $ramTypeMap[[int]$ramChips[0].SMBIOSMemoryType] } else { "Unknown" }
     if (-not $ramType) { $ramType = "Unknown/Other" }
     
-    $totalRamGB = [math]::Round(($os.TotalVisibleMemorySize / 1MB), 2)
+    $totalRamGB = if ($os -and $os.TotalVisibleMemorySize) { [math]::Round(($os.TotalVisibleMemorySize / 1MB), 2) } else { 0 }
 
     [PSCustomObject]@{
-        "OS Version" = "$($os.Caption) ($($os.OSArchitecture), Build $($os.BuildNumber))"
+        "OS Version" = if ($os) { "$($os.Caption) ($($os.OSArchitecture), Build $($os.BuildNumber))" } else { "Unknown" }
         "Uptime"     = "$($uptime.Days)d $($uptime.Hours)h $($uptime.Minutes)m"
-        "CPU"        = $proc.Name
+        "CPU"        = if ($proc) { $proc.Name } else { "Unknown" }
         "GPU"        = $gpuDetails
-        "Memory"     = "$($totalRamGB) GB ($ramType @ $($ramChips[0].Speed) MHz)"
+        "Memory"     = "$($totalRamGB) GB ($ramType @ $(if ($ramChips) { $ramChips[0].Speed } else { 'Unknown' }) MHz)"
     } | Format-List
 
     # --- 1B. STORAGE (VOLUMES & PHYSICAL DISKS) ---
@@ -121,7 +121,7 @@ try {
 
     # --- 2. PERFORMANCE (TOP 10 PROCESSES) ---
     Write-Host "`n[2/7] PERFORMANCE (TOP 10 PROCESSES)" -ForegroundColor Green
-    $ramUsed = [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1MB, 2)
+    $ramUsed = if ($os -and $os.TotalVisibleMemorySize -and $os.FreePhysicalMemory) { [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1MB, 2) } else { 0 }
     Write-Host "Total RAM: $($ramUsed) GB Used / $($totalRamGB) GB Total`n" -ForegroundColor Cyan
 
     $processes = Get-CimInstance @sessionParams -ClassName Win32_PerfFormattedData_PerfProc_Process -ErrorAction SilentlyContinue | 
