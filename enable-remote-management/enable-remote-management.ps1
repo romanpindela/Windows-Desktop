@@ -144,7 +144,7 @@ try {
 
     # 4. Explicitly Turning on PowerShell Remoting locally
     Write-Host "`n[3/5] Enabling local PowerShell Remoting infrastructure..." -ForegroundColor Yellow
-    Enable-PSRemoting -Force -ErrorAction Stop
+    Enable-PSRemoting -Force -SkipNetworkProfileCheck -ErrorAction Stop
 
     # 5. Adding Specified User to the Security Group
     Write-Host "[4/5] Provisioning access rights for user '$TargetUser'..." -ForegroundColor Yellow
