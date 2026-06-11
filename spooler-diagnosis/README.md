@@ -1,28 +1,37 @@
 # spooler-diagnosis.ps1
 
-A professional administrative script for diagnosing the Windows Print Spooler service on local or remote machines.
+A professional administrative script for diagnosing the Windows Print Spooler service on local machines.
 
 ## Features
 - **Service Validation:** Checks the current state of the Print Spooler service.
 - **Queue Analysis:** Queries WMI/CIM to detect the number of stuck print jobs.
 - **Printer Status Check:** Retrieves a list of installed printers and highlights any paused devices in color.
-- **Remote Capable:** Can target remote servers securely.
 - **Clean Architecture:** Built according to CleanCode principles with proper error handling.
 
 ## Parameters
 
 | Parameter | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `-ComputerName` | `String` | No | Target computer name (Defaults to local host). |
 | `-ShowHelp` (`-h`) | `Switch` | No | Displays the interactive script help menu. |
 
 ## Usage Examples
 ```powershell
 # Local diagnosis
 .\spooler-diagnosis.ps1
+```
 
-# Remote diagnosis
-.\spooler-diagnosis.ps1 -ComputerName "SRV-PRINT-01"
+## Example Output
+```text
+Starting Spooler Diagnosis on: WORKSTATION-01
+Service Status: Running
+Current Print Jobs in Queue: 0
+
+Checking printer statuses...
+--- Printer Status List ---
+  > Microsoft Print to PDF - Status: Normal
+  > Fax - Status: Normal
+
+[i] Spooler appears to be operating normally.
 
 Author Information
 Author: Roman Pindela
