@@ -25,6 +25,13 @@ A clean, robust, and enterprise-grade PowerShell utility designed to be executed
 - **PowerShell Version:** PowerShell 5.1 or PowerShell Core (7.x+).
 - **Execution Level:** Must be executed locally. If the session is not elevated, the script will automatically request **Administrator privileges** via a UAC prompt.
 
+## Installation & Setup
+
+If you downloaded this script directly from GitHub (e.g., via a web browser), Windows will apply a "Mark of the Web" security restriction. You must unblock the file before executing it:
+```powershell
+Unblock-File -Path ".\enable-remote-management.ps1"
+```
+
 ## Usage
 
 ### Direct Terminal Help
