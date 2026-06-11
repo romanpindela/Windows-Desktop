@@ -10,7 +10,7 @@
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
     GitHub: https://github.com/romanpindela
-    Version: 1.0.1
+    Version: 1.1.0
 #>
 
 param (
@@ -25,7 +25,7 @@ function Show-ScriptHelp {
     Write-Host "`n=== SCRIPT: Diagnose-Spooler ===" -ForegroundColor Cyan
     Write-Host "Description: Diagnoses and attempts to fix Print Spooler issues."
     Write-Host "Author: Roman Pindela (roman.pindela@gmail.com) | https://github.com/romanpindela"
-    Write-Host "Version: 1.0.1"
+    Write-Host "Version: 1.1.0"
     Write-Host "`nUsage Examples:"
     Write-Host "  .\spooler-diagnosis.ps1"
     Write-Host "  .\spooler-diagnosis.ps1 -ComputerName 'SRV-PRINT-01'"
@@ -52,9 +52,28 @@ try {
     $jobCount = if ($jobs) { $jobs.Count } else { 0 }
     Write-Host "Current Print Jobs in Queue: $jobCount"
 
+    # 3. Check Printer Statuses
+    Write-Host "`nChecking printer statuses..." -ForegroundColor Yellow
+    $printers = Get-Printer -ComputerName $ComputerName -ErrorAction SilentlyContinue
+    $pausedCount = 0
+    
+    if ($printers) {
+        Write-Host "--- Printer Status List ---" -ForegroundColor Cyan
+        foreach ($printer in $printers) {
+            if ($printer.PrinterStatus -match 'Paused') {
+                Write-Host "  > $($printer.Name) - Status: $($printer.PrinterStatus)" -ForegroundColor Red
+                $pausedCount++
+            } else {
+                Write-Host "  > $($printer.Name) - Status: $($printer.PrinterStatus)" -ForegroundColor Gray
+            }
+        }
+    } else {
+        Write-Host "  No printers found or unable to query printers." -ForegroundColor DarkGray
+    }
+
     # Provide remediation advice based on status
-    if ($spooler.Status -ne 'Running' -or $jobCount -gt 5) {
-        Write-Host "`n[!] Issue detected: Spooler is stopped or queue is heavily loaded." -ForegroundColor Red
+    if ($spooler.Status -ne 'Running' -or $jobCount -gt 5 -or $pausedCount -gt 0) {
+        Write-Host "`n[!] Issue detected: Spooler is stopped, queue is loaded, or printers are paused." -ForegroundColor Red
         Write-Host "Recommended Action: Restart the spooler service and clear the C:\Windows\System32\spool\PRINTERS folder."
     } else {
         Write-Host "`n[i] Spooler appears to be operating normally." -ForegroundColor Green

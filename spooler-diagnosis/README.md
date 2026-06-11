@@ -5,6 +5,7 @@ A professional administrative script for diagnosing the Windows Print Spooler se
 ## Features
 - **Service Validation:** Checks the current state of the Print Spooler service.
 - **Queue Analysis:** Queries WMI/CIM to detect the number of stuck print jobs.
+- **Printer Status Check:** Retrieves a list of installed printers and highlights any paused devices in color.
 - **Remote Capable:** Can target remote servers securely.
 - **Clean Architecture:** Built according to CleanCode principles with proper error handling.
 
@@ -30,4 +31,4 @@ Email: roman.pindela@gmail.com
 
 GitHub: romanpindela
 
-Version: 1.0.0
+Version: 1.1.0
