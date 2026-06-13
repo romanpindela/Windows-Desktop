@@ -37,7 +37,22 @@ Skip automatic resuming of paused printers:
 .\spooler-restart.ps1 -SkipPrinterResume
 ```
 
+
+## Download and Usage
+
+A compiled standalone executable (`.exe`) is available for download, so you do not need to run the raw scripts manually.
+
+### Instructions
+
+1. **Download** the compiled `.exe` file from this repository.
+2. **Run as Administrator:** Right-click the `.exe` file and select **"Run as administrator"**. This step is required for the application to apply the necessary system changes.
+3. Once successfully executed, the tool will grant you access to printing functionality in Windows.
+
+> **Note for developers:** The tools and files used to compile this executable from the original script are located in the `dev/convert-ps2exe` directory.
+
 ---
+
+
 
 ## Requirements
 
