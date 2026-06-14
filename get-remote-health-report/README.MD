@@ -48,7 +48,7 @@ Elevation: Local execution requires "Run as Administrator" for deep WMI interrog
 WinRM Enablement: Remote target machines must have PowerShell Remoting enabled (Enable-PSRemoting).
 
 Author: Roman Pindela | GitHub: romanpindela | Version: 6.0.0
-
+```
 ## Execution View
 
 ### Standard Run
