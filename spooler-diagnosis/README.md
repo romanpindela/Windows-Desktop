@@ -32,7 +32,7 @@ Checking printer statuses...
   > Fax - Status: Normal
 
 [i] Spooler appears to be operating normally.
-
+```
 Author Information
 Author: Roman Pindela
 
