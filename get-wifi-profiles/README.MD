@@ -138,3 +138,11 @@ https://github.com/romanpindela
 ## License
 
 MIT License
+
+## Execution View
+
+### Standard Run
+![Standard Run](assets/screenshot-standard-run.jpg)
+
+### Help Output (-Help)
+![Help Output](assets/screenshot-help.jpg)
