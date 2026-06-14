@@ -182,3 +182,12 @@ MIT License
 Copyright (c) 2025 Roman Pindela
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software.
+
+
+## Execution View
+
+### Standard Run
+![Standard Run](assets/screenshot-standard-run.jpg)
+
+### Help Output (-Help)
+![Help Output](assets/screenshot-help.jpg)
