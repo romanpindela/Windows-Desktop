@@ -33,6 +33,7 @@ Checking printer statuses...
 
 [i] Spooler appears to be operating normally.
 ```
+---
 Author Information
 Author: Roman Pindela
 
