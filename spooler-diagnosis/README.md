@@ -41,3 +41,11 @@ Email: roman.pindela@gmail.com
 GitHub: romanpindela
 
 Version: 1.1.0
+
+## Execution View
+
+### Standard Run
+![Standard Run](assets/screenshot-standard-run.jpg)
+
+### Help Output (-Help)
+![Help Output](assets/screenshot-help.jpg)
