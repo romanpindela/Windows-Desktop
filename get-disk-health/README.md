@@ -44,7 +44,7 @@ To display the help screen:
 ## Screenshots & Examples
 
 ### PowerShell Console Output
-![PowerShell Output](assets/screenshot_-_html_raport.png)
+![PowerShell Output](assets/screenshot_-_powershell_output.png)
 
 ### Generated HTML Report
 ![HTML Report](assets/screenshot_-_html_raport.jpg)
