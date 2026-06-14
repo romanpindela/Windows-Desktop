@@ -41,4 +41,12 @@ To display the help screen:
 
 ---
 
+## Screenshots & Examples
+
+### PowerShell Console Output
+![PowerShell Output](assets/screenshot-powershell-output.png)
+
+### Generated HTML Report
+![HTML Report](assets/screenshot-html-raport.jpg)
+
 *Note: Native Windows Management Instrumentation (WMI/CIM) does not expose the "Manufacturing Date" of physical drives. For this specific metric, proprietary vendor software (e.g., Samsung Magician) is typically required.*
