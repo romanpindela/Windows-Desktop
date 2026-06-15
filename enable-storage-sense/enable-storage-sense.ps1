@@ -2,6 +2,50 @@
 # EXTENDED STORAGE SENSE AND SYSTEM CLEANUP CONFIGURATION SCRIPT
 # ==============================================================================
 
+param(
+    [switch]$Help,
+    [switch]$h
+)
+
+$ScriptVersion = "1.0.0"
+
+function Show-Help {
+    Write-Host ""
+    Write-Host "ENABLE-STORAGE-SENSE v$ScriptVersion" -ForegroundColor Cyan
+    Write-Host "Windows Automatic Cleanup Configuration Script"
+    Write-Host ""
+    Write-Host "DESCRIPTION"
+    Write-Host "    This script fully automates the disk cleanup process in Windows 10/11."
+    Write-Host "    It configures native Storage Sense mechanisms to run in the background,"
+    Write-Host "    cleans temporary files, OneDrive files, old Windows installations, unused"
+    Write-Host "    apps, securely clears Windows Update cache, and removes bloatware."
+    Write-Host ""
+    Write-Host "USAGE"
+    Write-Host "    .\enable-storage-sense.ps1"
+    Write-Host ""
+    Write-Host "EXAMPLES"
+    Write-Host "    .\enable-storage-sense.ps1"
+    Write-Host "    .\enable-storage-sense.ps1 -Help"
+    Write-Host ""
+    Write-Host "OPTIONS"
+    Write-Host "    -Help, -h"
+    Write-Host "        Display this help screen."
+    Write-Host ""
+    Write-Host "REQUIREMENTS"
+    Write-Host "    - Administrator privileges (auto-prompts for UAC elevation)"
+    Write-Host ""
+    Write-Host "AUTHOR"
+    Write-Host "    Roman Pindela"
+    Write-Host "    Email  : roman.pindela@gmail.com"
+    Write-Host "    GitHub : https://github.com/romanpindela"
+    Write-Host ""
+}
+
+if ($Help -or $h) {
+    Show-Help
+    exit 0
+}
+
 # 0. Check for Administrator privileges
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {

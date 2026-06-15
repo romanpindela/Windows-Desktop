@@ -32,3 +32,11 @@ By default, Windows blocks the execution of scripts from files. To allow its exe
 3. Enter the following command and press `Enter`:
 ```powershell
    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+
+## Execution View
+
+### Standard Run
+![Standard Run](assets/screenshot-standard-run.jpg)
+
+### Help Output (-Help)
+![Help Output](assets/screenshot-help.jpg)
