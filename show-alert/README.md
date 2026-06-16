@@ -30,3 +30,11 @@ The script can be run without parameters (displays the default message) or with 
 - Email: roman.pindela@gmail.com
 - GitHub: romanpindela
 - Wersja: 1.0.0
+
+## Execution View
+
+### Standard Run
+![Standard Run](assets/screenshot-standard-run.jpg)
+
+### Help Output (-Help)
+![Help Output](assets/screenshot-help.jpg)

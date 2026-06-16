@@ -16,7 +16,7 @@ param (
     [string]$Message = "Please contact the administrator.`n`nRoman Pindela.",
 
     [Parameter(Mandatory=$false)]
-    [string]$Title = "WARNING",
+    [string]$Title = " ",
 
     [Alias("h", "Help")]
     [switch]$ShowHelp
