@@ -11,6 +11,8 @@
     The path to the local .ps1 script file that you want to execute.
 .PARAMETER Credential
     Optional PSCredential object. If not provided, you will be prompted.
+.PARAMETER ArgumentList
+    Optional array of arguments to pass to the remote script.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
@@ -27,6 +29,9 @@ param (
 
     [Parameter(Mandatory=$false)]
     [System.Management.Automation.PSCredential]$Credential,
+
+    [Parameter(Mandatory=$false)]
+    [object[]]$ArgumentList,
 
     [Alias("h", "Help")]
     [switch]$ShowHelp
@@ -53,12 +58,14 @@ function Show-Help {
     Write-Host "    -ComputerName  Hostname or IP address of the target computer."
     Write-Host "    -ScriptPath    Path to the local .ps1 script to execute."
     Write-Host "    -Credential    Optional pre-defined network credentials."
+    Write-Host "    -ArgumentList  Optional array of arguments to pass to the remote script."
     Write-Host "    -h, -Help      Display this structured help screen."
     Write-Host ""
 
     Write-Host "EXAMPLES"
     Write-Host "    .\invoke-remote-script -ComputerName 'SRV-PROD01' -ScriptPath 'C:\Scripts\Get-Audit.ps1'"
     Write-Host "    .\invoke-remote-script -ComputerName '10.10.1.5' -ScriptPath '.\HealthCheck.ps1'"
+    Write-Host "    .\invoke-remote-script -ComputerName '10.10.1.5' -ScriptPath '.\Deploy.ps1' -ArgumentList 'Prod', 123"
     Write-Host ""
 
     Write-Host "CONTACT & INFO"
@@ -110,7 +117,11 @@ try {
     # 5. Remote Execution
     Write-Host "Connecting and executing on $ComputerName..." -ForegroundColor Yellow
     
-    Invoke-Command -ComputerName $ComputerName -Credential $Credential -ScriptBlock $ScriptBlock -ErrorAction Stop
+    if ($ArgumentList) {
+        Invoke-Command -ComputerName $ComputerName -Credential $Credential -ScriptBlock $ScriptBlock -ArgumentList $ArgumentList -ErrorAction Stop
+    } else {
+        Invoke-Command -ComputerName $ComputerName -Credential $Credential -ScriptBlock $ScriptBlock -ErrorAction Stop
+    }
 
     Write-Host ""
     Write-Host "Remote execution completed successfully." -ForegroundColor Green
