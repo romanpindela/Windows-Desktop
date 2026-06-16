@@ -38,3 +38,11 @@ By default, when you use `Invoke-Command` to run a script on a remote computer, 
 ```powershell
 .\invoke-interactive-script.ps1 -ComputerName "10.10.1.96" -ScriptPath ".\show-alert.ps1" -ArgumentList '-Message "Please contact the IT Helpdesk immediately." -Title "SECURITY WARNING"'
 ```
+
+## Execution View
+
+### Standard Run
+![Standard Run](assets/screenshot-standard-run.jpg)
+
+### Help Output (-Help)
+![Help Output](assets/screenshot-help.jpg)
