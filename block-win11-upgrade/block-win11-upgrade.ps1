@@ -43,7 +43,7 @@ if ($ShowHelp -or $PSBoundParameters.Count -eq 0) {
 
 try {
     if ($Disable) {
-        Write-Verbose "Rozpoczęto proces odblokowywania aktualizacji do Windows 11..."
+        Write-Verbose "Started the process of unblocking the Windows 11 upgrade..."
         
         Remove-ItemProperty -Path $registryPath -Name "TargetReleaseVersion" -ErrorAction SilentlyContinue
         Remove-ItemProperty -Path $registryPath -Name "ProductVersion" -ErrorAction SilentlyContinue
@@ -51,10 +51,10 @@ try {
         
         Restart-Service -Name wuauserv -Force -ErrorAction SilentlyContinue
         
-        Write-Host "Blokada usunięta. Windows 11 może zostać pobrany." -ForegroundColor Yellow
+        Write-Host "Block removed. Windows 11 can now be downloaded." -ForegroundColor Yellow
     }
     elseif ($Enable) {
-        Write-Verbose "Rozpoczęto proces blokowania aktualizacji do Windows 11..."
+        Write-Verbose "Started the process of blocking the Windows 11 upgrade..."
         
         if (!(Test-Path $registryPath)) {
             New-Item -Path $registryPath -Force | Out-Null
@@ -66,12 +66,12 @@ try {
 
         Restart-Service -Name wuauserv -Force -ErrorAction SilentlyContinue
         
-        Write-Host "Gotowe! Aktualizacja do Windows 11 została zablokowana. Twój system pozostanie na Windows 10 (22H2)." -ForegroundColor Green
+        Write-Host "Done! The Windows 11 upgrade has been blocked. Your system will remain on Windows 10 (22H2)." -ForegroundColor Green
     }
     else {
         Write-Error "Invalid parameters. Use -Enable to apply the block or -Disable to remove it. Use -Help for usage information."
     }
 }
 catch {
-    Write-Error "Wystąpił błąd podczas modyfikacji rejestru lub restartu usługi: $_"
+    Write-Error "An error occurred while modifying the registry or restarting the service: $_"
 }

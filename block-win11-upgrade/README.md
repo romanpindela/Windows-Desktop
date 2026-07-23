@@ -1,23 +1,23 @@
 # Manage Windows 11 Upgrade
 
 ## Overview
-`Manage-Win11Upgrade.ps1` is a PowerShell script designed to control the automatic upgrade path from Windows 10 to Windows 11. By default, the script pins the system to Windows 10 (22H2) by modifying the appropriate local registry policies. 
+`block-win11-upgrade.ps1` is a PowerShell script designed to control the automatic upgrade path from Windows 10 to Windows 11. By default, the script pins the system to Windows 10 (22H2) by modifying the appropriate local registry policies. 
 
 ## Usage
 
 **To block the Windows 11 upgrade (Default behavior):**
 ```powershell
-.\Manage-Win11Upgrade.ps1
+.\block-win11-upgrade.ps1
 ```
 
 **To allow/unblock the Windows 11 upgrade:**
 ```powershell
-.\Manage-Win11Upgrade.ps1 -Disable
+.\block-win11-upgrade.ps1 -Disable
 ```
 
 Alternatively, to view standard help:
 ```powershell
-Get-Help .\Manage-Win11Upgrade.ps1 -Full
+Get-Help .\block-win11-upgrade.ps1 -Full
 ```
 
 ## Error Handling
