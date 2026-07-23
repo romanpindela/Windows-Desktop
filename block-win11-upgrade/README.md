@@ -37,3 +37,11 @@ The script encapsulates the execution logic inside a strict `try-catch` block. I
 * **Script Version:** 1.0.0
 * **Release Date:** July 2026
 * **License:** MIT License. Feel free to use, modify, and distribute in enterprise environments.
+
+## Execution View
+
+### Standard Run
+![Standard Run](assets/screenshot-standard-run.jpg)
+
+### Help Output (-Help)
+![Help Output](assets/screenshot-help.jpg)
