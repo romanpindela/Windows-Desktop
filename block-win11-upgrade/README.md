@@ -40,8 +40,6 @@ The script encapsulates the execution logic inside a strict `try-catch` block. I
 
 ## Execution View
 
-### Standard Run
-![Standard Run](assets/screenshot-standard-run.jpg)
 
 ### Help Output (-Help)
 ![Help Output](assets/screenshot-help.jpg)
