@@ -16,11 +16,13 @@
     The local directory where installer files will be temporarily downloaded. Defaults to the user's temp folder.
 .PARAMETER Help
     Displays this help message and exits.
+.PARAMETER Install
+    Triggers the installation process. This parameter is required to start the installation.
 .EXAMPLE
-    .\deploy-zus-platnik.ps1
+    .\deploy-zus-platnik.ps1 -Install
     
-    Runs the script with default settings. It will check for prerequisites, download the official
-    installer and patch, install them silently, and clean up.
+    Triggers the installation with default settings. It will check for prerequisites,
+    download the official installer and patch, install them silently, and clean up.
 .EXAMPLE
     .\deploy-zus-platnik.ps1 -Help
     
@@ -49,7 +51,10 @@ param(
 
     [Parameter(Mandatory = $false)]
     [Alias("h")]
-    [switch]$Help
+    [switch]$Help,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Triggers the installation process.")]
+    [switch]$Install
 )
 
 # --- SCRIPT METADATA ---
@@ -72,7 +77,7 @@ function Show-Help {
     Write-Host "    installation, and cleanup, with full progress tracking."
     Write-Host ""
     Write-Host "USAGE:" -ForegroundColor Yellow
-    Write-Host "    .\deploy-zus-platnik.ps1 [PARAMETERS]"
+    Write-Host "    .\deploy-zus-platnik.ps1 -Install [PARAMETERS]"
     Write-Host ""
     Write-Host "PARAMETERS:" -ForegroundColor Yellow
     Write-Host "    -InstallerUrl <string>"
@@ -86,10 +91,12 @@ function Show-Help {
     Write-Host ""
     Write-Host "    -Help, -h"
     Write-Host "        Displays this help screen."
+    Write-Host "    -Install"
+    Write-Host "        Triggers the installation process. Required to run."
     Write-Host ""
     Write-Host "EXAMPLE:" -ForegroundColor Yellow
     Write-Host "    # Run the default installation"
-    Write-Host "    .\deploy-zus-platnik.ps1"
+    Write-Host "    .\deploy-zus-platnik.ps1 -Install"
     Write-Host ""
     Write-Host "    # Display this help menu"
     Write-Host "    .\deploy-zus-platnik.ps1 -Help"
@@ -132,9 +139,19 @@ function Test-IsSqlServerInstalled {
 
 # --- INITIALIZATION & VALIDATION ---
 
+# Show help if requested or if no parameters are provided at all.
 if ($Help -or $PSBoundParameters.Count -eq 0) {
     Show-Help
     exit 0
+}
+
+# If parameters are provided, but -Install is not one of them, show an error and exit.
+if (-not $Install) {
+    Write-Host ""
+    Write-Host "Error: The -Install parameter is required to start the installation." -ForegroundColor Red
+    Write-Host "Use -Help to see available options." -ForegroundColor Yellow
+    Write-Host ""
+    exit 1
 }
 
 # Check for Administrator privileges using SID (language-independent)

@@ -51,7 +51,7 @@ To run the script with all default settings, simply execute it from a PowerShell
 # Navigate to the script's directory first
 cd C:\path\to\script
 
-.\deploy-zus-platnik.ps1
+.\deploy-zus-platnik.ps1 -Install
 ```
 
 ### Displaying Help
@@ -87,4 +87,3 @@ To see the built-in help menu with parameter descriptions and examples:
     *   Implemented prerequisite checks and installation for .NET and SQL LocalDB.
     *   Integrated automatic UAC elevation and detailed progress bar.
     *   Created comprehensive help function and README documentation.
-
