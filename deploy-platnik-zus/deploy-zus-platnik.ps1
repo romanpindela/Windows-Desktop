@@ -169,7 +169,7 @@ if (-not $isAdmin) {
 # --- MAIN EXECUTION LOGIC ---
 
 try {
-    $totalSteps = 9
+    $totalSteps = 11
     $currentStep = 0
     function Update-Step {
         param(
@@ -182,7 +182,24 @@ try {
 
     Write-Host "Starting ZUS Płatnik installation process..." -ForegroundColor Cyan
 
-    # 1. Check .NET Framework
+    # 1. Check for winget
+    Update-Step "Checking for winget package manager..."
+    if (-not (Get-Command "winget" -ErrorAction SilentlyContinue)) {
+        throw "winget is not installed or not found in PATH. This script requires winget to install prerequisites. Please install 'App Installer' from the Microsoft Store."
+    }
+    Write-Host "[OK] winget package manager found." -ForegroundColor Green
+
+    # 2. Initialize winget sources
+    Update-Step "Initializing winget sources..."
+    Write-Host "Attempting to initialize winget sources to accept agreements..."
+    # Running a harmless search forces winget to initialize its sources if needed.
+    winget search "Microsoft.PowerShell" --accept-source-agreements | Out-Null
+    if ($LASTEXITCODE -eq 0x8a15000f) {
+        throw "winget failed to initialize its 'msstore' source. Please open a terminal and run 'winget source list' once manually to accept the required agreements, then re-run this script."
+    }
+    Write-Host "[OK] winget initialization appears successful." -ForegroundColor Green
+
+    # 3. Check .NET Framework
     Update-Step "Checking for .NET Framework 4.8+..."
     if (Test-NetFramework48OrHigher) {
         Write-Host "[OK] .NET Framework 4.8+ is already installed." -ForegroundColor Green
@@ -190,12 +207,12 @@ try {
     } else {
         Write-Host "[WARN] .NET Framework 4.8+ not found. Attempting installation via winget..." -ForegroundColor Yellow
         Update-Step "Installing .NET Framework..."
-        winget install --id Microsoft.DotNet.Framework.DeveloperPack --silent --accept-package-agreements --accept-source-agreements
+        winget install --id Microsoft.DotNet.Framework.DeveloperPack --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
         if ($LASTEXITCODE -ne 0) { throw "Failed to install .NET Framework via winget." }
         Write-Host "[OK] .NET Framework installed successfully." -ForegroundColor Green
     }
 
-    # 2. Check SQL Server
+    # 4. Check SQL Server
     Update-Step "Checking for SQL Server instance..."
     if (Test-IsSqlServerInstalled) {
         Write-Host "[OK] An existing SQL Server instance was found." -ForegroundColor Green
@@ -203,12 +220,12 @@ try {
     } else {
         Write-Host "[WARN] No SQL Server instance found. Attempting to install SQL Server LocalDB via winget..." -ForegroundColor Yellow
         Update-Step "Installing SQL Server 2022 LocalDB..."
-        winget install --id Microsoft.SQLServer.2022.LocalDB --silent --accept-package-agreements --accept-source-agreements
+        winget install --id Microsoft.SQLServer.2022.LocalDB --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
         if ($LASTEXITCODE -ne 0) { throw "Failed to install SQL Server LocalDB via winget." }
         Write-Host "[OK] SQL Server LocalDB installed successfully." -ForegroundColor Green
     }
 
-    # 3. Download Files
+    # 5. Download Files
     $installerFile = Join-Path -Path $DownloadPath -ChildPath "platnik_install.exe"
     $patchFile = Join-Path -Path $DownloadPath -ChildPath "platnik_patch.exe"
 
@@ -222,7 +239,7 @@ try {
 
     Write-Host "[OK] All required files downloaded." -ForegroundColor Green
 
-    # 4. Install Płatnik
+    # 6. Install Płatnik
     Update-Step "Installing ZUS Płatnik (this may take a few minutes)..."
     Write-Host "Running silent installation of Płatnik..."
     $installArgs = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
@@ -230,7 +247,7 @@ try {
     if ($process.ExitCode -ne 0) { throw "Płatnik installer failed with exit code $($process.ExitCode)." }
     Write-Host "[OK] ZUS Płatnik installed successfully." -ForegroundColor Green
 
-    # 5. Install Patch
+    # 7. Install Patch
     Update-Step "Installing ZUS Płatnik patch..."
     Write-Host "Running silent installation of the patch..."
     $patchArgs = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
@@ -238,7 +255,7 @@ try {
     if ($process.ExitCode -ne 0) { throw "Płatnik patch installer failed with exit code $($process.ExitCode)." }
     Write-Host "[OK] Płatnik patch installed successfully." -ForegroundColor Green
 
-    # 6. Cleanup
+    # 8. Cleanup
     Update-Step "Cleaning up temporary files..."
     Write-Host "Removing temporary installer files..."
     Remove-Item -Path $installerFile -Force -ErrorAction SilentlyContinue
