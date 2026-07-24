@@ -159,7 +159,7 @@ function Test-IsPlatnikInstalled {
     )
     foreach ($path in $uninstallPaths) {
         if (Test-Path $path) {
-            $installed = Get-ItemProperty -Path "$path\*" -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq "Płatnik" }
+            $installed = Get-ItemProperty -Path "$path\*" -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like "Płatnik*" }
             if ($installed) {
                 return $true
             }
