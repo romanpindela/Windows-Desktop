@@ -169,7 +169,7 @@ if (-not $isAdmin) {
 # --- MAIN EXECUTION LOGIC ---
 
 try {
-    $totalSteps = 11
+    $totalSteps = 9 # Reduced step count as SQL prerequisite handling is removed.
     $currentStep = 0
     function Update-Step {
         param(
@@ -212,17 +212,12 @@ try {
         Write-Host "[OK] .NET Framework installed successfully." -ForegroundColor Green
     }
 
-    # 4. Check SQL Server
-    Update-Step "Checking for SQL Server instance..."
+    # 4. Check for SQL Server (automatic installation is now skipped)
+    Write-Host "Checking for SQL Server instance..." -ForegroundColor Cyan
     if (Test-IsSqlServerInstalled) {
         Write-Host "[OK] An existing SQL Server instance was found." -ForegroundColor Green
-        $currentStep++ # Skip the installation step
     } else {
-        Write-Host "[WARN] No SQL Server instance found. Attempting to install SQL Server LocalDB via winget..." -ForegroundColor Yellow
-        Update-Step "Installing SQL Server 2022 LocalDB..."
-        winget install --id Microsoft.SQLServer.2022.LocalDB --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
-        if ($LASTEXITCODE -ne 0) { throw "Failed to install SQL Server LocalDB via winget." }
-        Write-Host "[OK] SQL Server LocalDB installed successfully." -ForegroundColor Green
+        Write-Host "[WARN] No SQL Server instance found. The Płatnik installation may fail if it cannot connect to a database." -ForegroundColor Yellow
     }
 
     # 5. Download Files
