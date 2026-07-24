@@ -131,7 +131,7 @@ if (-not $isAdmin) {
 # --- MAIN EXECUTION LOGIC ---
 
 try {
-    $totalSteps = 5
+    $totalSteps = 6
     $currentStep = 0
     function Update-Step {
         param(
@@ -171,7 +171,7 @@ try {
         Write-Host "[OK] .NET Framework installed successfully." -ForegroundColor Green
     }
 
-    # Step 4 & 5: Download files to C:\Temp
+    # Steps 4, 5, & 6: Download files to C:\Temp
     $downloadPath = "C:\Temp"
     Update-Step "Ensuring download directory '$downloadPath' exists..."
     if (-not (Test-Path -Path $downloadPath)) {
