@@ -10,7 +10,7 @@ A professional PowerShell script to automate the complete, unattended installati
 
 This tool streamlines the preparation for a manual ZUS Płatnik installation. It intelligently checks the system for the required .NET Framework 4.8+ dependency, automatically installing it with `winget` if it is missing.
 
-Once the environment is verified and all prerequisites are met, the script downloads the latest official Płatnik installer and its corresponding patch directly to your user **Downloads** folder, ready for you to run manually.
+Once the environment is verified and all prerequisites are met, the script downloads the latest official Płatnik installer and its corresponding patch to the **C:\Temp** folder, ready for you to run manually.
 
 The script provides a user-friendly experience with a detailed progress bar and robust, language-independent checks, ensuring it works reliably on both Polish and English versions of Windows.
 
@@ -18,7 +18,7 @@ The script provides a user-friendly experience with a detailed progress bar and 
 
 *   **Automatic UAC Elevation**: Prompts for Administrator rights if not already elevated.
 *   **Automated Prerequisite Management**: Checks for and installs .NET Framework 4.8+.
-*   **Installer Download**: Downloads the main Płatnik installer and the latest patch to your Downloads folder.
+*   **Installer Download**: Downloads the main Płatnik installer and the latest patch to the `C:\Temp` folder.
 *   **Progress Tracking**: A step-by-step progress bar shows exactly what the script is doing.
 *   **Error Handling**: Gracefully handles unexpected errors and provides clear feedback.
 *   **Self-Contained**: No external modules required, uses native PowerShell and `winget`.

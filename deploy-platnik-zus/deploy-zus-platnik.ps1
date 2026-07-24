@@ -4,9 +4,8 @@
 .DESCRIPTION
     This script streamlines the preparation for a manual ZUS Płatnik installation.
     It automatically checks for the required .NET Framework 4.8+ dependency and installs it using winget if it is missing.
-    After ensuring the environment is ready, it downloads the latest Płatnik installer and its patch
-    directly to the user's "Downloads" folder.
-
+    After ensuring the environment is ready, it downloads the latest Płatnik installer and its patch to the C:\Temp folder.
+    
     The script requires Administrator privileges and will automatically prompt for UAC elevation if needed.
 .PARAMETER InstallerUrl
     The direct URL to the main ZUS Płatnik installer executable.
@@ -18,7 +17,7 @@
     .\deploy-zus-platnik.ps1
     
     Checks prerequisites, installs them if needed, and downloads the Płatnik
-    installer and patch to the user's Downloads folder.
+    installer and patch to the C:\Temp folder.
 .EXAMPLE
     .\deploy-zus-platnik.ps1 -Help
     
@@ -63,7 +62,7 @@ function Show-Help {
     Write-Host ""
     Write-Host "DESCRIPTION:" -ForegroundColor Yellow
     Write-Host "    Prepares the system for a ZUS Płatnik installation."
-    Write-Host "    It checks and installs the .NET prerequisite and then downloads the installer and patch to your Downloads folder."
+    Write-Host "    It checks and installs the .NET prerequisite and then downloads the installer and patch to the C:\Temp folder."
     Write-Host ""
     Write-Host "USAGE:" -ForegroundColor Yellow
     Write-Host "    .\deploy-zus-platnik.ps1 [PARAMETERS]"
@@ -172,15 +171,16 @@ try {
         Write-Host "[OK] .NET Framework installed successfully." -ForegroundColor Green
     }
 
-    # Step 4 & 5: Download files to user's Downloads folder
-    $userDownloadsPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Downloads)
-    if (-not (Test-Path -Path $userDownloadsPath)) {
-        $userDownloadsPath = Join-Path -Path $env:USERPROFILE -ChildPath "Downloads"
-        New-Item -Path $userDownloadsPath -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+    # Step 4 & 5: Download files to C:\Temp
+    $downloadPath = "C:\Temp"
+    Update-Step "Ensuring download directory '$downloadPath' exists..."
+    if (-not (Test-Path -Path $downloadPath)) {
+        New-Item -Path $downloadPath -ItemType Directory -Force | Out-Null
+        Write-Host "Created directory: $downloadPath" -ForegroundColor Green
     }
 
-    $installerFile = Join-Path -Path $userDownloadsPath -ChildPath "platnik_install.exe"
-    $patchFile = Join-Path -Path $userDownloadsPath -ChildPath "platnik_patch.exe"
+    $installerFile = Join-Path -Path $downloadPath -ChildPath "platnik_install.exe"
+    $patchFile = Join-Path -Path $downloadPath -ChildPath "platnik_patch.exe"
 
     Update-Step "Downloading ZUS Płatnik installer..."
     Write-Host "Downloading Płatnik installer to '$installerFile'..."
@@ -197,11 +197,11 @@ try {
     Write-Host "  Environment is ready for ZUS Płatnik installation!" -ForegroundColor Green
     Write-Host "======================================================" -ForegroundColor Green
     Write-Host ""
-    Write-Host "Installer files have been downloaded to your Downloads folder:" -ForegroundColor Cyan
+    Write-Host "Installer files have been downloaded to C:\Temp:" -ForegroundColor Cyan
     Write-Host "  - $installerFile"
     Write-Host "  - $patchFile"
     Write-Host ""
-    Write-Host "You can now run 'platnik_install.exe' manually to begin the installation." -ForegroundColor Yellow
+    Write-Host "You can now run 'platnik_install.exe' from C:\Temp to begin the installation." -ForegroundColor Yellow
     Write-Host ""
 
 }
