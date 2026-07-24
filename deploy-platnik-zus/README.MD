@@ -8,7 +8,7 @@ A professional PowerShell script to automate the complete, unattended installati
 
 ## Description
 
-This tool streamlines the preparation for a manual ZUS Płatnik installation. It intelligently checks the system for the required .NET Framework 4.8+ dependency, automatically installing it with `winget` if it is missing.
+This tool streamlines the preparation for a manual ZUS Płatnik installation. It intelligently checks the system for required dependencies (.NET Framework 4.8+, VSTO Runtime, WSE 3.0), automatically installing them if they are missing.
 
 Once the environment is verified and all prerequisites are met, the script downloads the latest official Płatnik installer and its corresponding patch to the **C:\Temp** folder, ready for you to run manually.
 
@@ -17,7 +17,7 @@ The script provides a user-friendly experience with a detailed progress bar and 
 ## Features
 
 *   **Automatic UAC Elevation**: Prompts for Administrator rights if not already elevated.
-*   **Automated Prerequisite Management**: Checks for and installs .NET Framework 4.8+.
+*   **Automated Prerequisite Management**: Checks for and installs .NET Framework 4.8+, VSTO 2010 Runtime, and WSE 3.0.
 *   **Installer Download**: Downloads the main Płatnik installer and the latest patch to the `C:\Temp` folder.
 *   **Progress Tracking**: A step-by-step progress bar shows exactly what the script is doing.
 *   **Error Handling**: Gracefully handles unexpected errors and provides clear feedback.
@@ -77,6 +77,7 @@ To see the built-in help menu with parameter descriptions and examples:
 | ------------------ | ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
 | `-InstallerUrl`    | The URL for the main ZUS Płatnik installer executable.                   | `https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/pelna/install.exe` |
 | `-PatchUrl`        | The URL for the ZUS Płatnik patch executable.                            | `https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/dodatki/P2StartFix2.exe` |
+| `-Download`        | Specifies which files to download: `All`, `InstallerOnly`, `PatchOnly`.  | `All`                                                                      |
 | `-Help` / `-h`     | Displays the detailed help message and exits.                            | `[switch]`                                                                 |
 
 ---

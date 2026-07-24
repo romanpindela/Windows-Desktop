@@ -118,6 +118,29 @@ function Test-NetFramework48OrHigher {
     return $false
 }
 
+function Test-VstoRuntimeInstalled {
+    # VSTO 2010 Runtime for .NET 4.0 installs this key.
+    $vstoPath = "HKLM:\SOFTWARE\Microsoft\VSTO Runtime Setup\v4R"
+    if (Test-Path $vstoPath) {
+        $installValue = (Get-ItemProperty -Path $vstoPath -Name "Install" -ErrorAction SilentlyContinue).Install
+        if ($installValue -eq 1) {
+            return $true
+        }
+    }
+    return $false
+}
+
+function Test-Wse3Installed {
+    # Product code for Microsoft WSE 3.0
+    $productCode = "{2495B3AF-4253-4323-A551-27B567542613}"
+    $uninstallPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$productCode"
+    $uninstallPathWow = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$productCode"
+    if ((Test-Path $uninstallPath) -or (Test-Path $uninstallPathWow)) {
+        return $true
+    }
+    return $false
+}
+
 # --- INITIALIZATION & VALIDATION ---
 
 # Show help if requested.
@@ -142,9 +165,11 @@ if (-not $isAdmin) {
 # --- MAIN EXECUTION LOGIC ---
 
 try {
-    $totalSteps = 4 # Base steps
-    if ($Download -in ('All', 'InstallerOnly')) { $totalSteps++ }
-    if ($Download -in ('All', 'PatchOnly')) { $totalSteps++ }
+    # Set a max number of steps for the progress bar.
+    # It won't be perfectly linear if steps are skipped, but it provides good feedback.
+    $totalSteps = 9 # 1-winget, 2-winget-init, 3-dotnet-check, 4-vsto-check, 5-vsto-install, 6-wse-check, 7-wse-install, 8-mdac-check, 9-dir-check
+    if ($Download -in ('All', 'InstallerOnly')) { $totalSteps += 1 }
+    if ($Download -in ('All', 'PatchOnly')) { $totalSteps += 1 }
 
     $currentStep = 0
     function Update-Step {
@@ -185,7 +210,48 @@ try {
         Write-Host "[OK] .NET Framework installed successfully." -ForegroundColor Green
     }
 
-    # Step 4: Ensure download directory exists
+    # Step 4 & 5: Check for VSTO 2010 Runtime
+    Update-Step "Checking for VSTO 2010 Runtime..."
+    Write-Host "`n-> Checking for 'Visual Studio 2010 Tools for Office Runtime'..." -ForegroundColor Cyan
+    Write-Host "   (A component for applications integrating with Microsoft Office)"
+    if (Test-VstoRuntimeInstalled) {
+        Write-Host "[OK] VSTO 2010 Runtime is already installed." -ForegroundColor Green
+    } else {
+        Write-Host "[WARN] VSTO 2010 Runtime not found. Attempting automatic installation..." -ForegroundColor Yellow
+        Update-Step "Installing VSTO 2010 Runtime..."
+        $vstoUrl = "https://download.microsoft.com/download/C/3/A/C3A5200B-D33C-47E9-9D70-2F73D5529254/vstor_redist.exe"
+        $vstoInstaller = Join-Path -Path $env:TEMP -ChildPath "vstor_redist.exe"
+        Invoke-WebRequest -Uri $vstoUrl -OutFile $vstoInstaller
+        Start-Process -FilePath $vstoInstaller -ArgumentList "/q /norestart" -Wait
+        Remove-Item -Path $vstoInstaller -Force -ErrorAction SilentlyContinue
+        Write-Host "[OK] VSTO 2010 Runtime installed successfully." -ForegroundColor Green
+    }
+
+    # Step 6 & 7: Check for WSE 3.0
+    Update-Step "Checking for WSE 3.0..."
+    Write-Host "`n-> Checking for 'Web Services Enhancements (WSE) 3.0'..." -ForegroundColor Cyan
+    Write-Host "   (A .NET Framework extension for advanced web service standards)"
+    if (Test-Wse3Installed) {
+        Write-Host "[OK] WSE 3.0 is already installed." -ForegroundColor Green
+    } else {
+        Write-Host "[WARN] WSE 3.0 not found. Attempting automatic installation..." -ForegroundColor Yellow
+        Update-Step "Installing WSE 3.0..."
+        $wseUrl = "https://download.microsoft.com/download/5/f/a/5fa3c898-a035-4fb9-a51a-17014a610368/WSE30.msi"
+        $wseInstaller = Join-Path -Path $env:TEMP -ChildPath "WSE30.msi"
+        Invoke-WebRequest -Uri $wseUrl -OutFile $wseInstaller
+        Start-Process -FilePath "msiexec.exe" -ArgumentList "/i `"$wseInstaller`" /qn /norestart" -Wait
+        Remove-Item -Path $wseInstaller -Force -ErrorAction SilentlyContinue
+        Write-Host "[OK] WSE 3.0 installed successfully." -ForegroundColor Green
+    }
+
+    # Step 8: Check for MDAC
+    Update-Step "Checking for MDAC 2.8..."
+    Write-Host "`n-> Checking for 'Microsoft Data Access Components (MDAC) 2.8'..." -ForegroundColor Cyan
+    Write-Host "   (A legacy data access component. Modern Windows includes a newer, integrated version - Windows DAC.)"
+    Write-Host "[INFO] Installation is not required as a modern equivalent is part of the operating system." -ForegroundColor Green
+
+
+    # Step 9: Ensure download directory exists
     $downloadPath = "C:\Temp"
     Update-Step "Ensuring download directory '$downloadPath' exists..."
     if (-not (Test-Path -Path $downloadPath)) {
@@ -195,7 +261,7 @@ try {
     
     $downloadedFiles = [System.Collections.Generic.List[string]]::new()
 
-    # Step 5: Download Installer (if requested)
+    # Step 10: Download Installer (if requested)
     if ($Download -in ('All', 'InstallerOnly')) {
         $installerFileName = [System.IO.Path]::GetFileName($InstallerUrl)
         $installerFile = Join-Path -Path $downloadPath -ChildPath $installerFileName
@@ -205,7 +271,7 @@ try {
         $downloadedFiles.Add($installerFile)
     }
 
-    # Step 6: Download Patch (if requested)
+    # Step 11: Download Patch (if requested)
     if ($Download -in ('All', 'PatchOnly')) {
         $patchFileName = [System.IO.Path]::GetFileName($PatchUrl)
         $patchFile = Join-Path -Path $downloadPath -ChildPath $patchFileName
