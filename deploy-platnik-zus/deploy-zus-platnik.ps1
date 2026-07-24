@@ -171,8 +171,9 @@ function Test-IsPlatnikInstalled {
         "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
     )
 
+    # Search for both "Płatnik" (with diacritic) and "Platnik" (without)
     $platnikEntries = Get-ItemProperty -Path "$uninstallPaths\*" -ErrorAction SilentlyContinue | Where-Object {
-        $_.DisplayName -like "Płatnik*" -or $_.Publisher -like "Asseco Poland*"
+        $_.DisplayName -like "Płatnik*" -or $_.DisplayName -like "Platnik*" -or $_.Publisher -like "Asseco Poland*"
     }
 
     if ($platnikEntries) {
@@ -191,10 +192,12 @@ function Test-IsPlatnikInstalled {
     }
 
     # --- Fallback Check: Default Paths ---
-    # If the registry is unreliable or orphaned, check common installation locations.
+    # If the registry is unreliable or orphaned, check common installation locations for both naming conventions.
     $defaultPaths = @(
         (Join-Path -Path ${env:ProgramFiles(x86)} -ChildPath "Asseco Poland SA\Płatnik"),
-        (Join-Path -Path ${env:ProgramFiles} -ChildPath "Asseco Poland SA\Płatnik")
+        (Join-Path -Path ${env:ProgramFiles(x86)} -ChildPath "Asseco Poland SA\Platnik"),
+        (Join-Path -Path ${env:ProgramFiles} -ChildPath "Asseco Poland SA\Płatnik"),
+        (Join-Path -Path ${env:ProgramFiles} -ChildPath "Asseco Poland SA\Platnik")
     )
 
     foreach ($path in $defaultPaths) {
