@@ -157,46 +157,54 @@ function Test-IsPlatnikInstalled {
     .SYNOPSIS
         Checks if ZUS Płatnik is installed by querying the registry.
     .DESCRIPTION
-        This function provides a robust check for an existing Płatnik installation.
-        It queries both 32-bit and 64-bit Uninstall registry locations.
-        For added reliability, if an entry is found, it attempts to verify that the
-        installation directory specified in the registry actually exists on disk.
-        This helps avoid false positives from orphaned registry keys.
+        This function provides a highly robust check for an existing Płatnik installation.
+        It first queries the Uninstall registry keys for an entry with a DisplayName like "Płatnik*" or a Publisher like "Asseco Poland*".
+        If an entry is found, it verifies that the installation directory exists and contains a key executable (P2Start.exe).
+        If the registry check fails or is inconclusive, it performs a fallback check for the default installation directory.
     .RETURNS
         [bool] Returns $true if Płatnik is found and verified, otherwise $false.
     #>
+    
+    # --- Primary Check: Registry ---
     $uninstallPaths = @(
         "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
         "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
     )
 
-    # Use Get-ItemProperty with a wildcard to search all uninstall keys.
-    # The -like operator handles different version numbers in the display name (e.g., "Płatnik 10.02.002").
-    $platnikEntries = Get-ItemProperty -Path "$uninstallPaths\*" -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like "Płatnik*" }
-
-    if (-not $platnikEntries) {
-        # No registry entry found at all.
-        return $false
+    $platnikEntries = Get-ItemProperty -Path "$uninstallPaths\*" -ErrorAction SilentlyContinue | Where-Object {
+        $_.DisplayName -like "Płatnik*" -or $_.Publisher -like "Asseco Poland*"
     }
 
-    # Iterate through found entries in case of multiple (though unlikely).
-    foreach ($entry in $platnikEntries) {
-        # A professional check verifies the InstallLocation property to avoid orphaned entries.
-        if ($entry.InstallLocation) {
-            if (Test-Path -Path $entry.InstallLocation -PathType Container) {
-                # The installation directory exists. This is a confirmed installation.
-                return $true
+    if ($platnikEntries) {
+        foreach ($entry in $platnikEntries) {
+            # A professional check verifies the InstallLocation property to avoid orphaned entries.
+            if ($entry.InstallLocation) {
+                $installDir = $entry.InstallLocation
+                # Some installers don't put a trailing slash, some do. Join-Path handles this.
+                $executablePath = Join-Path -Path $installDir -ChildPath "P2Start.exe"
+                if (Test-Path -Path $executablePath -PathType Leaf) {
+                    # Executable found in the registered installation directory. This is a confirmed installation.
+                    return $true
+                }
             }
-            # If InstallLocation exists but the path does not, we continue checking other potential entries.
-        } else {
-            # If the entry has no InstallLocation, we have to trust the DisplayName.
-            # This is a valid fallback for some installers.
+        }
+    }
+
+    # --- Fallback Check: Default Paths ---
+    # If the registry is unreliable or orphaned, check common installation locations.
+    $defaultPaths = @(
+        (Join-Path -Path ${env:ProgramFiles(x86)} -ChildPath "Asseco Poland SA\Płatnik"),
+        (Join-Path -Path ${env:ProgramFiles} -ChildPath "Asseco Poland SA\Płatnik")
+    )
+
+    foreach ($path in $defaultPaths) {
+        $executablePath = Join-Path -Path $path -ChildPath "P2Start.exe"
+        if (Test-Path -Path $executablePath -PathType Leaf) {
             return $true
         }
     }
 
-    # If we looped through entries with InstallLocation and none of the paths existed,
-    # it means we only found orphaned entries.
+    # If all checks fail, it's not installed.
     return $false
 }
 
