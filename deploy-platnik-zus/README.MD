@@ -54,6 +54,13 @@ cd C:\path\to\script
 .\deploy-zus-platnik.ps1 -Install
 ```
 
+### Patch-Only Installation
+
+If Płatnik is already installed and you only want to apply the latest patch:
+```powershell
+.\deploy-zus-platnik.ps1 -InstallFix
+```
+
 ### Displaying Help
 
 To see the built-in help menu with parameter descriptions and examples:
@@ -66,6 +73,8 @@ To see the built-in help menu with parameter descriptions and examples:
 
 | Parameter          | Description                                                              | Default Value                                                              |
 | ------------------ | ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `-Install`         | Triggers the full installation process (including prerequisites).        | `[switch]`                                                                 |
+| `-InstallFix`      | Triggers a patch-only installation. Requires Płatnik to be installed.    | `[switch]`                                                                 |
 | `-InstallerUrl`    | The URL for the main ZUS Płatnik installer executable.                   | `https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/pelna/install.exe` |
 | `-PatchUrl`        | The URL for the ZUS Płatnik patch executable.                            | `https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/dodatki/P2StartFix2.exe` |
 | `-DownloadPath`    | The local directory for temporary downloads.                             | `$env:TEMP`                                                                |
