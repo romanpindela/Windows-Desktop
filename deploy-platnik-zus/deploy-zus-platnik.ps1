@@ -157,11 +157,10 @@ function Test-IsPlatnikInstalled {
     .SYNOPSIS
         Checks if ZUS Płatnik is installed by querying the registry.
     .DESCRIPTION
-        This function provides an extremely robust, multi-factor check for an existing Płatnik installation.
-        It searches for multiple key executables ('P2Start.exe', 'platnik.exe') and checks both registry entries and default file paths
-        to reliably detect an installation even if the registry is inconsistent or naming conventions vary.
+        This function provides an extremely robust, multi-factor check for an existing Płatnik installation,
+        returning its installation path if found.
     .RETURNS
-        [bool] Returns $true if Płatnik is found and verified, otherwise $false.
+        [string] Returns the installation path if Płatnik is found and verified, otherwise $null.
     #>
     
     # --- Define key files that confirm an installation ---
@@ -185,7 +184,7 @@ function Test-IsPlatnikInstalled {
                 foreach ($exe in $keyExecutables) {
                     $executablePath = Join-Path -Path $installDir -ChildPath $exe
                     if (Test-Path -Path $executablePath -PathType Leaf) {
-                        return $true # Confirmed installation
+                        return $installDir # Confirmed installation, return path
                     }
                 }
             }
@@ -206,14 +205,14 @@ function Test-IsPlatnikInstalled {
             foreach ($exe in $keyExecutables) {
                 $executablePath = Join-Path -Path $installPath -ChildPath $exe
                 if (Test-Path -Path $executablePath -PathType Leaf) {
-                    return $true # Confirmed installation
+                    return $installPath # Confirmed installation, return path
                 }
             }
         }
     }
 
     # If all checks fail, it's not installed.
-    return $false
+    return $null
 }
 
 # --- INITIALIZATION & VALIDATION ---
@@ -300,7 +299,7 @@ try {
         }
 
         # 5. Check for existing Płatnik installation
-        Update-Step "Checking for existing ZUS Płatnik installation..."
+        Update-Step "Checking for existing ZUS Płatnik installation and its path..."
         if (Test-IsPlatnikInstalled) {
             Write-Host "[OK] ZUS Płatnik is already installed. Skipping main installation." -ForegroundColor Green
         }
@@ -311,8 +310,8 @@ try {
 
             Update-Step "Installing ZUS Płatnik (this may take a few minutes)..."
             Write-Host "Running silent installation of Płatnik..."
-            $installArgs = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
-            $process = Start-Process -FilePath $installerFile -ArgumentList $installArgs -Wait -PassThru
+            $installArgs = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" # Standard Inno Setup silent parameters
+            $process = Start-Process -FilePath $installerFile -ArgumentList $installArgs -Wait -PassThru -WorkingDirectory $DownloadPath
             if ($process.ExitCode -ne 0) { throw "Płatnik installer failed with exit code $($process.ExitCode)." }
             Write-Host "[OK] ZUS Płatnik installed successfully." -ForegroundColor Green
         }
@@ -331,7 +330,7 @@ try {
         Update-Step "Installing ZUS Płatnik patch..."
         Write-Host "Running silent installation of the patch..."
         $patchArgs = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
-        $process = Start-Process -FilePath $patchFile -ArgumentList $patchArgs -Wait -PassThru
+        $process = Start-Process -FilePath $patchFile -ArgumentList $patchArgs -Wait -PassThru -WorkingDirectory $platnikInstallPath
         if ($process.ExitCode -ne 0) { throw "Płatnik patch installer failed with exit code $($process.ExitCode)." }
         Write-Host "[OK] Płatnik patch installed successfully." -ForegroundColor Green
         
@@ -345,13 +344,13 @@ try {
         $totalSteps = 5 # Maximum steps for a patch-only installation
         Write-Host "Starting ZUS Płatnik patch-only installation process..." -ForegroundColor Cyan
 
-        Update-Step "Checking for existing ZUS Płatnik installation..."
-        if (-not (Test-IsPlatnikInstalled)) {
+        Update-Step "Checking for existing ZUS Płatnik installation and its path..."
+        $platnikInstallPath = Test-IsPlatnikInstalled
+        if (-not $platnikInstallPath) {
             throw "ZUS Płatnik is not installed. Cannot apply patch. Please run the full installation first using the -Install parameter."
         }
-        Write-Host "[OK] ZUS Płatnik is installed. Proceeding with patch installation." -ForegroundColor Green
+        Write-Host "[OK] ZUS Płatnik is installed at '$platnikInstallPath'. Proceeding with patch installation." -ForegroundColor Green
 
-        Update-Step "Downloading ZUS Płatnik patch..."
         Write-Host "Downloading Płatnik patch from $PatchUrl..."
         Invoke-WebRequest -Uri $PatchUrl -OutFile $patchFile
         Write-Host "[OK] Patch file downloaded." -ForegroundColor Green
@@ -364,7 +363,7 @@ try {
         Update-Step "Installing ZUS Płatnik patch..."
         Write-Host "Running silent installation of the patch..."
         $patchArgs = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
-        $process = Start-Process -FilePath $patchFile -ArgumentList $patchArgs -Wait -PassThru
+        $process = Start-Process -FilePath $patchFile -ArgumentList $patchArgs -Wait -PassThru -WorkingDirectory $platnikInstallPath
         if ($process.ExitCode -ne 0) { throw "Płatnik patch installer failed with exit code $($process.ExitCode)." }
         Write-Host "[OK] Płatnik patch installed successfully." -ForegroundColor Green
         
