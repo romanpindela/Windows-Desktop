@@ -173,7 +173,7 @@ try {
     }
 
     # Step 4 & 5: Download files to user's Downloads folder
-    $userDownloadsPath = [Environment]::GetFolderPath([Environment+SpecialFolder]::Downloads)
+    $userDownloadsPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Downloads)
     if (-not (Test-Path -Path $userDownloadsPath)) {
         $userDownloadsPath = Join-Path -Path $env:USERPROFILE -ChildPath "Downloads"
         New-Item -Path $userDownloadsPath -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
