@@ -1,0 +1,90 @@
+# ZUS Płatnik Automated Installer
+
+**Version: 1.0.0**
+
+A professional PowerShell script to automate the complete, unattended installation of ZUS Płatnik on Windows 10 and Windows 11.
+
+---
+
+## Description
+
+This tool streamlines the entire deployment process for ZUS Płatnik. It intelligently checks the system for required dependencies (.NET Framework 4.8+ and a Microsoft SQL Server instance), automatically installing them with `winget` if they are missing. It then proceeds to download the official Płatnik installer and the latest patch, executes them silently, and cleans up all temporary files.
+
+The script provides a user-friendly experience with a detailed progress bar and robust, language-independent checks, ensuring it works reliably on both Polish and English versions of Windows.
+
+## Features
+
+*   **Automatic UAC Elevation**: Prompts for Administrator rights if not already elevated.
+*   **Prerequisite Management**: Automatically checks for and installs .NET Framework and SQL Server LocalDB via `winget`.
+*   **Silent Installation**: Installs Płatnik and its patch without any user interaction.
+*   **Progress Tracking**: A step-by-step progress bar shows exactly what the script is doing.
+*   **Error Handling**: Gracefully handles unexpected errors and provides clear feedback.
+*   **Self-Contained**: No external modules required, uses native PowerShell and `winget`.
+*   **Language Independent**: Core functions (like admin checks) use SIDs to work on any Windows language.
+
+## Requirements
+
+*   Windows 10 / Windows 11 / Windows Server 2019+
+*   PowerShell 5.1 or later
+*   Internet connection (for downloading prerequisites and Płatnik)
+*   `winget` package manager (included by default in modern Windows versions)
+
+## Important: Unblocking the Script
+
+After downloading the script from the internet (e.g., from GitHub), Windows will likely block it for security reasons. You must unblock it before execution.
+
+Open a PowerShell terminal in the script's directory and run:
+
+```powershell
+Unblock-File -Path '.\install-zus-platnik.ps1'
+```
+
+## Usage
+
+The script is designed to be simple to use. Administrator privileges are required and will be requested automatically.
+
+### Standard Installation
+
+To run the script with all default settings, simply execute it from a PowerShell terminal:
+
+```powershell
+# Navigate to the script's directory first
+cd C:\path\to\script
+
+.\install-zus-platnik.ps1
+```
+
+### Displaying Help
+
+To see the built-in help menu with parameter descriptions and examples:
+
+```powershell
+.\install-zus-platnik.ps1 -Help
+```
+
+## Parameters
+
+| Parameter          | Description                                                              | Default Value                                                              |
+| ------------------ | ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `-InstallerUrl`    | The URL for the main ZUS Płatnik installer executable.                   | `https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/pelna/install.exe` |
+| `-PatchUrl`        | The URL for the ZUS Płatnik patch executable.                            | `https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/dodatki/P2StartFix2.exe` |
+| `-DownloadPath`    | The local directory for temporary downloads.                             | `$env:TEMP`                                                                |
+| `-Help` / `-h`     | Displays the detailed help message and exits.                            | `[switch]`                                                                 |
+
+---
+
+## Author
+
+*   **Roman Pindela**
+*   **Email**: `roman.pindela@gmail.com`
+*   **GitHub**: https://github.com/romanpindela
+
+## Version History
+
+*   **v1.0.0** (2026-07-24)
+    *   Initial release.
+    *   Added core functionality for downloading and silent installation.
+    *   Implemented prerequisite checks and installation for .NET and SQL LocalDB.
+    *   Integrated automatic UAC elevation and detailed progress bar.
+    *   Created comprehensive help function and README documentation.
+
