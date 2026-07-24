@@ -137,6 +137,22 @@ function Test-IsSqlServerInstalled {
     return $false
 }
 
+function Test-IsPlatnikInstalled {
+    $uninstallPaths = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+    )
+    foreach ($path in $uninstallPaths) {
+        if (Test-Path $path) {
+            $installed = Get-ItemProperty -Path "$path\*" -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq "Płatnik" }
+            if ($installed) {
+                return $true
+            }
+        }
+    }
+    return $false
+}
+
 # --- INITIALIZATION & VALIDATION ---
 
 # Show help if requested or if no parameters are provided at all.
@@ -169,7 +185,7 @@ if (-not $isAdmin) {
 # --- MAIN EXECUTION LOGIC ---
 
 try {
-    $totalSteps = 9 # Reduced step count as SQL prerequisite handling is removed.
+    $totalSteps = 11 # Maximum possible steps
     $currentStep = 0
     function Update-Step {
         param(
@@ -203,7 +219,6 @@ try {
     Update-Step "Checking for .NET Framework 4.8+..."
     if (Test-NetFramework48OrHigher) {
         Write-Host "[OK] .NET Framework 4.8+ is already installed." -ForegroundColor Green
-        $currentStep++ # Skip the installation step
     } else {
         Write-Host "[WARN] .NET Framework 4.8+ not found. Attempting installation via winget..." -ForegroundColor Yellow
         Update-Step "Installing .NET Framework..."
@@ -220,44 +235,53 @@ try {
         Write-Host "[WARN] No SQL Server instance found. The Płatnik installation may fail if it cannot connect to a database." -ForegroundColor Yellow
     }
 
-    # 5. Download Files
     $installerFile = Join-Path -Path $DownloadPath -ChildPath "platnik_install.exe"
     $patchFile = Join-Path -Path $DownloadPath -ChildPath "platnik_patch.exe"
 
-    Update-Step "Downloading ZUS Płatnik installer..."
-    Write-Host "Downloading Płatnik installer from $InstallerUrl..."
-    Invoke-WebRequest -Uri $InstallerUrl -OutFile $installerFile
+    # Check for existing Płatnik installation
+    Update-Step "Checking for existing ZUS Płatnik installation..."
+    if (Test-IsPlatnikInstalled) {
+        Write-Host "[OK] ZUS Płatnik is already installed. Skipping main installation." -ForegroundColor Green
+    }
+    else {
+        # Download and install the main application
+        Update-Step "Downloading ZUS Płatnik installer..."
+        Write-Host "Downloading Płatnik installer from $InstallerUrl..."
+        Invoke-WebRequest -Uri $InstallerUrl -OutFile $installerFile
 
+        Update-Step "Installing ZUS Płatnik (this may take a few minutes)..."
+        Write-Host "Running silent installation of Płatnik..."
+        $installArgs = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
+        $process = Start-Process -FilePath $installerFile -ArgumentList $installArgs -Wait -PassThru
+        if ($process.ExitCode -ne 0) { throw "Płatnik installer failed with exit code $($process.ExitCode)." }
+        Write-Host "[OK] ZUS Płatnik installed successfully." -ForegroundColor Green
+    }
+
+    # Download and install the patch
     Update-Step "Downloading ZUS Płatnik patch..."
     Write-Host "Downloading Płatnik patch from $PatchUrl..."
     Invoke-WebRequest -Uri $PatchUrl -OutFile $patchFile
+    Write-Host "[OK] Patch file downloaded." -ForegroundColor Green
 
-    Write-Host "[OK] All required files downloaded." -ForegroundColor Green
+    # Stop Płatnik processes before patching to avoid file locks
+    Update-Step "Stopping Płatnik processes before patching..."
+    Write-Host "Ensuring no Płatnik processes are running before patching..." -ForegroundColor Yellow
+    Get-Process -Name "P2Start", "platnik" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 2 # Give processes a moment to terminate
 
-    # 6. Install Płatnik
-    Update-Step "Installing ZUS Płatnik (this may take a few minutes)..."
-    Write-Host "Running silent installation of Płatnik..."
-    $installArgs = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
-    $process = Start-Process -FilePath $installerFile -ArgumentList $installArgs -Wait -PassThru
-    if ($process.ExitCode -ne 0) { throw "Płatnik installer failed with exit code $($process.ExitCode)." }
-    Write-Host "[OK] ZUS Płatnik installed successfully." -ForegroundColor Green
-
-    # 7. Install Patch
     Update-Step "Installing ZUS Płatnik patch..."
     Write-Host "Running silent installation of the patch..."
     $patchArgs = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
     $process = Start-Process -FilePath $patchFile -ArgumentList $patchArgs -Wait -PassThru
     if ($process.ExitCode -ne 0) { throw "Płatnik patch installer failed with exit code $($process.ExitCode)." }
     Write-Host "[OK] Płatnik patch installed successfully." -ForegroundColor Green
-
-    # 8. Cleanup
+    
     Update-Step "Cleaning up temporary files..."
     Write-Host "Removing temporary installer files..."
     Remove-Item -Path $installerFile -Force -ErrorAction SilentlyContinue
     Remove-Item -Path $patchFile -Force -ErrorAction SilentlyContinue
     Write-Host "[OK] Cleanup complete." -ForegroundColor Green
 
-    Update-Step "Installation finished!"
     Write-Progress -Activity "Installing ZUS Płatnik" -Completed
 
     Write-Host ""
