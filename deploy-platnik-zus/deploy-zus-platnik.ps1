@@ -17,12 +17,12 @@
 .PARAMETER Help
     Displays this help message and exits.
 .EXAMPLE
-    .\install-zus-platnik.ps1
+    .\deploy-zus-platnik.ps1
     
     Runs the script with default settings. It will check for prerequisites, download the official
     installer and patch, install them silently, and clean up.
 .EXAMPLE
-    .\install-zus-platnik.ps1 -Help
+    .\deploy-zus-platnik.ps1 -Help
     
     Displays the help screen with information about the script, parameters, and examples.
 .NOTES
@@ -33,7 +33,7 @@
 
     This script is designed to be language-agnostic and will work on both Polish and English
     versions of Windows. It is crucial to unblock the script after downloading it from the internet.
-    Run: Unblock-File -Path .\install-zus-platnik.ps1
+    Run: Unblock-File -Path .\deploy-zus-platnik.ps1
 #>
 
 [CmdletBinding()]
@@ -72,7 +72,7 @@ function Show-Help {
     Write-Host "    installation, and cleanup, with full progress tracking."
     Write-Host ""
     Write-Host "USAGE:" -ForegroundColor Yellow
-    Write-Host "    .\install-zus-platnik.ps1 [PARAMETERS]"
+    Write-Host "    .\deploy-zus-platnik.ps1 [PARAMETERS]"
     Write-Host ""
     Write-Host "PARAMETERS:" -ForegroundColor Yellow
     Write-Host "    -InstallerUrl <string>"
@@ -89,14 +89,14 @@ function Show-Help {
     Write-Host ""
     Write-Host "EXAMPLE:" -ForegroundColor Yellow
     Write-Host "    # Run the default installation"
-    Write-Host "    .\install-zus-platnik.ps1"
+    Write-Host "    .\deploy-zus-platnik.ps1"
     Write-Host ""
     Write-Host "    # Display this help menu"
-    Write-Host "    .\install-zus-platnik.ps1 -Help"
+    Write-Host "    .\deploy-zus-platnik.ps1 -Help"
     Write-Host ""
     Write-Host "IMPORTANT:" -ForegroundColor Yellow
     Write-Host "    After downloading, you must unblock the script:"
-    Write-Host "    Unblock-File -Path '.\install-zus-platnik.ps1'"
+    Write-Host "    Unblock-File -Path '.\deploy-zus-platnik.ps1'"
     Write-Host ""
     Write-Host "CONTACT:" -ForegroundColor Yellow
     Write-Host "    Author : $AuthorName"

@@ -36,7 +36,7 @@ After downloading the script from the internet (e.g., from GitHub), Windows will
 Open a PowerShell terminal in the script's directory and run:
 
 ```powershell
-Unblock-File -Path '.\install-zus-platnik.ps1'
+Unblock-File -Path '.\deploy-zus-platnik.ps1'
 ```
 
 ## Usage
@@ -51,7 +51,7 @@ To run the script with all default settings, simply execute it from a PowerShell
 # Navigate to the script's directory first
 cd C:\path\to\script
 
-.\install-zus-platnik.ps1
+.\deploy-zus-platnik.ps1
 ```
 
 ### Displaying Help
@@ -59,7 +59,7 @@ cd C:\path\to\script
 To see the built-in help menu with parameter descriptions and examples:
 
 ```powershell
-.\install-zus-platnik.ps1 -Help
+.\deploy-zus-platnik.ps1 -Help
 ```
 
 ## Parameters
