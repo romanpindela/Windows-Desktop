@@ -8,15 +8,17 @@ A professional PowerShell script to automate the complete, unattended installati
 
 ## Description
 
-This tool streamlines the entire deployment process for ZUS Płatnik. It intelligently checks the system for required dependencies (.NET Framework 4.8+ and a Microsoft SQL Server instance), automatically installing them with `winget` if they are missing. It then proceeds to download the official Płatnik installer and the latest patch, executes them silently, and cleans up all temporary files.
+This tool streamlines the preparation for a manual ZUS Płatnik installation. It intelligently checks the system for the required .NET Framework 4.8+ dependency, automatically installing it with `winget` if it is missing.
+
+Once the environment is verified and all prerequisites are met, the script downloads the latest official Płatnik installer and its corresponding patch directly to your user **Downloads** folder, ready for you to run manually.
 
 The script provides a user-friendly experience with a detailed progress bar and robust, language-independent checks, ensuring it works reliably on both Polish and English versions of Windows.
 
 ## Features
 
 *   **Automatic UAC Elevation**: Prompts for Administrator rights if not already elevated.
-*   **Prerequisite Management**: Automatically checks for and installs .NET Framework and SQL Server LocalDB via `winget`.
-*   **Silent Installation**: Installs Płatnik and its patch without any user interaction.
+*   **Automated Prerequisite Management**: Checks for and installs .NET Framework 4.8+.
+*   **Installer Download**: Downloads the main Płatnik installer and the latest patch to your Downloads folder.
 *   **Progress Tracking**: A step-by-step progress bar shows exactly what the script is doing.
 *   **Error Handling**: Gracefully handles unexpected errors and provides clear feedback.
 *   **Self-Contained**: No external modules required, uses native PowerShell and `winget`.
@@ -43,22 +45,15 @@ Unblock-File -Path '.\deploy-zus-platnik.ps1'
 
 The script is designed to be simple to use. Administrator privileges are required and will be requested automatically.
 
-### Standard Installation
+### Prepare Environment and Download
 
-To run the script with all default settings, simply execute it from a PowerShell terminal:
+To run the script, simply execute it from a PowerShell terminal:
 
 ```powershell
 # Navigate to the script's directory first
 cd C:\path\to\script
 
-.\deploy-zus-platnik.ps1 -Install
-```
-
-### Patch-Only Installation
-
-If Płatnik is already installed and you only want to apply the latest patch:
-```powershell
-.\deploy-zus-platnik.ps1 -InstallFix
+.\deploy-zus-platnik.ps1
 ```
 
 ### Displaying Help
@@ -73,11 +68,8 @@ To see the built-in help menu with parameter descriptions and examples:
 
 | Parameter          | Description                                                              | Default Value                                                              |
 | ------------------ | ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `-Install`         | Triggers the full installation process (including prerequisites).        | `[switch]`                                                                 |
-| `-InstallFix`      | Triggers a patch-only installation. Requires Płatnik to be installed.    | `[switch]`                                                                 |
 | `-InstallerUrl`    | The URL for the main ZUS Płatnik installer executable.                   | `https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/pelna/install.exe` |
 | `-PatchUrl`        | The URL for the ZUS Płatnik patch executable.                            | `https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/dodatki/P2StartFix2.exe` |
-| `-DownloadPath`    | The local directory for temporary downloads.                             | `$env:TEMP`                                                                |
 | `-Help` / `-h`     | Displays the detailed help message and exits.                            | `[switch]`                                                                 |
 
 ---
