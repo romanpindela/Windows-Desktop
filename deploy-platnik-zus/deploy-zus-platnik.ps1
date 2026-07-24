@@ -157,53 +157,58 @@ function Test-IsPlatnikInstalled {
     .SYNOPSIS
         Checks if ZUS Płatnik is installed by querying the registry.
     .DESCRIPTION
-        This function provides a highly robust check for an existing Płatnik installation.
-        It first queries the Uninstall registry keys for an entry with a DisplayName like "Płatnik*" or a Publisher like "Asseco Poland*".
-        If an entry is found, it verifies that the installation directory exists and contains a key executable (P2Start.exe).
-        If the registry check fails or is inconclusive, it performs a fallback check for the default installation directory.
+        This function provides an extremely robust, multi-factor check for an existing Płatnik installation.
+        It searches for multiple key executables ('P2Start.exe', 'platnik.exe') and checks both registry entries and default file paths
+        to reliably detect an installation even if the registry is inconsistent or naming conventions vary.
     .RETURNS
         [bool] Returns $true if Płatnik is found and verified, otherwise $false.
     #>
     
+    # --- Define key files that confirm an installation ---
+    $keyExecutables = @("P2Start.exe", "platnik.exe")
+
     # --- Primary Check: Registry ---
     $uninstallPaths = @(
         "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
         "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
     )
 
-    # Search for both "Płatnik" (with diacritic) and "Platnik" (without)
+    # Search for multiple name/publisher variations
     $platnikEntries = Get-ItemProperty -Path "$uninstallPaths\*" -ErrorAction SilentlyContinue | Where-Object {
         $_.DisplayName -like "Płatnik*" -or $_.DisplayName -like "Platnik*" -or $_.Publisher -like "Asseco Poland*"
     }
 
     if ($platnikEntries) {
         foreach ($entry in $platnikEntries) {
-            # A professional check verifies the InstallLocation property to avoid orphaned entries.
             if ($entry.InstallLocation) {
                 $installDir = $entry.InstallLocation
-                # Some installers don't put a trailing slash, some do. Join-Path handles this.
-                $executablePath = Join-Path -Path $installDir -ChildPath "P2Start.exe"
-                if (Test-Path -Path $executablePath -PathType Leaf) {
-                    # Executable found in the registered installation directory. This is a confirmed installation.
-                    return $true
+                foreach ($exe in $keyExecutables) {
+                    $executablePath = Join-Path -Path $installDir -ChildPath $exe
+                    if (Test-Path -Path $executablePath -PathType Leaf) {
+                        return $true # Confirmed installation
+                    }
                 }
             }
         }
     }
 
     # --- Fallback Check: Default Paths ---
-    # If the registry is unreliable or orphaned, check common installation locations for both naming conventions.
-    $defaultPaths = @(
-        (Join-Path -Path ${env:ProgramFiles(x86)} -ChildPath "Asseco Poland SA\Płatnik"),
-        (Join-Path -Path ${env:ProgramFiles(x86)} -ChildPath "Asseco Poland SA\Platnik"),
-        (Join-Path -Path ${env:ProgramFiles} -ChildPath "Asseco Poland SA\Płatnik"),
-        (Join-Path -Path ${env:ProgramFiles} -ChildPath "Asseco Poland SA\Platnik")
+    # If the registry is unreliable, check common installation locations.
+    $defaultBasePaths = @(
+        ${env:ProgramFiles(x86)},
+        ${env:ProgramFiles}
     )
+    $subFolders = @("Asseco Poland SA\Płatnik", "Asseco Poland SA\Platnik")
 
-    foreach ($path in $defaultPaths) {
-        $executablePath = Join-Path -Path $path -ChildPath "P2Start.exe"
-        if (Test-Path -Path $executablePath -PathType Leaf) {
-            return $true
+    foreach ($basePath in $defaultBasePaths) {
+        foreach ($subFolder in $subFolders) {
+            $installPath = Join-Path -Path $basePath -ChildPath $subFolder
+            foreach ($exe in $keyExecutables) {
+                $executablePath = Join-Path -Path $installPath -ChildPath $exe
+                if (Test-Path -Path $executablePath -PathType Leaf) {
+                    return $true # Confirmed installation
+                }
+            }
         }
     }
 
