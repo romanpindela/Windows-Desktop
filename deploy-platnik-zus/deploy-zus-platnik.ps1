@@ -42,6 +42,10 @@ param(
     [string]$PatchUrl = "https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/dodatki/P2StartFix2.exe",
 
     [Parameter(Mandatory = $false)]
+    [ValidateSet('All', 'InstallerOnly', 'PatchOnly')]
+    [string]$Download = 'All',
+
+    [Parameter(Mandatory = $false)]
     [Alias("h")]
     [switch]$Help
 )
@@ -74,12 +78,19 @@ function Show-Help {
     Write-Host "    -PatchUrl <string>"
     Write-Host "        URL for the Płatnik patch. Defaults to the official source."
     Write-Host ""
+    Write-Host "    -Download <string>"
+    Write-Host "        Specifies which files to download. Options: 'All', 'InstallerOnly', 'PatchOnly'."
+    Write-Host "        (Default is 'All')"
+    Write-Host ""
     Write-Host "    -Help, -h"
     Write-Host "        Displays this help screen."
     Write-Host ""
     Write-Host "EXAMPLE:" -ForegroundColor Yellow
-    Write-Host "    # Prepare the environment and download files"
+    Write-Host "    # Prepare environment and download all files (default)"
     Write-Host "    .\deploy-zus-platnik.ps1"
+    Write-Host ""
+    Write-Host "    # Prepare environment and download only the patch"
+    Write-Host "    .\deploy-zus-platnik.ps1 -Download PatchOnly"
     Write-Host ""
     Write-Host "    # Display this help menu"
     Write-Host "    .\deploy-zus-platnik.ps1 -Help"
@@ -131,7 +142,10 @@ if (-not $isAdmin) {
 # --- MAIN EXECUTION LOGIC ---
 
 try {
-    $totalSteps = 6
+    $totalSteps = 4 # Base steps
+    if ($Download -in ('All', 'InstallerOnly')) { $totalSteps++ }
+    if ($Download -in ('All', 'PatchOnly')) { $totalSteps++ }
+
     $currentStep = 0
     function Update-Step {
         param(
@@ -171,24 +185,35 @@ try {
         Write-Host "[OK] .NET Framework installed successfully." -ForegroundColor Green
     }
 
-    # Steps 4, 5, & 6: Download files to C:\Temp
+    # Step 4: Ensure download directory exists
     $downloadPath = "C:\Temp"
     Update-Step "Ensuring download directory '$downloadPath' exists..."
     if (-not (Test-Path -Path $downloadPath)) {
         New-Item -Path $downloadPath -ItemType Directory -Force | Out-Null
         Write-Host "Created directory: $downloadPath" -ForegroundColor Green
     }
+    
+    $downloadedFiles = [System.Collections.Generic.List[string]]::new()
 
-    $installerFile = Join-Path -Path $downloadPath -ChildPath "platnik_install.exe"
-    $patchFile = Join-Path -Path $downloadPath -ChildPath "platnik_patch.exe"
+    # Step 5: Download Installer (if requested)
+    if ($Download -in ('All', 'InstallerOnly')) {
+        $installerFileName = [System.IO.Path]::GetFileName($InstallerUrl)
+        $installerFile = Join-Path -Path $downloadPath -ChildPath $installerFileName
+        Update-Step "Downloading ZUS Płatnik installer..."
+        Write-Host "Downloading Płatnik installer to '$installerFile'..."
+        Invoke-WebRequest -Uri $InstallerUrl -OutFile $installerFile
+        $downloadedFiles.Add($installerFile)
+    }
 
-    Update-Step "Downloading ZUS Płatnik installer..."
-    Write-Host "Downloading Płatnik installer to '$installerFile'..."
-    Invoke-WebRequest -Uri $InstallerUrl -OutFile $installerFile
-
-    Update-Step "Downloading ZUS Płatnik patch..."
-    Write-Host "Downloading Płatnik patch to '$patchFile'..."
-    Invoke-WebRequest -Uri $PatchUrl -OutFile $patchFile
+    # Step 6: Download Patch (if requested)
+    if ($Download -in ('All', 'PatchOnly')) {
+        $patchFileName = [System.IO.Path]::GetFileName($PatchUrl)
+        $patchFile = Join-Path -Path $downloadPath -ChildPath $patchFileName
+        Update-Step "Downloading ZUS Płatnik patch..."
+        Write-Host "Downloading Płatnik patch to '$patchFile'..."
+        Invoke-WebRequest -Uri $PatchUrl -OutFile $patchFile
+        $downloadedFiles.Add($patchFile)
+    }
 
     Write-Progress -Activity "Installing ZUS Płatnik" -Completed
 
@@ -197,11 +222,12 @@ try {
     Write-Host "  Environment is ready for ZUS Płatnik installation!" -ForegroundColor Green
     Write-Host "======================================================" -ForegroundColor Green
     Write-Host ""
-    Write-Host "Installer files have been downloaded to C:\Temp:" -ForegroundColor Cyan
-    Write-Host "  - $installerFile"
-    Write-Host "  - $patchFile"
+    Write-Host "The following files have been downloaded to C:\Temp:" -ForegroundColor Cyan
+    foreach($file in $downloadedFiles) {
+        Write-Host "  - $file"
+    }
     Write-Host ""
-    Write-Host "You can now run 'platnik_install.exe' from C:\Temp to begin the installation." -ForegroundColor Yellow
+    Write-Host "You can now run the installer manually from C:\Temp." -ForegroundColor Yellow
     Write-Host ""
 
 }

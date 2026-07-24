@@ -45,15 +45,22 @@ Unblock-File -Path '.\deploy-zus-platnik.ps1'
 
 The script is designed to be simple to use. Administrator privileges are required and will be requested automatically.
 
-### Prepare Environment and Download
+### Prepare Environment and Download All Files (Default)
 
-To run the script, simply execute it from a PowerShell terminal:
+To run the script with default behavior, which downloads both the installer and the patch:
 
 ```powershell
 # Navigate to the script's directory first
 cd C:\path\to\script
 
 .\deploy-zus-platnik.ps1
+```
+
+### Prepare and Download Only the Patch
+
+To prepare the environment but only download the patch file:
+```powershell
+.\deploy-zus-platnik.ps1 -Download PatchOnly
 ```
 
 ### Displaying Help
