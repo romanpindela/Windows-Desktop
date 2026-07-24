@@ -153,18 +153,50 @@ function Test-IsSqlServerInstalled {
 }
 
 function Test-IsPlatnikInstalled {
+    <#
+    .SYNOPSIS
+        Checks if ZUS Płatnik is installed by querying the registry.
+    .DESCRIPTION
+        This function provides a robust check for an existing Płatnik installation.
+        It queries both 32-bit and 64-bit Uninstall registry locations.
+        For added reliability, if an entry is found, it attempts to verify that the
+        installation directory specified in the registry actually exists on disk.
+        This helps avoid false positives from orphaned registry keys.
+    .RETURNS
+        [bool] Returns $true if Płatnik is found and verified, otherwise $false.
+    #>
     $uninstallPaths = @(
         "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
         "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
     )
-    foreach ($path in $uninstallPaths) {
-        if (Test-Path $path) {
-            $installed = Get-ItemProperty -Path "$path\*" -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like "Płatnik*" }
-            if ($installed) {
+
+    # Use Get-ItemProperty with a wildcard to search all uninstall keys.
+    # The -like operator handles different version numbers in the display name (e.g., "Płatnik 10.02.002").
+    $platnikEntries = Get-ItemProperty -Path "$uninstallPaths\*" -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like "Płatnik*" }
+
+    if (-not $platnikEntries) {
+        # No registry entry found at all.
+        return $false
+    }
+
+    # Iterate through found entries in case of multiple (though unlikely).
+    foreach ($entry in $platnikEntries) {
+        # A professional check verifies the InstallLocation property to avoid orphaned entries.
+        if ($entry.InstallLocation) {
+            if (Test-Path -Path $entry.InstallLocation -PathType Container) {
+                # The installation directory exists. This is a confirmed installation.
                 return $true
             }
+            # If InstallLocation exists but the path does not, we continue checking other potential entries.
+        } else {
+            # If the entry has no InstallLocation, we have to trust the DisplayName.
+            # This is a valid fallback for some installers.
+            return $true
         }
     }
+
+    # If we looped through entries with InstallLocation and none of the paths existed,
+    # it means we only found orphaned entries.
     return $false
 }
 
