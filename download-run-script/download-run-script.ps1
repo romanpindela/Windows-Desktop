@@ -1,57 +1,203 @@
-# ==============================================================================
-# SETTINGS - Paste the full GitHub link below and specify whether to execute it
-# ==============================================================================
-$GitHubUrl = "https://github.com/romanpindela/Windows-Desktop/blob/main/deploy-platnik-zus/deploy-zus-platnik.ps1"
-$TargetFolder = "C:\PowerShell"
-$RunAfterDownload = $true  # Set to $false if you only want to download without executing
-# ==============================================================================
+<#
+.SYNOPSIS
+    Downloads a PowerShell script from a GitHub URL and optionally executes it.
+.DESCRIPTION
+    A utility script that takes a standard GitHub URL for a .ps1 file, converts it to the raw content URL,
+    downloads it to a specified local directory, unblocks it, and optionally executes it.
+    The script requires Administrator privileges to write to default system locations and will auto-elevate.
+.PARAMETER Url
+    The full GitHub URL to the .ps1 script file. (e.g., https://github.com/user/repo/blob/main/script.ps1)
+.PARAMETER DestinationPath
+    The local folder where the script will be downloaded. Defaults to C:\Temp.
+.PARAMETER Execute
+    A switch to execute the script immediately after download. If omitted, the script is only downloaded.
+.PARAMETER Help
+    Displays this help message.
+.EXAMPLE
+    .\download-run-script.ps1 -Url "https://github.com/user/repo/blob/main/script.ps1"
+    
+    Downloads 'script.ps1' to C:\Temp but does not run it.
+.EXAMPLE
+    .\download-run-script.ps1 -Url "https://github.com/user/repo/blob/main/script.ps1" -Execute
+    
+    Downloads 'script.ps1' to C:\Temp and runs it immediately.
+.EXAMPLE
+    .\download-run-script.ps1 -Url "https://github.com/user/repo/blob/main/script.ps1" -DestinationPath "C:\MyScripts"
+    
+    Downloads 'script.ps1' to the C:\MyScripts folder.
+.EXAMPLE
+    .\download-run-script.ps1 -Help
+    
+    Displays the help menu.
+.NOTES
+    Version: 1.2.0
+    Author: Roman Pindela
+    Email: roman.pindela@gmail.com
+    GitHub: https://github.com/romanpindela
+
+    It is crucial to unblock this script after downloading it from the internet.
+    Run: Unblock-File -Path .\download-run-script.ps1
+#>
+[CmdletBinding()]
+param()
+
+# --- CONFIGURATION FOR DIRECT EXECUTION (PASTE IN CONSOLE) ---
+# To use this script by pasting its content directly into a PowerShell console,
+# define the target URL here. If run from a file, use the -Url parameter instead.
+$HardcodedUrl = "" # e.g., "https://github.com/romanpindela/Windows-Desktop/blob/main/deploy-platnik-zus/deploy-zus-platnik.ps1"
+
+DynamicParam {
+    $paramDictionary = New-Object -TypeName System.Management.Automation.RuntimeDefinedParameterDictionary
+    $attributeCollection = New-Object -TypeName System.Collections.ObjectModel.Collection[System.Attribute]
+
+    $paramAttribute = New-Object -TypeName System.Management.Automation.ParameterAttribute
+    $paramAttribute.Mandatory = $false
+    $paramAttribute.HelpMessage = "The full GitHub URL to the .ps1 script file."
+    $attributeCollection.Add($paramAttribute)
+
+    $runtimeParam = New-Object -TypeName System.Management.Automation.RuntimeDefinedParameter('Url', [string], $attributeCollection)
+    $paramDictionary.Add('Url', $runtimeParam)
+
+    return $paramDictionary
+}
+
+begin {
+    # This block runs before parameter binding, allowing us to decide which URL to use.
+    # If the script is called with -Url, that takes precedence.
+    if ($PSBoundParameters.ContainsKey('Url')) {
+        $Url = $PSBoundParameters['Url']
+    }
+    # If no -Url is provided, fall back to the hardcoded URL.
+    elseif (-not [string]::IsNullOrWhiteSpace($HardcodedUrl)) {
+        $Url = $HardcodedUrl
+    }
+    else {
+        # If neither is available, the script will show help later.
+        $Url = $null
+    }
+
+    # Define other parameters that are not dynamic
+    [Parameter(Mandatory=$false, HelpMessage="The local folder where the script will be downloaded. Defaults to C:\Temp.")]
+    [string]$Url,
+
+    [Parameter(Mandatory=$false, HelpMessage="The local folder where the script will be downloaded. Defaults to C:\Temp.")]
+    [string]$DestinationPath = "C:\Temp",
+
+    [Parameter(Mandatory=$false, HelpMessage="Execute the script immediately after download.")]
+    [switch]$Execute,
+
+    [Parameter(Mandatory=$false, Alias='h')]
+    [switch]$Help
+}
+
+# --- SCRIPT METADATA ---
+$ScriptVersion = "1.2.0"
+$AuthorName = "Roman Pindela"
+$AuthorEmail = "roman.pindela@gmail.com"
+$AuthorGitHub = "https://github.com/romanpindela"
+
+# --- FUNCTIONS ---
+function Show-Help {
+    Write-Host ""
+    Write-Host "DOWNLOAD-RUN-SCRIPT v$ScriptVersion" -ForegroundColor Cyan
+    Write-Host "by $AuthorName"
+    Write-Host "-----------------------------------------------------------------"
+    Write-Host ""
+    Write-Host "DESCRIPTION:" -ForegroundColor Yellow
+    Write-Host "    Downloads a PowerShell script from a GitHub URL, unblocks it,"
+    Write-Host "    and optionally executes it. Requires admin rights."
+    Write-Host ""
+    Write-Host "USAGE:" -ForegroundColor Yellow
+    Write-Host "    .\download-run-script.ps1 [-Url <string>] [PARAMETERS]"
+    Write-Host ""
+    Write-Host "PARAMETERS:" -ForegroundColor Yellow
+    Write-Host "    -Url <string>"
+    Write-Host "        (Mandatory) The full GitHub URL of the .ps1 file to download."
+    Write-Host ""
+    Write-Host "    -DestinationPath <string>"
+    Write-Host "        The local folder for the download. Defaults to 'C:\Temp'."
+    Write-Host ""
+    Write-Host "    -Execute"
+    Write-Host "        A switch to run the script after it's downloaded."
+    Write-Host ""
+    Write-Host "    -Help, -h"
+    Write-Host "        Displays this help screen."
+    Write-Host ""
+    Write-Host "EXAMPLES:" -ForegroundColor Yellow
+    Write-Host "    # Download a script to C:\Temp without running it"
+    Write-Host "    .\download-run-script.ps1 -Url 'https://github.com/user/repo/blob/main/script.ps1'"
+    Write-Host ""
+    Write-Host "    # Download and run a script"
+    Write-Host "    .\download-run-script.ps1 -Url 'https://github.com/user/repo/blob/main/script.ps1' -Execute"
+    Write-Host ""
+    Write-Host "IMPORTANT:" -ForegroundColor Yellow
+    Write-Host "    After downloading this utility, you must unblock it:"
+    Write-Host "    Unblock-File -Path '.\download-run-script.ps1'"
+    Write-Host ""
+    Write-Host "CONTACT:" -ForegroundColor Yellow
+    Write-Host "    Author : $AuthorName"
+    Write-Host "    Email  : $AuthorEmail"
+    Write-Host "    GitHub : $AuthorGitHub"
+    Write-Host ""
+}
+
+# --- INITIALIZATION & VALIDATION ---
+if ($Help -or [string]::IsNullOrWhiteSpace($Url)) {
+    Show-Help
+    exit 0
+}
+
+# Check if the script is already running with Administrator privileges using SID (language-independent)
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = New-Object Security.Principal.WindowsPrincipal($identity)
+$adminSid = New-Object Security.Principal.SecurityIdentifier([Security.Principal.WellKnownSidType]::BuiltInAdministratorsSid, $null)
+
+$isAdmin = $principal.IsInRole($adminSid)
+
+if (-not $isAdmin) {
+    # If not running as Admin, prompt for UAC consent and relaunch the script with elevated privileges
+    Write-Host "Missing Administrator privileges. Requesting elevation..." -ForegroundColor Yellow
+    Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Exit
+}
 
 # Force TLS 1.2 security protocol
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Automatically convert standard GitHub URL to RAW format
-if ($GitHubUrl -like "*github.com/*/blob/*") {
-    $rawUrl = $GitHubUrl -replace "github.com", "raw.githubusercontent.com" -replace "/blob/", "/"
-} else {
-    $rawUrl = $GitHubUrl
-}
-
-# Extract file name from the URL
-$fileName = Split-Path -Path $rawUrl -Leaf
-$destinationFile = Join-Path -Path $TargetFolder -ChildPath $fileName
-
-# Check and create target folder if it does not exist
-if (-not (Test-Path -Path $TargetFolder)) {
-    Write-Host "Creating directory: $TargetFolder..." -ForegroundColor Yellow
-    New-Item -Path $TargetFolder -ItemType Directory -Force | Out-Null
-}
-
-# Remove existing file prior to downloading to ensure a clean overwrite
-if (Test-Path -Path $destinationFile) {
-    Write-Host "Existing file found. Overwriting '$fileName'..." -ForegroundColor Yellow
-    Remove-Item -Path $destinationFile -Force -ErrorAction SilentlyContinue
-}
-
-# Download, unblock, and execute
 try {
-    Write-Host "Downloading latest version of '$fileName'..." -ForegroundColor Cyan
-    
-    # Download file (OutFile automatically overwrites, but -UseBasicParsing ensures speed)
+    # Automatically convert standard GitHub URL to RAW format
+    if ($Url -like "*github.com/*/blob/*") {
+        $rawUrl = $Url -replace "github.com", "raw.githubusercontent.com" -replace "/blob/", "/"
+    } else {
+        $rawUrl = $Url
+    }
+
+    # Extract file name from the URL
+    $fileName = Split-Path -Path $rawUrl -Leaf
+    $destinationFile = Join-Path -Path $DestinationPath -ChildPath $fileName
+
+    # Check and create target folder if it does not exist
+    if (-not (Test-Path -Path $DestinationPath)) {
+        Write-Host "Creating directory: $DestinationPath..." -ForegroundColor Yellow
+        New-Item -Path $DestinationPath -ItemType Directory -Force | Out-Null
+    }
+
+    Write-Host "Downloading '$fileName' to '$destinationFile'..." -ForegroundColor Cyan
     Invoke-WebRequest -Uri $rawUrl -OutFile $destinationFile -UseBasicParsing
 
     if (Test-Path -Path $destinationFile) {
-        Write-Host "[OK] File successfully saved/overwritten at: $destinationFile" -ForegroundColor Green
+        Write-Host "[OK] File successfully downloaded." -ForegroundColor Green
 
-        # Unblock the file (removes web mark-of-the-web block)
         Unblock-File -Path $destinationFile
-        Write-Host "[OK] File unblocked (Unblock-File)." -ForegroundColor Gray
+        Write-Host "[OK] File unblocked." -ForegroundColor Gray
 
-        # Execute script
-        if ($RunAfterDownload) {
+        if ($Execute) {
             Write-Host "`n--- Executing script: $fileName ---`n" -ForegroundColor Yellow
             & $destinationFile
         }
     }
 } catch {
-    Write-Host "`n[ERROR] An error occurred while downloading/overwriting: $_" -ForegroundColor Red
+    Write-Host ""
+    Write-Error "An error occurred during the process: $($_.Exception.Message)"
+    exit 1
 }
