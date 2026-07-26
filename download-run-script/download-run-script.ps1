@@ -110,17 +110,17 @@ function Show-Help {
 }
 
 # --- INITIALIZATION & VALIDATION ---
-
-# If -Url parameter is not used, fall back to the hardcoded URL.
-if (-not $PSBoundParameters.ContainsKey('Url') -and -not [string]::IsNullOrWhiteSpace($HardcodedUrl)) {
-    $Url = $HardcodedUrl
-    # In paste-to-run mode, we almost always want to execute.
-    if (-not $PSBoundParameters.ContainsKey('Execute')) {
-        $Execute = $true
-    }
+# Determine the effective URL to use
+$effectiveUrl = $null
+if ($PSBoundParameters.ContainsKey('Url')) {
+    $effectiveUrl = $Url
+} elseif (-not [string]::IsNullOrWhiteSpace($HardcodedUrl)) {
+    $effectiveUrl = $HardcodedUrl
+    # In paste-to-run mode, default to executing the script
+    if (-not $PSBoundParameters.ContainsKey('Execute')) { $Execute = $true }
 }
 
-if ($Help -or -not $Url) {
+if ($Help -or -not $effectiveUrl) {
     Show-Help
     exit 0
 }
@@ -135,7 +135,7 @@ $isAdmin = $principal.IsInRole($adminSid)
 if (-not $isAdmin) {
     # If not running as Admin, prompt for UAC consent and relaunch the script with elevated privileges
     Write-Host "Missing Administrator privileges. Requesting elevation..." -ForegroundColor Yellow    
-    # If running from a file, relaunch the file.
+    # If running from a file, relaunch the file with its bound parameters.
     if ($PSCommandPath) {
         Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $PSBoundParameters" -Verb RunAs
     } else {
@@ -152,10 +152,10 @@ if (-not $isAdmin) {
 
 try {
     # Automatically convert standard GitHub URL to RAW format
-    if ($Url -like "*github.com/*/blob/*") {
-        $rawUrl = $Url -replace "github.com", "raw.githubusercontent.com" -replace "/blob/", "/"
+    if ($effectiveUrl -like "*github.com/*/blob/*") {
+        $rawUrl = $effectiveUrl -replace "github.com", "raw.githubusercontent.com" -replace "/blob/", "/"
     } else {
-        $rawUrl = $Url
+        $rawUrl = $effectiveUrl
     }
 
     # Extract file name from the URL
