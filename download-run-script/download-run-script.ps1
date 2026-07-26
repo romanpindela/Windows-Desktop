@@ -39,45 +39,8 @@
     Run: Unblock-File -Path .\download-run-script.ps1
 #>
 [CmdletBinding()]
-param()
-
-# --- CONFIGURATION FOR DIRECT EXECUTION (PASTE IN CONSOLE) ---
-# To use this script by pasting its content directly into a PowerShell console,
-# define the target URL here. If run from a file, use the -Url parameter instead.
-$HardcodedUrl = "" # e.g., "https://github.com/romanpindela/Windows-Desktop/blob/main/deploy-platnik-zus/deploy-zus-platnik.ps1"
-
-DynamicParam {
-    $paramDictionary = New-Object -TypeName System.Management.Automation.RuntimeDefinedParameterDictionary
-    $attributeCollection = New-Object -TypeName System.Collections.ObjectModel.Collection[System.Attribute]
-
-    $paramAttribute = New-Object -TypeName System.Management.Automation.ParameterAttribute
-    $paramAttribute.Mandatory = $false
-    $paramAttribute.HelpMessage = "The full GitHub URL to the .ps1 script file."
-    $attributeCollection.Add($paramAttribute)
-
-    $runtimeParam = New-Object -TypeName System.Management.Automation.RuntimeDefinedParameter('Url', [string], $attributeCollection)
-    $paramDictionary.Add('Url', $runtimeParam)
-
-    return $paramDictionary
-}
-
-begin {
-    # This block runs before parameter binding, allowing us to decide which URL to use.
-    # If the script is called with -Url, that takes precedence.
-    if ($PSBoundParameters.ContainsKey('Url')) {
-        $Url = $PSBoundParameters['Url']
-    }
-    # If no -Url is provided, fall back to the hardcoded URL.
-    elseif (-not [string]::IsNullOrWhiteSpace($HardcodedUrl)) {
-        $Url = $HardcodedUrl
-    }
-    else {
-        # If neither is available, the script will show help later.
-        $Url = $null
-    }
-
-    # Define other parameters that are not dynamic
-    [Parameter(Mandatory=$false, HelpMessage="The local folder where the script will be downloaded. Defaults to C:\Temp.")]
+param(
+    [Parameter(Mandatory=$false, HelpMessage="The full GitHub URL to the .ps1 script file.")]
     [string]$Url,
 
     [Parameter(Mandatory=$false, HelpMessage="The local folder where the script will be downloaded. Defaults to C:\Temp.")]
@@ -88,7 +51,12 @@ begin {
 
     [Parameter(Mandatory=$false, Alias='h')]
     [switch]$Help
-}
+)
+
+# --- CONFIGURATION FOR DIRECT EXECUTION (PASTE IN CONSOLE) ---
+# To use this script by pasting its content directly into a PowerShell console,
+# define the target URL here. If run from a file, use the -Url parameter instead.
+$HardcodedUrl = "https://github.com/romanpindela/Windows-Desktop/blob/main/get-wifi-profiles/get-wifi-profiles.ps1" # e.g., "https://github.com/romanpindela/Windows-Desktop/blob/main/deploy-platnik-zus/deploy-zus-platnik.ps1"
 
 # --- SCRIPT METADATA ---
 $ScriptVersion = "1.2.0"
@@ -142,7 +110,17 @@ function Show-Help {
 }
 
 # --- INITIALIZATION & VALIDATION ---
-if ($Help -or [string]::IsNullOrWhiteSpace($Url)) {
+
+# If -Url parameter is not used, fall back to the hardcoded URL.
+if (-not $PSBoundParameters.ContainsKey('Url') -and -not [string]::IsNullOrWhiteSpace($HardcodedUrl)) {
+    $Url = $HardcodedUrl
+    # In paste-to-run mode, we almost always want to execute.
+    if (-not $PSBoundParameters.ContainsKey('Execute')) {
+        $Execute = $true
+    }
+}
+
+if ($Help -or -not $Url) {
     Show-Help
     exit 0
 }
@@ -156,8 +134,16 @@ $isAdmin = $principal.IsInRole($adminSid)
 
 if (-not $isAdmin) {
     # If not running as Admin, prompt for UAC consent and relaunch the script with elevated privileges
-    Write-Host "Missing Administrator privileges. Requesting elevation..." -ForegroundColor Yellow
-    Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Write-Host "Missing Administrator privileges. Requesting elevation..." -ForegroundColor Yellow    
+    # If running from a file, relaunch the file.
+    if ($PSCommandPath) {
+        Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $PSBoundParameters" -Verb RunAs
+    } else {
+        # If pasted in console, relaunch with the entire script content as an encoded command.
+        $scriptContent = $MyInvocation.MyCommand.Definition
+        $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($scriptContent))
+        Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedCommand" -Verb RunAs
+    }
     Exit
 }
 
