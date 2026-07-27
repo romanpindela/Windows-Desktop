@@ -107,9 +107,12 @@ To see the built-in help menu with parameter descriptions and examples:
 
 ## Version History
 
+*   **v1.1.0** (2026-07-27)
+    *   Refactored script to use explicit execution modes: `-PrepareEnvironment` and `-PrepareAndDownload`.
+    *   Changed default behavior (no parameters) to display the help menu for improved safety and usability.
+    *   Added prerequisite checks and automatic installation for VSTO 2010 Runtime and WSE 3.0.
+    *   Added an informational check for the legacy MDAC 2.8 component.
 *   **v1.0.0** (2026-07-24)
     *   Initial release.
-    *   Added core functionality for downloading and silent installation.
-    *   Implemented prerequisite checks and installation for .NET and SQL LocalDB.
+    *   Core functionality to prepare environment by checking for .NET and downloading Płatnik installers.
     *   Integrated automatic UAC elevation and detailed progress bar.
-    *   Created comprehensive help function and README documentation.

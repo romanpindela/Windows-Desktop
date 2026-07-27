@@ -34,9 +34,9 @@
 .EXAMPLE
     .\deploy-zus-platnik.ps1 -Help
     
-    Displays the help screen with information about the script, parameters, and examples.
+    Displays the help screen with information about the script, parameters, and examples. 
 .NOTES
-    Version: 1.0.0
+    Version: 1.1.0
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
     GitHub: https://github.com/romanpindela
@@ -72,7 +72,7 @@ param(
 )
 
 # --- SCRIPT METADATA ---
-$ScriptVersion = "1.0.0"
+$ScriptVersion = "1.1.0"
 $AuthorName = "Roman Pindela"
 $AuthorEmail = "roman.pindela@gmail.com"
 $AuthorGitHub = "https://github.com/romanpindela"
