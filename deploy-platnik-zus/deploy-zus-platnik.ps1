@@ -11,6 +11,10 @@
     The direct URL to the main ZUS Płatnik installer executable.
 .PARAMETER PatchUrl
     The direct URL to the ZUS Płatnik patch executable.
+.PARAMETER PrepareEnvironment
+    A switch to only prepare the environment by checking and installing prerequisites.
+.PARAMETER PrepareAndDownload
+    A switch to prepare the environment and then download the Płatnik installers.
 .PARAMETER Help
     Displays this help message and exits.
 .EXAMPLE
@@ -18,6 +22,15 @@
     
     Checks prerequisites, installs them if needed, and downloads the Płatnik
     installer and patch to the C:\Temp folder.
+.EXAMPLE
+    .\deploy-zus-platnik.ps1 -PrepareEnvironment
+    
+    Checks and installs all necessary prerequisites without downloading any Płatnik files.
+.EXAMPLE
+    .\deploy-zus-platnik.ps1 -PrepareAndDownload -Download PatchOnly
+    
+    Prepares the environment and then downloads only the Płatnik patch file.
+    This is similar to the previous default behavior but explicitly triggered.
 .EXAMPLE
     .\deploy-zus-platnik.ps1 -Help
     
@@ -33,19 +46,27 @@
     Run: Unblock-File -Path .\deploy-zus-platnik.ps1
 #>
 
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName='HelpOnly')]
 param(
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName='PrepareAndDownload')]
     [string]$InstallerUrl = "https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/pelna/install.exe",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName='PrepareAndDownload')]
     [string]$PatchUrl = "https://redir.cache.orange.pl/zus/pobierz/dystrybucja/a1_10_02_002/dodatki/P2StartFix2.exe",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName='PrepareAndDownload')]
     [ValidateSet('All', 'InstallerOnly', 'PatchOnly')]
     [string]$Download = 'All',
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true, ParameterSetName='PrepareEnvironment')]
+    [switch]$PrepareEnvironment,
+
+    [Parameter(Mandatory = $true, ParameterSetName='PrepareAndDownload')]
+    [switch]$PrepareAndDownload,
+
+    [Parameter(Mandatory = $false, ParameterSetName='HelpOnly')]
+    [Parameter(Mandatory = $false, ParameterSetName='PrepareEnvironment')]
+    [Parameter(Mandatory = $false, ParameterSetName='PrepareAndDownload')]
     [Alias("h")]
     [switch]$Help
 )
@@ -69,7 +90,7 @@ function Show-Help {
     Write-Host "    It checks and installs the .NET prerequisite and then downloads the installer and patch to the C:\Temp folder."
     Write-Host ""
     Write-Host "USAGE:" -ForegroundColor Yellow
-    Write-Host "    .\deploy-zus-platnik.ps1 [PARAMETERS]"
+    Write-Host "    .\deploy-zus-platnik.ps1 [-PrepareEnvironment | -PrepareAndDownload] [PARAMETERS]"
     Write-Host ""
     Write-Host "PARAMETERS:" -ForegroundColor Yellow
     Write-Host "    -InstallerUrl <string>"
@@ -77,6 +98,14 @@ function Show-Help {
     Write-Host ""
     Write-Host "    -PatchUrl <string>"
     Write-Host "        URL for the Płatnik patch. Defaults to the official source."
+    Write-Host ""
+    Write-Host "    -PrepareEnvironment"
+    Write-Host "        Only checks and installs prerequisites (e.g., .NET, VSTO, WSE)."
+    Write-Host "        No Płatnik installers are downloaded."
+    Write-Host ""
+    Write-Host "    -PrepareAndDownload"
+    Write-Host "        Checks and installs prerequisites, then downloads Płatnik installers."
+    Write-Host "        This parameter enables -Download, -InstallerUrl, and -PatchUrl."
     Write-Host ""
     Write-Host "    -Download <string>"
     Write-Host "        Specifies which files to download. Options: 'All', 'InstallerOnly', 'PatchOnly'."
@@ -88,6 +117,12 @@ function Show-Help {
     Write-Host "EXAMPLE:" -ForegroundColor Yellow
     Write-Host "    # Prepare environment and download all files (default)"
     Write-Host "    .\deploy-zus-platnik.ps1"
+    Write-Host ""
+    Write-Host "    # Only prepare the environment (install prerequisites)"
+    Write-Host "    .\deploy-zus-platnik.ps1 -PrepareEnvironment"
+    Write-Host ""
+    Write-Host "    # Prepare environment and download all files (explicitly)"
+    Write-Host "    .\deploy-zus-platnik.ps1 -PrepareAndDownload"
     Write-Host ""
     Write-Host "    # Prepare environment and download only the patch"
     Write-Host "    .\deploy-zus-platnik.ps1 -Download PatchOnly"
@@ -144,7 +179,7 @@ function Test-Wse3Installed {
 # --- INITIALIZATION & VALIDATION ---
 
 # Show help if requested.
-if ($Help) {
+if ($Help -or ($PSBoundParameters.Count -eq 0 -and $PSCmdlet.ParameterSetName -eq 'HelpOnly')) {
     Show-Help
     exit 0
 }
@@ -165,11 +200,13 @@ if (-not $isAdmin) {
 # --- MAIN EXECUTION LOGIC ---
 
 try {
-    # Set a max number of steps for the progress bar.
-    # It won't be perfectly linear if steps are skipped, but it provides good feedback.
-    $totalSteps = 9 # 1-winget, 2-winget-init, 3-dotnet-check, 4-vsto-check, 5-vsto-install, 6-wse-check, 7-wse-install, 8-mdac-check, 9-dir-check
-    if ($Download -in ('All', 'InstallerOnly')) { $totalSteps += 1 }
-    if ($Download -in ('All', 'PatchOnly')) { $totalSteps += 1 }
+    # Dynamically set total steps for progress bar based on execution mode
+    $totalSteps = 8 # Base steps for prerequisites (winget, winget-init, dotnet, vsto-check, vsto-install, wse-check, wse-install, mdac-check)
+    if ($PSCmdlet.ParameterSetName -eq 'PrepareAndDownload') {
+        $totalSteps += 1 # For directory check
+        if ($Download -in ('All', 'InstallerOnly')) { $totalSteps += 1 } # For installer download
+        if ($Download -in ('All', 'PatchOnly')) { $totalSteps += 1 } # For patch download
+    }
 
     $currentStep = 0
     function Update-Step {
@@ -181,7 +218,7 @@ try {
         Write-Progress -Activity "Preparing for ZUS Płatnik Installation" -Status "$StatusMessage ($script:currentStep of $script:totalSteps)" -PercentComplete $percent
     }
 
-    Write-Host "Starting environment preparation for ZUS Płatnik..." -ForegroundColor Cyan
+    Write-Host "Starting environment preparation for ZUS Płatnik ($($PSCmdlet.ParameterSetName) mode)..." -ForegroundColor Cyan
 
     # Step 1: Check for winget
     Update-Step "Checking for winget package manager..."
@@ -250,51 +287,61 @@ try {
     Write-Host "   (A legacy data access component. Modern Windows includes a newer, integrated version - Windows DAC.)"
     Write-Host "[INFO] Installation is not required as a modern equivalent is part of the operating system." -ForegroundColor Green
 
+    # --- Download Section (only if PrepareAndDownload is specified) ---
+    if ($PSCmdlet.ParameterSetName -eq 'PrepareAndDownload') {
+        # Step 9: Ensure download directory exists
+        $downloadPath = "C:\Temp"
+        Update-Step "Ensuring download directory '$downloadPath' exists..."
+        if (-not (Test-Path -Path $downloadPath)) {
+            New-Item -Path $downloadPath -ItemType Directory -Force | Out-Null
+            Write-Host "Created directory: $downloadPath" -ForegroundColor Green
+        }
+        
+        $downloadedFiles = [System.Collections.Generic.List[string]]::new()
 
-    # Step 9: Ensure download directory exists
-    $downloadPath = "C:\Temp"
-    Update-Step "Ensuring download directory '$downloadPath' exists..."
-    if (-not (Test-Path -Path $downloadPath)) {
-        New-Item -Path $downloadPath -ItemType Directory -Force | Out-Null
-        Write-Host "Created directory: $downloadPath" -ForegroundColor Green
+        # Step 10: Download Installer (if requested)
+        if ($Download -in ('All', 'InstallerOnly')) {
+            $installerFileName = [System.IO.Path]::GetFileName($InstallerUrl)
+            $installerFile = Join-Path -Path $downloadPath -ChildPath $installerFileName
+            Update-Step "Downloading ZUS Płatnik installer..."
+            Write-Host "Downloading Płatnik installer to '$installerFile'..."
+            Invoke-WebRequest -Uri $InstallerUrl -OutFile $installerFile
+            $downloadedFiles.Add($installerFile)
+        }
+
+        # Step 11: Download Patch (if requested)
+        if ($Download -in ('All', 'PatchOnly')) {
+            $patchFileName = [System.IO.Path]::GetFileName($PatchUrl)
+            $patchFile = Join-Path -Path $downloadPath -ChildPath $patchFileName
+            Update-Step "Downloading ZUS Płatnik patch..."
+            Write-Host "Downloading Płatnik patch to '$patchFile'..."
+            Invoke-WebRequest -Uri $PatchUrl -OutFile $patchFile
+            $downloadedFiles.Add($patchFile)
+        }
+
+        Write-Progress -Activity "Preparing for ZUS Płatnik Installation" -Completed
+
+        Write-Host ""
+        Write-Host "======================================================" -ForegroundColor Green
+        Write-Host "  Environment is ready for ZUS Płatnik installation!" -ForegroundColor Green
+        Write-Host "======================================================" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "The following files have been downloaded to C:\Temp:" -ForegroundColor Cyan
+        foreach($file in $downloadedFiles) {
+            Write-Host "  - $file"
+        }
+        Write-Host ""
+        Write-Host "You can now run the installer manually from C:\Temp." -ForegroundColor Yellow
+        Write-Host ""
+    } else { # PrepareEnvironment mode
+        Write-Progress -Activity "Preparing for ZUS Płatnik Installation" -Completed
+        Write-Host ""
+        Write-Host "======================================================" -ForegroundColor Green
+        Write-Host "  Environment prepared for ZUS Płatnik installation!" -ForegroundColor Green
+        Write-Host "======================================================" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Prerequisites have been checked/installed. No Płatnik installers were downloaded." -ForegroundColor Yellow
     }
-    
-    $downloadedFiles = [System.Collections.Generic.List[string]]::new()
-
-    # Step 10: Download Installer (if requested)
-    if ($Download -in ('All', 'InstallerOnly')) {
-        $installerFileName = [System.IO.Path]::GetFileName($InstallerUrl)
-        $installerFile = Join-Path -Path $downloadPath -ChildPath $installerFileName
-        Update-Step "Downloading ZUS Płatnik installer..."
-        Write-Host "Downloading Płatnik installer to '$installerFile'..."
-        Invoke-WebRequest -Uri $InstallerUrl -OutFile $installerFile
-        $downloadedFiles.Add($installerFile)
-    }
-
-    # Step 11: Download Patch (if requested)
-    if ($Download -in ('All', 'PatchOnly')) {
-        $patchFileName = [System.IO.Path]::GetFileName($PatchUrl)
-        $patchFile = Join-Path -Path $downloadPath -ChildPath $patchFileName
-        Update-Step "Downloading ZUS Płatnik patch..."
-        Write-Host "Downloading Płatnik patch to '$patchFile'..."
-        Invoke-WebRequest -Uri $PatchUrl -OutFile $patchFile
-        $downloadedFiles.Add($patchFile)
-    }
-
-    Write-Progress -Activity "Installing ZUS Płatnik" -Completed
-
-    Write-Host ""
-    Write-Host "======================================================" -ForegroundColor Green
-    Write-Host "  Environment is ready for ZUS Płatnik installation!" -ForegroundColor Green
-    Write-Host "======================================================" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "The following files have been downloaded to C:\Temp:" -ForegroundColor Cyan
-    foreach($file in $downloadedFiles) {
-        Write-Host "  - $file"
-    }
-    Write-Host ""
-    Write-Host "You can now run the installer manually from C:\Temp." -ForegroundColor Yellow
-    Write-Host ""
 
 }
 catch {

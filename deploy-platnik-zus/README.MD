@@ -8,10 +8,10 @@ A professional PowerShell script to automate the complete, unattended installati
 
 ## Description
 
-This tool streamlines the preparation for a manual ZUS Płatnik installation. It intelligently checks the system for required dependencies (.NET Framework 4.8+, VSTO Runtime, WSE 3.0), automatically installing them if they are missing.
+This tool streamlines the preparation for a manual ZUS Płatnik installation. It intelligently checks the system for required dependencies (.NET Framework 4.8+, VSTO Runtime, WSE 3.0), automatically installing them if they are missing. It also provides information regarding MDAC 2.8, which is superseded by modern Windows DAC.
 
-Once the environment is verified and all prerequisites are met, the script downloads the latest official Płatnik installer and its corresponding patch to the **C:\Temp** folder, ready for you to run manually.
-
+The script can either **only prepare the environment** (install prerequisites) or **prepare the environment and then download** the latest official Płatnik installer and its corresponding patch to the **C:\Temp** folder, ready for you to run manually.
+ 
 The script provides a user-friendly experience with a detailed progress bar and robust, language-independent checks, ensuring it works reliably on both Polish and English versions of Windows.
 
 ## Features
@@ -19,6 +19,7 @@ The script provides a user-friendly experience with a detailed progress bar and 
 *   **Automatic UAC Elevation**: Prompts for Administrator rights if not already elevated.
 *   **Automated Prerequisite Management**: Checks for and installs .NET Framework 4.8+, VSTO 2010 Runtime, and WSE 3.0.
 *   **Installer Download**: Downloads the main Płatnik installer and the latest patch to the `C:\Temp` folder.
+*   **MDAC Information**: Provides guidance on MDAC 2.8, noting it's superseded by modern Windows DAC.
 *   **Progress Tracking**: A step-by-step progress bar shows exactly what the script is doing.
 *   **Error Handling**: Gracefully handles unexpected errors and provides clear feedback.
 *   **Self-Contained**: No external modules required, uses native PowerShell and `winget`.
@@ -45,15 +46,31 @@ Unblock-File -Path '.\deploy-zus-platnik.ps1'
 
 The script is designed to be simple to use. Administrator privileges are required and will be requested automatically.
 
-### Prepare Environment and Download All Files (Default)
+### 1. Display Help (Default Behavior)
 
-To run the script with default behavior, which downloads both the installer and the patch:
+Running the script without any parameters will display the help menu:
 
 ```powershell
 # Navigate to the script's directory first
 cd C:\path\to\script
 
 .\deploy-zus-platnik.ps1
+```
+
+### 2. Prepare Environment Only
+
+To check and install all necessary prerequisites without downloading any Płatnik files:
+
+```powershell
+.\deploy-zus-platnik.ps1 -PrepareEnvironment
+```
+
+### 3. Prepare Environment and Download Files
+
+To prepare the environment and then download the Płatnik installer and/or patch files to `C:\Temp`:
+
+```powershell
+.\deploy-zus-platnik.ps1 -PrepareAndDownload
 ```
 
 ### Prepare and Download Only the Patch
