@@ -57,7 +57,7 @@ function Show-Help {
     Write-Host "PARAMETERS"
     Write-Host "    -ComputerName  Hostname or IP address of the target computer."
     Write-Host "    -ScriptPath    Path to the local .ps1 script to execute."
-    Write-Host "    -Credential    Optional pre-defined network credentials."
+    Write-Host "    -Credential    Optional credentials: username and password (PSCredential)."
     Write-Host "    -ArgumentList  Optional array of arguments to pass to the remote script."
     Write-Host "    -h, -Help      Display this structured help screen."
     Write-Host ""
@@ -66,6 +66,8 @@ function Show-Help {
     Write-Host "    .\invoke-remote-script -ComputerName 'SRV-PROD01' -ScriptPath 'C:\Scripts\Get-Audit.ps1'"
     Write-Host "    .\invoke-remote-script -ComputerName '10.10.1.5' -ScriptPath '.\HealthCheck.ps1'"
     Write-Host "    .\invoke-remote-script -ComputerName '10.10.1.5' -ScriptPath '.\Deploy.ps1' -ArgumentList 'Prod', 123"
+    Write-Host "    `$Credential = Get-Credential"
+    Write-Host "    .\invoke-remote-script -ComputerName '10.10.1.5' -ScriptPath '.\HealthCheck.ps1' -Credential `$Credential"
     Write-Host ""
 
     Write-Host "CONTACT & INFO"

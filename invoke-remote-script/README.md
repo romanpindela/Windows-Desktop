@@ -25,3 +25,12 @@ To view all available parameters and usage guidelines, run the script without ar
 .\invoke-remote-script -Help
 # or
 .\invoke-remote-script -h
+```
+
+### Wywołanie z poświadczeniami
+Parametr `-Credential` przyjmuje obiekt `PSCredential`, zawierający nazwę użytkownika i hasło.
+
+```powershell
+$Credential = Get-Credential
+.\invoke-remote-script -ComputerName '10.10.1.5' -ScriptPath '.\HealthCheck.ps1' -Credential $Credential
+```
