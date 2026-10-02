@@ -1,0 +1,99 @@
+[
+  {
+    "Name": "7-Zip",
+    "Id": "7zip.7zip"
+  },
+  {
+    "Name": "Adobe Acrobat Reader DC (PL)",
+    "Id": "Adobe.Acrobat.Reader.64-bit"
+  },
+  {
+    "Name": "Total Commander",
+    "Id": "Ghisler.TotalCommander"
+  },
+  {
+    "Name": "Visual Studio Code",
+    "Id": "Microsoft.VisualStudioCode"
+  },
+  {
+    "Name": "Google Drive",
+    "Id": "Google.GoogleDrive"
+  },
+  {
+    "Name": "Microsoft OneDrive",
+    "Id": "Microsoft.OneDrive"
+  },
+  {
+    "Name": "Microsoft 365 Apps (Office)",
+    "Id": "Microsoft.Office"
+  },
+  {
+    "Name": "Google Chrome",
+    "Id": "Google.Chrome"
+  },
+  {
+    "Name": "IrfanView",
+    "Id": "IrfanSkiljan.IrfanView"
+  },
+  {
+    "Name": "VLC Media Player",
+    "Id": "VideoLAN.VLC"
+  },
+  {
+    "Name": "Spotify",
+    "Id": "Spotify.Spotify"
+  },
+  {
+    "Name": "Microsoft Teams",
+    "Id": "Microsoft.Teams"
+  },
+  {
+    "Name": "Mozilla Firefox",
+    "Id": "Mozilla.Firefox"
+  },
+  {
+    "Name": "Opera Stable",
+    "Id": "Opera.Opera"
+  },
+  {
+    "Name": "Brave Browser",
+    "Id": "Brave.Brave"
+  },
+  {
+    "Name": "WireGuard",
+    "Id": "WireGuard.WireGuard"
+  },
+  {
+    "Name": "TeamViewer",
+    "Id": "TeamViewer.TeamViewer"
+  },
+  {
+    "Name": "Git for Windows",
+    "Id": "Git.Git"
+  },
+  {
+    "Name": "Notepad++",
+    "Id": "Notepad++.Notepad++"
+  },
+  {
+    "Name": "Windows Terminal",
+    "Id": "Microsoft.WindowsTerminal"
+  },
+  {
+    "Name": "Lenovo System Update",
+    "Id": "Lenovo.SystemUpdate"
+  },
+  {
+    "Name": "Lenovo Service Bridge",
+    "Id": "Lenovo.ServiceBridge"
+  },
+  {
+    "Name": "Sublime Text 4",
+    "Id": "SublimeHQ.SublimeText.4"
+  },
+  {
+    "Name": "Dropbox",
+    "Id": "Dropbox.Dropbox"
+  }
+
+]
