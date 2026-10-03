@@ -54,7 +54,7 @@ Running the script without parameters or with `-Help` / `-h` displays standard C
 .\configure-microsoft-defender.ps1 -Help
 # or
 .\configure-microsoft-defender.ps1 -h
-
+```
 
 ## Screenshots & Examples
 
