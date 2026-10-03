@@ -1,10 +1,10 @@
-﻿# Install-Applications (Windows Workstation Deployment)
+﻿# install-applications (Windows Workstation Deployment)
 Dokumentacja techniczna skryptu automatyzującego wdrażanie stacji roboczej Windows
 ## Informacje o projekcie
 Parametr
 Wartość
 Nazwa projektu
-Install-Applications (Windows Workstation Deployment)
+install-applications (Windows Workstation Deployment)
 Autor
 Roman Pindela
 Kontakt
@@ -24,7 +24,7 @@ Automatyczna samonaprawa winget: W przypadku wykrycia starszej wersji (< 1.7.0) 
 Procedura awaryjna Office 365 (Fallback ODT): W razie niezgodności sumy kontrolnej (hash mismatch) w winget dla pakietu Microsoft Office, skrypt automatycznie pobiera instalator Office Deployment Tool (ODT), generuje plik konfiguracyjny XML i instaluje pakiet Office 365 w wersji 64-bitowej w polskiej wersji językowej (pl-PL).
 Ochrona bufora konsoli: Specjalna funkcja logowania zapobiegająca rozjeżdżaniu się tekstu (schodkowaniu) w oknie konsoli PowerShell.
 ## Struktura katalogu wdrożeniowego
-Install-Applications.ps1 — Główny skrypt instalacyjny PowerShell.
+install-applications.ps1 — Główny skrypt instalacyjny PowerShell.
 ApplicationList.json — Plik konfiguracyjny z listą aplikacji do zainstalowania.
 README.md — Niniejsza dokumentacja techniczna.
 ## Wymagania systemowe
@@ -37,12 +37,12 @@ Połączenie sieciowe: Aktywne połączenie z Internetem umożliwiające pobiera
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ### 2. Wyświetlenie menu pomocy i danych autora
 
-.\Install-Applications.ps1 -h
+.\install-applications.ps1 -h
 ### 3. Uruchomienie pełnej instalacji pakietów
 Uruchom konsolę PowerShell jako Administrator i przejdź do katalogu ze skryptem:
-.\Install-Applications.ps1 -ConfigPath .\ApplicationList.json
+.\install-applications.ps1 -ConfigPath .\ApplicationList.json
 
-(Dozwolona jest również forma skrócona: .\Install-Applications.ps1 .\ApplicationList.json)
+(Dozwolona jest również forma skrócona: .\install-applications.ps1 .\ApplicationList.json)
 ## Struktura i przykład pliku konfiguracyjnego JSON
 Plik JSON zawiera tablicę obiektów, gdzie każdy obiekt posiada pola Name (czytelna nazwa) oraz Id (oficjalny identyfikator w winget).
 Przykład pełnej konfiguracji:

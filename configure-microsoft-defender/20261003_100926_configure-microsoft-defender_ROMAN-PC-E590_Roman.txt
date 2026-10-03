@@ -1,0 +1,49 @@
+﻿================================================================================
+MICROSOFT DEFENDER HARDENING AND CONFIGURATION LOG
+Script Name    : configure-microsoft-defender.ps1
+Version        : 2.0.2
+Author         : Roman Pindela (Elektrimont Sp. z o.o.)
+GitHub         : https://github.com/romanpindela
+Host Computer  : ROMAN-PC-E590
+User Account   : ROMAN-PC-E590\Roman
+Start Timestamp: 2026-10-03 10:09:26.545 +02:00
+Log File Path  : C:\Logs\20261003_100926_configure-microsoft-defender_ROMAN-PC-E590_Roman.txt
+================================================================================
+[2026-10-03 10:09:26] [TITLE] ============================================================
+[2026-10-03 10:09:26] [TITLE]  MICROSOFT DEFENDER - HARDENING & REMEDIATION PIPELINE
+[2026-10-03 10:09:26] [TITLE]  Version 2.0.2 | Roman Pindela | Elektrimont Sp. z o.o.
+[2026-10-03 10:09:26] [TITLE] ============================================================
+[2026-10-03 10:09:26] [INFO] [1/9] Inspecting registered Antivirus products...
+[2026-10-03 10:09:26] [INFO] Detected security suite: Windows Defender
+[2026-10-03 10:09:26] [SUCCESS] No third-party Antivirus suites detected.
+[2026-10-03 10:09:26] [INFO] [2/9] Inspecting and remediating 'WinDefend' service status...
+[2026-10-03 10:09:26] [INFO] Service 'WinDefend' Current State: Running, StartupType: Automatic
+[2026-10-03 10:09:26] [INFO] [3/9] Auditing restrictive registry policies and overrides...
+[2026-10-03 10:09:26] [SUCCESS] Policy check completed for 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender'.
+[2026-10-03 10:09:26] [INFO] [4/9] Activating core Defender protection engines...
+[2026-10-03 10:09:26] [SUCCESS] Core realtime, IOAV, behavior, and script monitoring activated.
+[2026-10-03 10:09:26] [INFO] [5/9] Configuring Cloud Protection (MAPS) and PUA blocking...
+[2026-10-03 10:09:26] [SUCCESS] Configured MAPS Reporting (Advanced), Sample Consent, and PUA blocking.
+[2026-10-03 10:09:26] [INFO] [6/9] Enabling Controlled Folder Access (Ransomware protection)...
+[2026-10-03 10:09:27] [SUCCESS] Controlled Folder Access successfully enabled.
+[2026-10-03 10:09:27] [INFO] [7/9] Enabling Windows Defender Firewall across all network profiles...
+[2026-10-03 10:09:27] [SUCCESS] Firewall enabled on Domain, Private, and Public profiles.
+[2026-10-03 10:09:27] [INFO] [8/9] Enforcing Windows SmartScreen policy...
+[2026-10-03 10:09:27] [SUCCESS] SmartScreen set to 'RequireAdmin'.
+[2026-10-03 10:09:27] [INFO] [9/9] Checking and triggering signature update...
+[2026-10-03 10:09:29] [SUCCESS] Security intelligence definitions updated.
+[2026-10-03 10:09:29] [TITLE] ============================================
+[2026-10-03 10:09:29] [TITLE]  FINAL COMPLIANCE AND STATUS VERIFICATION
+[2026-10-03 10:09:29] [TITLE] ============================================
+[2026-10-03 10:09:31] [INFO] Defender Antivirus Enabled       : True
+[2026-10-03 10:09:31] [INFO] Defender Antispyware Enabled     : True
+[2026-10-03 10:09:31] [INFO] Real-Time Protection Active      : True
+[2026-10-03 10:09:31] [INFO] Behavior Monitor Active          : True
+[2026-10-03 10:09:31] [INFO] IOAV Protection Active           : True
+[2026-10-03 10:09:31] [INFO] AM Running Mode                  : Normal
+[2026-10-03 10:09:31] [INFO] Tamper Protection Status         : True
+[2026-10-03 10:09:31] [INFO] PUA Protection                   : 1
+[2026-10-03 10:09:31] [INFO] Cloud Protection (MAPS) Level    : 2
+[2026-10-03 10:09:31] [INFO] Controlled Folder Access         : 1
+[2026-10-03 10:09:31] [SUCCESS] STATUS VERIFIED: MICROSOFT DEFENDER IS FULLY ACTIVE AND SECURING THIS WORKSTATION.
+[2026-10-03 10:09:31] [INFO] Recommended action: Reboot the machine if service states were modified.
