@@ -7,10 +7,8 @@ Enterprise hardening, repair, and configuration automation script for **Microsof
 ## Author & Project Metadata
 
 - **Author**: Roman Pindela
-- **Role**: IT Administrator / Systems & Network Specialist
-- **Company**: Elektrimont Sp. z o.o.
 - **GitHub**: [github.com/romanpindela](https://github.com/romanpindela)
-- **Email**: roman.pindela@elektrimont.pl
+- **Email**: roman.pindela@gmail.com
 - **Version**: 2.0.0
 - **License**: MIT
 
@@ -56,3 +54,12 @@ Running the script without parameters or with `-Help` / `-h` displays standard C
 .\configure-microsoft-defender.ps1 -Help
 # or
 .\configure-microsoft-defender.ps1 -h
+
+
+## Screenshots & Examples
+
+### PowerShell Console Output
+![Running script](assets/Running_script.jpg)
+
+### PowerShell Console Output
+![Help menu](assets/Help_menu.jpg)

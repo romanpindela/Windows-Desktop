@@ -38,10 +38,8 @@
 
 .NOTES
     Author:        Roman Pindela
-    Title:         IT Administrator / Systems Specialist
-    Organization:  Elektrimont Sp. z o.o.
     GitHub:        https://github.com/romanpindela
-    Contact:       roman.pindela@elektrimont.pl
+    Contact:       roman.pindela@gmail.com
     Version:       2.0.2
     Requirements:  PowerShell 5.1+, Windows 10/11 / Windows Server 2019+, Run as Administrator
 #>
@@ -73,8 +71,6 @@ $Script:Metadata = @{
     Name        = 'configure-microsoft-defender.ps1'
     Version     = '2.0.2'
     Author      = 'Roman Pindela'
-    Role        = 'IT Administrator'
-    Company     = 'Elektrimont Sp. z o.o.'
     GitHub      = 'https://github.com/romanpindela'
     ExecutionId = (Get-Date -Format 'yyyyMMdd_HHmmss')
 }
@@ -91,7 +87,7 @@ function Show-ScriptHelp {
     Write-Host @"
 ================================================================================
 MICROSOFT DEFENDER HARDENING SCRIPT - HELP & USAGE
-Author : Roman Pindela | Elektrimont Sp. z o.o.
+Author : Roman Pindela
 Version: $($Script:Metadata.Version)
 GitHub : $($Script:Metadata.GitHub)
 ================================================================================
