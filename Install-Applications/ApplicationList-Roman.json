@@ -90,6 +90,19 @@
   {
     "Name": "Dropbox",
     "Id": "Dropbox.Dropbox"
+  },
+  {
+    "Name": "CutePDF Writer",
+    "Id": "AcroSoftware.CutePDFWriter"
+  },
+  {
+    "Name": "GPL Ghostscript",
+    "Id": "ArtifexSoftware.GhostScript"
+  },
+  {
+    "Name": "Microsoft Build of OpenJDK with Hotspot 17",
+    "Id": "Microsoft.OpenJDK.17"
   }
+
 
 ]
