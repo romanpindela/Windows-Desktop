@@ -3,7 +3,7 @@
   Nazwa skryptu : Install-Applications.ps1
   Autor         : Roman Pindela
   Kontakt       : roman.pindela@gmail.com
-  Wersja        : 1.9.6
+  Wersja        : 1.9.7
   Data wydania  : 2026-10-04
   Licencja      : MIT
   Repozytorium  : https://github.com/roman/install-applications
@@ -16,7 +16,24 @@
     InstallDate, InstallLocation). Pomija programy obecne juz w systemie,
     wspiera instalacje profilu uzytkownika (non-admin fallback dla np. Spotify)
     oraz procedure awaryjna ODT dla pakietu Office 365.
+    Posiada modul rejestrowania pelnego przebiegu instalacji do pliku logu.
+
 ================================================================================
+.SYNOPSIS
+    Automatycznie pobiera, audytuje i instaluje aplikacje z pliku JSON przy uzyciu winget.
+.PARAMETER ConfigPath
+    Sciezka do pliku JSON z lista programow do zainstalowania.
+.PARAMETER LogPath
+    Sciezka do pliku tekstowego ze szczegolowym logiem dzialania skryptu.
+    Domyslnie: C:\Logs\<yyyyMMdd_HHmmss>-<ComputerName>-<UserName>-Install-Applications.txt
+.PARAMETER Help
+    Wyswietla szczegolowe menu pomocy i informacje o autorze.
+.EXAMPLE
+    .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
+.EXAMPLE
+    .\Install-Applications.ps1 -ConfigPath .\ApplicationList.json -LogPath "D:\Logs\setup.log"
+.EXAMPLE
+    .\Install-Applications.ps1 -h
 #>
 [CmdletBinding(DefaultParameterSetName = "Install")]
 param (
@@ -25,9 +42,13 @@ param (
     [ValidateScript({
         $resolved = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($_);
         if ([System.IO.File]::Exists($resolved)) { $true }
-        else { throw "Plik nie istnieje pod podana sciezka: $_" }
+        else { throw "Plik konfiguracji nie istnieje pod podana sciezka: $_" }
     })]
     [string]$ConfigPath,
+
+    [Parameter(ParameterSetName = "Install", Position = 1)]
+    [Alias("l", "Log")]
+    [string]$LogPath,
 
     [Parameter(ParameterSetName = "Help")]
     [Alias("h")]
@@ -39,11 +60,14 @@ $ErrorActionPreference = "Stop";
 
 $SCRIPT_INFO = @{
     Name        = "Install-Applications";
-    Version     = "1.9.6";
+    Version     = "1.9.7";
     Author      = "Roman Pindela";
     Contact     = "roman.pindela@gmail.com";
     ReleaseDate = "2026-10-04";
 };
+
+# Globalna zmienna przechowujaca sciezke aktywnego pliku dziennika
+$script:ActiveLogFile = $null;
 
 function Write-Log {
     param (
@@ -52,6 +76,15 @@ function Write-Log {
     )
     [Console]::CursorLeft = 0;
     Write-Host "$Message" -ForegroundColor $Color;
+
+    if (-not [string]::IsNullOrWhiteSpace($script:ActiveLogFile)) {
+        try {
+            $timePrefix = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss");
+            $cleanLine = "[$timePrefix] $Message`r`n";
+            [System.IO.File]::AppendAllText($script:ActiveLogFile, $cleanLine, [System.Text.Encoding]::UTF8);
+        }
+        catch {}
+    }
 }
 
 function Show-HelpGuide {
@@ -62,11 +95,23 @@ function Show-HelpGuide {
   Autor: $($SCRIPT_INFO.Author) | Kontakt: $($SCRIPT_INFO.Contact)
 ================================================================================
 OPIS:
-  Automatyczny instalator stacji roboczej Windows x64.
+  Automatyczny instalator stacji roboczej Windows x64 z pelnym audytem rejestru
+  oraz rejestrowaniem dzialan do pliku dziennika.
 
 UZYCIE:
-  .\Install-Applications.ps1 -ConfigPath <sciezka_do_pliku.json>
+  .\Install-Applications.ps1 -ConfigPath <sciezka_do_pliku.json> [-LogPath <sciezka_do_logu.txt>]
   .\Install-Applications.ps1 -h | -Help
+
+PARAMETRY:
+  -ConfigPath, -c, -Path : [Wymagany] Sciezka do pliku JSON z konfiguracja pakietow.
+  -LogPath, -l, -Log     : [Opcjonalny] Sciezka do pliku logu tekstowego.
+                           Domyslnie: C:\Logs\<Data_Godzina>-<Host>-<User>-Install-Applications.txt
+  -Help, -h              : Wyswietla to menu pomocy oraz informacje o autorze.
+
+PRZYKLADY:
+  .\Install-Applications.ps1 -h
+  .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
+  .\Install-Applications.ps1 .\ApplicationList.json -LogPath "C:\Deploy\log.txt"
 ================================================================================
 "@ -ForegroundColor Yellow;
 }
@@ -75,6 +120,25 @@ if ($Help -or [string]::IsNullOrWhiteSpace($ConfigPath)) {
     Show-HelpGuide;
     return;
 }
+
+# Inicjalizacja domyslnej sciezki logowania, jesli nie zostala wskazana
+if ([string]::IsNullOrWhiteSpace($LogPath)) {
+    $defaultLogDir = "C:\Logs";
+    $timeMarker = (Get-Date).ToString("yyyyMMdd_HHmmss");
+    $compName   = $env:COMPUTERNAME;
+    $userName   = $env:USERNAME;
+    $scriptName = $SCRIPT_INFO.Name;
+    $logFileName = "${timeMarker}-${compName}-${userName}-${scriptName}.txt";
+    $LogPath = Join-Path ($defaultLogDir) ($logFileName);
+}
+
+# Ustalenie i utworzenie katalogu dziennika
+$resolvedLogPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LogPath);
+$logDirectory = [System.IO.Path]::GetDirectoryName($resolvedLogPath);
+if (-not [string]::IsNullOrWhiteSpace($logDirectory) -and -not [System.IO.Directory]::Exists($logDirectory)) {
+    [System.IO.Directory]::CreateDirectory($logDirectory) | Out-Null;
+}
+$script:ActiveLogFile = $resolvedLogPath;
 
 function Test-IsAdmin {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent();
@@ -429,7 +493,7 @@ function Install-AppPackage {
     $prefix = "[$CurrentIndex/$TotalCount]";
     Write-Log "`n$prefix Sprawdzanie i przygotowanie: $($App.Name) (ID: $($App.Id))..." Cyan;
 
-    # 1. Wywolanie pozycyjne w nawiasach (zero ryzyka sklejenia parametru)
+    # 1. Sprawdzenie obecnosci w zindeksowanym inwentarzu rejestru
     $match = Find-InstalledApp ($App.Name) ($App.Id) ($SystemInventory);
     if ($null -ne$match) {
         Write-Log "    [V] Pominieto: Aplikacja jest juz zainstalowana w systemie." Green;
@@ -499,6 +563,7 @@ Clear-Host;
 Write-Log "================================================================================" Cyan;
 Write-Log "  $($SCRIPT_INFO.Name) v$($SCRIPT_INFO.Version) - Inicjalizacja srodowiska" Cyan;
 Write-Log "  Autor: $($SCRIPT_INFO.Author) | Kontakt: $($SCRIPT_INFO.Contact)" Gray;
+Write-Log "  Plik dziennika: $resolvedLogPath" DarkCyan;
 Write-Log "================================================================================" Cyan;
 
 if (-not (Test-IsAdmin)) {
@@ -524,7 +589,7 @@ if ($null -eq $applications -or$applications.Count -eq 0) {
     return;
 }
 
-# 3. Skanowanie rejestru Windows w pamieci RAM
+# 3. Skanowanie rejestru Windows w pamieci RAM (.NET API)
 Write-Log "[*] Skanowanie zainstalowanego oprogramowania (.NET Registry API)..." Gray;
 $systemInventory = Get-WindowsInstalledApplications;
 Write-Log "[+] Zindeksowano $($systemInventory.Count) zainstalowanych wpisow w rejestrze." Green;
@@ -563,5 +628,6 @@ Write-Progress -Activity "Instalacja oprogramowania stacji roboczej" -Completed;
 
 Write-Log "`n================================================================================" Green;
 Write-Log "  [+] Zakonczono sprawdzanie wszystkich pakietow ($totalApps/$totalApps)." Green;
+Write-Log "  [+] Raport z przebiegu zapisano w: $resolvedLogPath" Green;
 Write-Log "================================================================================" Green;
 Write-Log "Kontakt z autorem: $($SCRIPT_INFO.Contact)`n" Gray;

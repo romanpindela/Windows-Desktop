@@ -1,39 +1,45 @@
 ﻿# install-applications (Windows Workstation Deployment)
 Dokumentacja techniczna skryptu automatyzującego audyt, pobieranie, instalację oraz bezobsługowe wdrażanie stacji roboczej Windows.
----
 ## Informacje o projekcie
 
 | Parametr | Wartość |
-| --- | --- |
+| :--- | :--- |
 | **Nazwa projektu** | install-applications (Windows Workstation Deployment) |
 | **Autor** | Roman Pindela |
 | **Kontakt** | roman.pindela@gmail.com |
-| **Wersja** | 1.9.6 |
+| **Wersja** | 1.9.7 |
 | **Data wydania** | 04.10.2026 |
 | **Licencja** | MIT |
 | **Repozytorium** | [GitHub - roman/install-applications](https://github.com/roman/install-applications) |
+
 ---
+
 ## Główne możliwości
-* **Brak hardkodowania:** Lista aplikacji pobierana jest wyłącznie z zewnętrznego pliku JSON przekazanego jako parametr w linii poleceń.
-* **Architektura x64:** Automatyczne pobieranie najnowszych 64-bitowych pakietów instalacyjnych bezpośrednio z oficjalnych repozytoriów dostawców i serwerów CDN.
-* **Cicha instalacja (Unattended):** Automatyczna akceptacja umów licencyjnych oraz instalacja w tle bez konieczności interakcji użytkownika.
+
+* **Brak hardkodowania:** Lista aplikacji pobierana jest wyłącznie ze wskazanego pliku konfiguracyjnego JSON.
+* **Zaawansowane logowanie do pliku tekstowego:** Każde uruchomienie tworzy szczegółowy plik dziennika z dokładnymi znacznikami czasu `[RRRR-MM-DD GG:MM:SS]`.
+  * Ścieżka domyślna: `C:\Logs\<DataIGodzina>-<Komputer>-<Użytkownik>-Install-Applications.txt` (np. `C:\Logs\20261004_102030-DESKTOP-rpindela-Install-Applications.txt`).
+  * Automatyczne tworzenie brakującego katalogu docelowego.
+  * Możliwość zdefiniowania własnej ścieżki za pomocą parametru `-LogPath`.
 * **Audyt rejestru przez .NET Registry API:** Jednorazowa, błyskawiczna inwentaryzacja oprogramowania w pamięci RAM za pośrednictwem natywnej klasy `[Microsoft.Win32.RegistryKey]`. Skrypt skanuje gałęzie:
   * `HKLM` 64-bit (`SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`)
   * `HKLM` 32-bit / WOW6432Node (`SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall`)
   * `HKCU` profil zalogowanego użytkownika (`SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`)
   Rozwiązanie to eliminuje błędy uprawnień oraz zawieszanie się pętli PowerShell na kluczach zawierających znaki specjalne i identyfikatory GUID (`{...}`).
-* **Inteligentne dopasowywanie (Smart Matching):** Skrypt oczyszcza nazwy pakietów z nawiasów (usuwa m.in. `(PL)`, `(x64)`, sufiksy wersji) i porównuje trzon programu, dzięki czemu wpisy takie jak `"Adobe Acrobat Reader DC (PL)"` lub `"7-Zip"` z pliku JSON bezbłędnie łączą się z wpisami w rejestrze Windows.
-* **Precyzyjne metadane aplikacji:** Dla każdego zweryfikowanego programu skrypt wyświetla w czytelnej ramce logu:
+* **Inteligentne dopasowywanie (Smart Matching):** Skrypt oczyszcza nazwy pakietów z nawiasów (usuwa m.in. `(PL)`, `(x64)`, dopiski architektury) i porównuje trzon programu, dzięki czemu wpisy takie jak `"Adobe Acrobat Reader DC (PL)"` lub `"7-Zip"` z pliku JSON bezbłędnie łączą się z wpisami w rejestrze Windows.
+* **Precyzyjne metadane aplikacji:** Dla każdego zweryfikowanego programu skrypt wyświetla w konsoli oraz zapisuje w pliku logu:
   * Pełną nazwę rejestrową (`DisplayName`)
   * Dokładną wersję programu (`DisplayVersion`)
-  * Datę instalacji (`InstallDate` sformatowaną do czytelnej postaci `YYYY-MM-DD`)
+  * Datę instalacji (`InstallDate` sformatowaną do postaci `YYYY-MM-DD`)
   * Ścieżkę instalacji na dysku (`InstallLocation` / `DisplayIcon`)
-* **Pełna idempotencja (Skip Already Installed):** Programy wykryte w systemie są natychmiast pomijane wraz z prezentacją ich metadanych, co zapobiega zbędnemu obciążaniu łącza i powtórnym próbom instalacji.
-* **Automatyczna instalacja User-Context (Non-Admin Fallback):** Pakiety odrzucające podniesione uprawnienia administratora (kod błędu `0x8A150056` / `-1978335146`, np. Spotify) są automatycznie delegowane do uruchomienia w kontekście zalogowanego użytkownika (`--scope user`) przy użyciu izolowanego zadania `ScheduledTask` z uprawnieniami `RunLevel Limited`.
-* **Procedura awaryjna Office 365 (ODT Fallback):** W razie niezgodności sumy kontrolnej (*hash mismatch*, kod `0x8A150011` / `-1978335215`) w repozytorium `winget`, skrypt automatycznie pobiera instalator Office Deployment Tool (ODT), generuje w locie konfigurację XML i instaluje pakiet Microsoft 365 Apps w polskiej wersji językowej (`pl-PL`, 64-bit).
-* **Automatyczna samonaprawa winget:** Weryfikacja minimalnej wersji menedżera pakietów (>= 1.7.0). W razie potrzeby skrypt pobiera brakujące zależności (VCLibs, Microsoft.UI.Xaml) oraz aktualizuje i naprawia narzędzie winget za pośrednictwem modułu `Microsoft.WinGet.Client`.
-* **Wizualizacja postępu i ochrona bufora:** Pasek postępu `Write-Progress`, numeracja zadań `[X/Y]` oraz dedykowana funkcja logowania zapobiegająca schodkowaniu tekstu w konsoli.
-* **Odporność na błędy parsowania:** Skrypt działa w trybie `Set-StrictMode -Version Latest`, wykorzystuje bezpieczny Hashtable Splatting parametrów oraz odczytuje pliki konfiguracyjne natywną metodą `[System.IO.File]::ReadAllText`.
+* **Pełna idempotencja (Skip Already Installed):** Programy wykryte w systemie są natychmiast pomijane wraz z prezentacją ich metadanych, co zapobiega zbędnemu obciążaniu łącza i powtórnym próbom instalacji[cite: 1].
+* **Automatyczna instalacja User-Context (Non-Admin Fallback):** Pakiety odrzucające podniesione uprawnienia administratora (kod błędu `0x8A150056` / `-1978335146`, np. Spotify) są automatycznie delegowane do uruchomienia w kontekście zalogowanego użytkownika (`--scope user`) przy użyciu izolowanego zadania `ScheduledTask` z uprawnieniami `RunLevel Limited`[cite: 1].
+* **Procedura awaryjna Office 365 (ODT Fallback):** W razie niezgodności sumy kontrolnej (*hash mismatch*, kod `0x8A150011` / `-1978335215`) w repozytorium `winget`, skrypt automatycznie pobiera instalator Office Deployment Tool (ODT), generuje w locie konfigurację XML i instaluje pakiet Microsoft 365 Apps w polskiej wersji językowej (`pl-PL`, 64-bit)[cite: 1].
+* **Automatyczna samonaprawa winget:** Weryfikacja minimalnej wersji menedżera pakietów (>= 1.7.0). W razie potrzeby skrypt pobiera brakujące zależności (VCLibs, Microsoft.UI.Xaml) oraz aktualizuje i naprawia narzędzie winget za pośrednictwem modułu `Microsoft.WinGet.Client`[cite: 1].
+* **Wizualizacja postępu i ochrona bufora:** Pasek postępu `Write-Progress`, numeracja zadań `[X/Y]` oraz dedykowana funkcja logowania zapobiegająca schodkowaniu tekstu w konsoli[cite: 1].
+
+---
+działa w trybie `Set-StrictMode -Version Latest`, wykorzystuje bezpieczny Hashtable Splatting parametrów oraz odczytuje pliki konfiguracyjne natywną metodą `[System.IO.File]::ReadAllText`.
 ---
 ## Struktura katalogu wdrożeniowego
 
@@ -145,6 +151,21 @@ Rozpoczynanie procesu instalacji...
 | **-1978335146 (0x8A150056)** | Blokada uruchomienia w kontekście administratora | Automatyczna instalacja w profilu użytkownika za pomocą izolowanego zadania ScheduledTask (--scope user). |
 | **-1978335215 (0x8A150011)** | Niezgodność hasha (*Hash Mismatch*) | Uruchomienie procedury awaryjnej (dla pakietu Office: automatyczne wdrożenie ODT). |
 | **-1073741819 (0xC0000005)** | Błąd krytyczny starszej wersji winget | Automatyczna naprawa i aktualizacja pakietów przez Microsoft.WinGet.Client. |
+---
+## Screenshots - Execution View
+
+### Standard Run
+![Standard Run](assets/standard_run.jpg)
+
+### Log file
+![Help Output](assets/Log_file.jpg)
+
+### Installing apps
+![Help Output](assets/Installing_apps.jpg)
+
+### Installing apps 2
+![Help Output](assets/Installing_apps2.jpg)
+
 ---
 ## Kontakt i wsparcie
 W razie problemów z wdrożeniem lub pytań technicznych:
