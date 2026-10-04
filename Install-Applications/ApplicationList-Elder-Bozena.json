@@ -46,10 +46,7 @@
   {
     "Name": "TeamViewer",
     "Id": "TeamViewer.TeamViewer"
-  },
-  {
-    "Name": "Git for Windows",
-    "Id": "Git.Git"
+  },": "Git.Git"
   },
   {
     "Name": "Notepad++",
@@ -66,10 +63,6 @@
   {
     "Name": "Apache OpenOffice",
     "Id": "Apache.OpenOffice"
-  },
-  {
-    "Name": "Sublime Text 4",
-    "Id": "SublimeHQ.SublimeText.4"
   },
   {
     "Name": "Dropbox",

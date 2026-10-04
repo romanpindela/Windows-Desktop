@@ -3,8 +3,8 @@
   Nazwa skryptu : Install-Applications.ps1
   Autor         : Roman Pindela
   Kontakt       : roman.pindela@gmail.com
-  Wersja        : 1.4.0
-  Data wydania  : 2026-10-02
+  Wersja        : 1.5.0
+  Data wydania  : 2026-10-04
   Licencja      : MIT
   Repozytorium  : https://github.com/roman/install-applications
 
@@ -12,7 +12,9 @@
     Skrypt automatyzuje instalacje i konfiguracje oprogramowania stacji roboczej
     w srodowisku Windows (architektura x64) w oparciu o menedzer pakietow winget
     oraz plik konfiguracyjny JSON. Zawiera graficzny pasek postepu, numeracje
-    pakietow, automatyczna samonaprawe winget oraz fallback ODT dla Office 365.
+    pakietow, automatyczna samonaprawe winget, procedure awaryjna ODT dla Office 365
+    oraz automatyczny fallback (User-Context Execution) dla instalatorow
+    blokujacych uruchomienie z uprawnieniami administratora (np. Spotify).
 
   HISTORIA ZMIAN:
     v1.0.0 (2026-10-02) - Pierwsza wersja: integracja z winget i wczytywanie JSON.
@@ -21,6 +23,8 @@
     v1.3.0 (2026-10-02) - Dodano procedure awaryjna ODT dla Office 365, metadane oraz dokumentacje.
     v1.3.2 (2026-10-02) - Naprawiono separatory sciezki w parametrach -Path.
     v1.4.0 (2026-10-02) - Dodano pasek postepu Write-Progress, numeracje zadan [X/Y] oraz zwiekszono czytelnosc.
+    v1.5.0 (2026-10-04) - Dodano automatyczna obsluge instalatorow blokujacych kontekst administratora
+                          (kod 0x8A150056 / Spotify) przez izolowane zadanie ScheduledTask w kontekscie zalogowanego usera.
 ================================================================================
 .SYNOPSIS
     Automatycznie pobiera i instaluje aplikacje z pliku JSON przy uzyciu winget.
@@ -54,10 +58,10 @@ $ErrorActionPreference = "Stop"
 # Globalne metadane skryptu
 $SCRIPT_INFO = @{
     Name        = "Install-Applications"
-    Version     = "1.4.0"
-    Author      = "Roman"
-    Contact     = "roman@example.com"
-    ReleaseDate = "2026-10-02"
+    Version     = "1.5.0"
+    Author      = "Roman Pindela"
+    Contact     = "roman.pindela@gmail.com"
+    ReleaseDate = "2026-10-04"
 }
 
 function Write-Log {
@@ -261,6 +265,47 @@ function Install-AppPackage {
     try {
         $process = Start-Process -FilePath "winget.exe" -ArgumentList $installArgs -NoNewWindow -Wait -PassThru
         
+        # Kod -1978335146 (0x8A150056): The installer cannot be run from an administrator context
+        if ($process.ExitCode -eq -1978335146) {
+            Write-Log "    [!] Pakiet $($App.Name) blokuje uruchomienie w kontekscie administratora." Yellow
+            Write-Log "        -> Uruchamianie procedury instalacji w kontekscie zalogowanego uzytkownika..." Cyan
+
+            # Wyznaczenie aktywnego zalogowanego uzytkownika stacji
+            $loggedUser = (Get-CimInstance -ClassName Win32_ComputerSystem).UserName
+            if (-not $loggedUser) {$loggedUser = [Environment]::UserName
+            }
+
+            $taskName = "WinGet_UserInstall_$($App.Id -replace '[^a-zA-Z0-9]', '_')"
+            $userArgs = "install --exact --id $($App.Id) --scope user --silent --accept-package-agreements --accept-source-agreements"
+
+            $action = New-ScheduledTaskAction -Execute "winget.exe" -Argument $userArgs
+            $principal = New-ScheduledTaskPrincipal -UserId$loggedUser -LogonType Interactive -RunLevel Limited
+
+            Register-ScheduledTask -TaskName $taskName -Action $action -Principal$principal -Force | Out-Null
+            Start-ScheduledTask -TaskName $taskName
+
+            do {
+                Start-Sleep -Seconds 2
+                $taskState = (Get-ScheduledTask -TaskName$taskName).State
+            } while ($taskState -eq 'Running')
+
+            $taskInfo = Get-ScheduledTaskInfo -TaskName$taskName
+            Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
+
+            if ($taskInfo.LastTaskResult -eq 0) {
+                Write-Log "    [+] Sukces: $($App.Name) zostal pomyslnie zainstalowany w profilu uzytkownika." Green
+                return
+            }
+            elseif ($taskInfo.LastTaskResult -eq -1978335189) {
+                Write-Log "    [!] Pominieto: $($App.Name) jest juz zainstalowany w profilu uzytkownika." Yellow
+                return
+            }
+            else {
+                Write-Log "    [-] Instalator w kontekscie uzytkownika zwrocil kod: $($taskInfo.LastTaskResult)" Yellow
+                return
+            }
+        }
+
         switch ($process.ExitCode) {
             0 {
                 Write-Log "    [+] Sukces: $($App.Name) zostal pomyslnie zainstalowany." Green
