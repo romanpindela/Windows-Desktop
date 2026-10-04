@@ -71,6 +71,7 @@ $Script:Metadata = @{
     Name        = 'configure-microsoft-defender.ps1'
     Version     = '2.0.2'
     Author      = 'Roman Pindela'
+    Company     = 'GitHub'
     GitHub      = 'https://github.com/romanpindela'
     ExecutionId = (Get-Date -Format 'yyyyMMdd_HHmmss')
 }
@@ -152,7 +153,7 @@ function Initialize-Logging {
 MICROSOFT DEFENDER HARDENING AND CONFIGURATION LOG
 Script Name    : $($Script:Metadata.Name)
 Version        : $($Script:Metadata.Version)
-Author         : $($Script:Metadata.Author) ($($Script:Metadata.Company))
+Author         : $($Script:Metadata.Author)
 GitHub         : $($Script:Metadata.GitHub)
 Host Computer  : $env:COMPUTERNAME
 User Account   : $env:USERDOMAIN\$env:USERNAME

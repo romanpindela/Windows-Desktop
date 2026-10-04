@@ -102,7 +102,13 @@
   {
     "Name": "Microsoft Build of OpenJDK with Hotspot 17",
     "Id": "Microsoft.OpenJDK.17"
+  },
+  {
+    "Name": "Logitech G HUB",
+    "Id": "Logitech.GHUB"
+  },
+  {
+    "Name": "Logitech Unifying Software",
+    "Id": "Logitech.UnifyingSoftware"
   }
-
-
 ]

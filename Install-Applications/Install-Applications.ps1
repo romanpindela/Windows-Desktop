@@ -3,7 +3,7 @@
   Nazwa skryptu : Install-Applications.ps1
   Autor         : Roman Pindela
   Kontakt       : roman.pindela@gmail.com
-  Wersja        : 1.9.7
+  Wersja        : 1.9.9
   Data wydania  : 2026-10-04
   Licencja      : MIT
   Repozytorium  : https://github.com/roman/install-applications
@@ -14,8 +14,9 @@
     Wykorzystuje natywne API .NET Registry do precyzyjnego audytu i odczytu
     metadanych zainstalowanych aplikacji (DisplayName, DisplayVersion,
     InstallDate, InstallLocation). Pomija programy obecne juz w systemie,
-    wspiera instalacje profilu uzytkownika (non-admin fallback dla np. Spotify)
-    oraz procedure awaryjna ODT dla pakietu Office 365.
+    wspiera instalacje profilu uzytkownika (non-admin fallback dla np. Spotify).
+    Procedura awaryjna ODT dla pakietu Office 365 uruchamiana jest WYLACZNIE
+    wtedy, gdy uzytkownik jawnie przekaże przelacznik -Fallback.
     Posiada modul rejestrowania pelnego przebiegu instalacji do pliku logu.
 
 ================================================================================
@@ -26,12 +27,15 @@
 .PARAMETER LogPath
     Sciezka do pliku tekstowego ze szczegolowym logiem dzialania skryptu.
     Domyslnie: C:\Logs\<yyyyMMdd_HHmmss>-<ComputerName>-<UserName>-Install-Applications.txt
+.PARAMETER Fallback
+    Zezwala na uzycie procedury awaryjnej ODT dla pakietu Office w przypadku
+    bledu instalatora winget (np. niezgodnosci sumy kontrolnej). Domyslnie wylaczone.
 .PARAMETER Help
     Wyswietla szczegolowe menu pomocy i informacje o autorze.
 .EXAMPLE
     .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
 .EXAMPLE
-    .\Install-Applications.ps1 -ConfigPath .\ApplicationList.json -LogPath "D:\Logs\setup.log"
+    .\Install-Applications.ps1 -ConfigPath .\ApplicationList.json -Fallback
 .EXAMPLE
     .\Install-Applications.ps1 -h
 #>
@@ -50,6 +54,10 @@ param (
     [Alias("l", "Log")]
     [string]$LogPath,
 
+    [Parameter(ParameterSetName = "Install")]
+    [Alias("fo", "FallbackOffice")]
+    [switch]$Fallback,
+
     [Parameter(ParameterSetName = "Help")]
     [Alias("h")]
     [switch]$Help
@@ -60,7 +68,7 @@ $ErrorActionPreference = "Stop";
 
 $SCRIPT_INFO = @{
     Name        = "Install-Applications";
-    Version     = "1.9.7";
+    Version     = "1.9.9";
     Author      = "Roman Pindela";
     Contact     = "roman.pindela@gmail.com";
     ReleaseDate = "2026-10-04";
@@ -99,18 +107,22 @@ OPIS:
   oraz rejestrowaniem dzialan do pliku dziennika.
 
 UZYCIE:
-  .\Install-Applications.ps1 -ConfigPath <sciezka_do_pliku.json> [-LogPath <sciezka_do_logu.txt>]
+  .\Install-Applications.ps1 -ConfigPath <sciezka_do_pliku.json> [-LogPath <sciezka_do_logu.txt>] [-Fallback]
   .\Install-Applications.ps1 -h | -Help
 
 PARAMETRY:
   -ConfigPath, -c, -Path : [Wymagany] Sciezka do pliku JSON z konfiguracja pakietow.
   -LogPath, -l, -Log     : [Opcjonalny] Sciezka do pliku logu tekstowego.
                            Domyslnie: C:\Logs\<Data_Godzina>-<Host>-<User>-Install-Applications.txt
+  -Fallback, -fo         : [Opcjonalny] Wlacza procedure awaryjna ODT dla pakietu Office
+                           w razie bledu sumy kontrolnej w winget. Bez tej flagi
+                           procedura awaryjna nie zostanie uruchomiona.
   -Help, -h              : Wyswietla to menu pomocy oraz informacje o autorze.
 
 PRZYKLADY:
   .\Install-Applications.ps1 -h
   .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
+  .\Install-Applications.ps1 -c .\ApplicationList.json -Fallback
   .\Install-Applications.ps1 .\ApplicationList.json -LogPath "C:\Deploy\log.txt"
 ================================================================================
 "@ -ForegroundColor Yellow;
@@ -451,7 +463,7 @@ function Invoke-UserContextInstall {
         LogonType = "Interactive"
         RunLevel  = "Limited"
     };
-    $principal = New-ScheduledTaskPrincipal @principalParams;
+    $principal = New-Object Microsoft.PowerShell.Commands.ScheduledTaskPrincipal @principalParams;
 
     $regParams = @{
         TaskName  = $taskName
@@ -487,7 +499,10 @@ function Install-AppPackage {
         [int]$TotalCount,
 
         [Parameter(Mandatory = $true)]
-        $SystemInventory
+        $SystemInventory,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$EnableOfficeFallback
     )
 
     $prefix = "[$CurrentIndex/$TotalCount]";
@@ -503,7 +518,7 @@ function Install-AppPackage {
 
     Write-Log "    [-] Brak aplikacji w systemie. Rozpoczynanie pobierania i instalacji..." Yellow;
 
-    # 2. Instalacja winget
+    # 2. Standardowa instalacja winget
     $installArgs = @(
         "install",
         "--exact",
@@ -535,8 +550,13 @@ function Install-AppPackage {
         }
         elseif ($process.ExitCode -eq -1978335215) {
             Write-Log "    [-] Wykryto niezgodnosc sumy kontrolnej w winget dla $($App.Name)." Yellow;
-            if ($App.Id -eq "Microsoft.Office") {
-                Install-OfficeFallback;
+            if ($App.Id -eq "Microsoft.Office" -or $App.Id -like "*Office*") {
+                if ($EnableOfficeFallback) {
+                    Write-Log "    [!] Flaga -Fallback aktywna. Uruchamianie procedury awaryjnej ODT..." Cyan;
+                    Install-OfficeFallback;
+                } else {
+                    Write-Log "    [!] Procedura awaryjna ODT jest wylaczona (brak parametru -Fallback). Instalacja pakietu Office zostala przerwana." Yellow;
+                }
             }
         }
         else {
@@ -549,7 +569,7 @@ function Install-AppPackage {
         if ($null -ne$postMatch) {
             Show-AppMetadata ($postMatch) ("Szczegoly nowo zainstalowanej aplikacji:");
         } else {
-            Write-Log "    [i] Aplikacja zostala zarejestrowana w systemie." Gray;
+            Write-Log "    [i] Stan rejestracji pakietu sprawdzony." Gray;
         }
     }
     catch {
@@ -564,6 +584,7 @@ Write-Log "=====================================================================
 Write-Log "  $($SCRIPT_INFO.Name) v$($SCRIPT_INFO.Version) - Inicjalizacja srodowiska" Cyan;
 Write-Log "  Autor: $($SCRIPT_INFO.Author) | Kontakt: $($SCRIPT_INFO.Contact)" Gray;
 Write-Log "  Plik dziennika: $resolvedLogPath" DarkCyan;
+Write-Log "  Fallback ODT  : $(if ($Fallback) { 'WLACZONY' } else { 'WYLACZONY (domyslnie)' })" $(if ($Fallback) { [ConsoleColor]::Yellow } else { [ConsoleColor]::Gray });
 Write-Log "================================================================================" Cyan;
 
 if (-not (Test-IsAdmin)) {
@@ -616,10 +637,11 @@ foreach ($app in $applications) {$currentIndex++;
     Write-Progress @progParams;
 
     $callArgs = @{
-        App             = $app
-        CurrentIndex    = [int]$currentIndex
-        TotalCount      = [int]$totalApps
-        SystemInventory = $systemInventory
+        App                  = $app
+        CurrentIndex         = [int]$currentIndex
+        TotalCount           = [int]$totalApps
+        SystemInventory      = $systemInventory
+        EnableOfficeFallback = $Fallback
     };
     Install-AppPackage @callArgs;
 }
