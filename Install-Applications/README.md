@@ -28,6 +28,7 @@ Dokumentacja techniczna skryptu automatyzującego audyt, pobieranie, instalację
   * `HKCU` profil zalogowanego użytkownika (`SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`)
 * **Inteligentne dopasowywanie (Smart Matching):** Skrypt oczyszcza nazwy pakietów z nawiasów i porównuje trzon programu, bezbłędnie kojarząc pakiety z wpisami rejestru Windows.
 * **Precyzyjne metadane aplikacji:** Dla każdego programu skrypt rejestruje pełną nazwę (`DisplayName`), wersję (`DisplayVersion`), datę instalacji (`InstallDate`) oraz ścieżkę instalacji (`InstallLocation` / `DisplayIcon`).
+* **Raport zainstalowanych programów:** Parametr `-VerifyInstalledApps` (skrót `-v`) wyświetla programy pogrupowane według producenta i posortowane według daty instalacji. Raport zawiera wersję, datę instalacji, rozmiar, architekturę, zakres instalacji i lokalizację. Długie nazwy, wersje i ścieżki są zawijane do kolejnych linii.
 * **Pełna idempotencja (Skip Already Installed):** Programy wykryte w systemie są natychmiast pomijane wraz z prezentacją ich metadanych[cite: 1, 3].
 * **Automatyczna instalacja User-Context (Non-Admin Fallback):** Pakiety odrzucające uprawnienia administratora (kod `0x8A150056` / `-1978335146`, np. Spotify) są delegowane do uruchomienia w kontekście zalogowanego użytkownika (`--scope user`) przez zadanie `ScheduledTask`[cite: 1, 3].
 * **Opcjonalna procedura awaryjna Office 365 (ODT Fallback):** Uruchamiana **wyłącznie po podaniu przełącznika `-Fallback`** w sytuacji wystąpienia błędu sumy kontrolnej hash (`-1978335215`) w winget. Domyślnie procedura ODT jest wyłączona, co zapobiega niekontrolowanemu pobieraniu instalatora awaryjnego.
@@ -48,7 +49,7 @@ install-applications/
 ---
 ## Wymagania systemowe
 * **System operacyjny:** Windows 10 / Windows 11 (architektura 64-bit).
-* **Uprawnienia:** Konsola PowerShell uruchomiona z uprawnieniami Administratora (niezbędna do instalacji globalnych i rejestracji zadań fallback).
+* **Uprawnienia:** Konsola PowerShell uruchomiona z uprawnieniami Administratora (niezbędna do instalacji globalnych i rejestracji zadań fallback). Sam raport `-VerifyInstalledApps` można uruchomić bez podwyższonych uprawnień.
 * **Połączenie sieciowe:** Dostęp do sieci Internet (oficjalne serwery CDN producentów oraz repozytorium WinGet).
 ---
 ## Instrukcja uruchomienia
@@ -66,6 +67,16 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
 ```
 *(Dopuszczalna jest również składnia skrócona: `.\Install-Applications.ps1 .\ApplicationList-Roman.json`)*
+### 4. Raport zainstalowanych programów
+```shell
+.\Install-Applications.ps1 -VerifyInstalledApps
+# Skrót:
+.\Install-Applications.ps1 -v
+# Zapis do domyślnego pliku w C:\Logs (sufiks -installedApplications):
+.\Install-Applications.ps1 -v -l ""
+# Zapis pod wskazaną ścieżką:
+.\Install-Applications.ps1 -v -l "C:\Reports\InstalledApps.txt"
+```
 ---
 ## Struktura i przykład pliku konfiguracyjnego JSON
 Plik JSON zawiera tablicę obiektów, gdzie każdy obiekt posiada pola `Name` (czytelna nazwa) oraz `Id` (identyfikator pakietu w winget):

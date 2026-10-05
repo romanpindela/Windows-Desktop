@@ -25,11 +25,16 @@
 .PARAMETER ConfigPath
     Sciezka do pliku JSON z lista programow do zainstalowania.
 .PARAMETER LogPath
-    Sciezka do pliku tekstowego ze szczegolowym logiem dzialania skryptu.
-    Domyslnie: C:\Logs\<yyyyMMdd_HHmmss>-<ComputerName>-<UserName>-Install-Applications.txt
+    Sciezka do logu instalacji lub raportu zainstalowanych aplikacji.
+    W trybie raportu pusta wartosc (-l "") zapisuje raport pod domyslna nazwa
+    zakonczona sufiksem -installedApplications.txt.
+    W trybie -VerifyInstalledApps parametr -l zapisuje raport. Pusta wartosc
+    (-l "") wybiera domyslna nazwe z sufiksem -installedApplications.
 .PARAMETER Fallback
     Zezwala na uzycie procedury awaryjnej ODT dla pakietu Office w przypadku
     bledu instalatora winget (np. niezgodnosci sumy kontrolnej). Domyslnie wylaczone.
+.PARAMETER VerifyInstalledApps
+    Wyswietla zainstalowane programy pogrupowane wedlug producenta.
 .PARAMETER Help
     Wyswietla szczegolowe menu pomocy i informacje o autorze.
 .EXAMPLE
@@ -51,12 +56,17 @@ param (
     [string]$ConfigPath,
 
     [Parameter(ParameterSetName = "Install", Position = 1)]
+    [Parameter(ParameterSetName = "Verify")]
     [Alias("l", "Log")]
     [string]$LogPath,
 
     [Parameter(ParameterSetName = "Install")]
     [Alias("fo", "FallbackOffice")]
     [switch]$Fallback,
+
+    [Parameter(ParameterSetName = "Verify")]
+    [Alias("v")]
+    [switch]$VerifyInstalledApps,
 
     [Parameter(ParameterSetName = "Help")]
     [Alias("h")]
@@ -108,49 +118,58 @@ OPIS:
 
 UZYCIE:
   .\Install-Applications.ps1 -ConfigPath <sciezka_do_pliku.json> [-LogPath <sciezka_do_logu.txt>] [-Fallback]
+    .\Install-Applications.ps1 -VerifyInstalledApps [-LogPath <sciezka_do_raportu.txt>]
+    .\Install-Applications.ps1 -v [-l ""]
   .\Install-Applications.ps1 -h | -Help
 
 PARAMETRY:
   -ConfigPath, -c, -Path : [Wymagany] Sciezka do pliku JSON z konfiguracja pakietow.
-  -LogPath, -l, -Log     : [Opcjonalny] Sciezka do pliku logu tekstowego.
-                           Domyslnie: C:\Logs\<Data_Godzina>-<Host>-<User>-Install-Applications.txt
+    -LogPath, -l, -Log     : [Opcjonalny] Sciezka pliku logu instalacji. Z -v zapisuje
+                                                     raport; -v -l "" wybiera domyslna nazwe zakonczona
+                                                     -installedApplications.txt.
   -Fallback, -fo         : [Opcjonalny] Wlacza procedure awaryjna ODT dla pakietu Office
                            w razie bledu sumy kontrolnej w winget. Bez tej flagi
                            procedura awaryjna nie zostanie uruchomiona.
+    -VerifyInstalledApps, -v : Wyswietla programy pogrupowane wedlug producenta,
+                                                            posortowane wedlug daty instalacji.
   -Help, -h              : Wyswietla to menu pomocy oraz informacje o autorze.
 
 PRZYKLADY:
   .\Install-Applications.ps1 -h
   .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
   .\Install-Applications.ps1 -c .\ApplicationList.json -Fallback
+    .\Install-Applications.ps1 -v
+    .\Install-Applications.ps1 -v -l ""
+    .\Install-Applications.ps1 -v -l "C:\Reports\InstalledApps.txt"
   .\Install-Applications.ps1 .\ApplicationList.json -LogPath "C:\Deploy\log.txt"
 ================================================================================
 "@ -ForegroundColor Yellow;
 }
 
-if ($Help -or [string]::IsNullOrWhiteSpace($ConfigPath)) {
+if ($Help -or ([string]::IsNullOrWhiteSpace($ConfigPath) -and -not $VerifyInstalledApps)) {
     Show-HelpGuide;
     return;
 }
 
 # Inicjalizacja domyslnej sciezki logowania, jesli nie zostala wskazana
-if ([string]::IsNullOrWhiteSpace($LogPath)) {
-    $defaultLogDir = "C:\Logs";
-    $timeMarker = (Get-Date).ToString("yyyyMMdd_HHmmss");
-    $compName   = $env:COMPUTERNAME;
-    $userName   = $env:USERNAME;
-    $scriptName = $SCRIPT_INFO.Name;
-    $logFileName = "${timeMarker}-${compName}-${userName}-${scriptName}.txt";
-    $LogPath = Join-Path ($defaultLogDir) ($logFileName);
-}
+if (-not $VerifyInstalledApps) {
+    if ([string]::IsNullOrWhiteSpace($LogPath)) {
+        $defaultLogDir = "C:\Logs";
+        $timeMarker = (Get-Date).ToString("yyyyMMdd_HHmmss");
+        $compName   = $env:COMPUTERNAME;
+        $userName   = $env:USERNAME;
+        $scriptName = $SCRIPT_INFO.Name;
+        $logFileName = "${timeMarker}-${compName}-${userName}-${scriptName}.txt";
+        $LogPath = Join-Path ($defaultLogDir) ($logFileName);
+    }
 
-# Ustalenie i utworzenie katalogu dziennika
-$resolvedLogPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LogPath);
-$logDirectory = [System.IO.Path]::GetDirectoryName($resolvedLogPath);
-if (-not [string]::IsNullOrWhiteSpace($logDirectory) -and -not [System.IO.Directory]::Exists($logDirectory)) {
-    [System.IO.Directory]::CreateDirectory($logDirectory) | Out-Null;
+    $resolvedLogPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LogPath);
+    $logDirectory = [System.IO.Path]::GetDirectoryName($resolvedLogPath);
+    if (-not [string]::IsNullOrWhiteSpace($logDirectory) -and -not [System.IO.Directory]::Exists($logDirectory)) {
+        [System.IO.Directory]::CreateDirectory($logDirectory) | Out-Null;
+    }
+    $script:ActiveLogFile = $resolvedLogPath;
 }
-$script:ActiveLogFile = $resolvedLogPath;
 
 function Test-IsAdmin {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent();
@@ -313,15 +332,30 @@ function Get-WindowsInstalledApplications {
                                 $rawDate = $appKey.GetValue("InstallDate");
                                 $rawLoc  = $appKey.GetValue("InstallLocation");
                                 $rawIcon = $appKey.GetValue("DisplayIcon");
-
+                                $rawPublisher = $appKey.GetValue("Publisher");
+                                $rawSize = $appKey.GetValue("EstimatedSize");
                                 # Formatowanie daty instalacji YYYYMMDD -> YYYY-MM-DD
                                 $formattedDate = "Brak wpisu daty w rejestrze";
+                                $installDateSort = $null;
                                 if ($null -ne $rawDate) {
                                     $dStr = [string]$rawDate;
                                     if ($dStr -match '^\d{8}$') {
                                         $formattedDate = "$($dStr.Substring(0,4))-$($dStr.Substring(4,2))-$($dStr.Substring(6,2))";
+                                        try { $installDateSort = [datetime]::ParseExact($dStr, "yyyyMMdd", [Globalization.CultureInfo]::InvariantCulture); } catch {}
                                     } elseif (-not [string]::IsNullOrWhiteSpace($dStr)) {
                                         $formattedDate = $dStr;
+                                        $parsedDate = [datetime]::MinValue;
+                                        if ([datetime]::TryParse($dStr, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$parsedDate)) {
+                                            $installDateSort = $parsedDate;
+                                        }
+                                    }
+                                }
+
+                                $sizeMB = $null;
+                                if ($null -ne $rawSize) {
+                                    $sizeKB = 0.0;
+                                    if ([double]::TryParse([string]$rawSize, [ref]$sizeKB) -and $sizeKB -gt 0) {
+                                        $sizeMB = [math]::Round(($sizeKB / 1024), 2);
                                     }
                                 }
 
@@ -344,7 +378,12 @@ function Get-WindowsInstalledApplications {
                                     KeyName         = $keyName;
                                     DisplayName     = $displayName;
                                     DisplayVersion  = if ($null -ne $rawVer) { [string]$rawVer } else { "Brak danych o wersji" };
+                                    Publisher       = if ($null -ne $rawPublisher -and -not [string]::IsNullOrWhiteSpace([string]$rawPublisher)) { [string]$rawPublisher } else { "Nieznany producent" };
                                     InstallDate     = $formattedDate;
+                                    InstallDateSort = $installDateSort;
+                                    SizeMB          = $sizeMB;
+                                    Architecture    = if ($target.View -eq [Microsoft.Win32.RegistryView]::Registry32) { "32-bit" } else { "64-bit" };
+                                    Scope           = if ($target.Hive -eq [Microsoft.Win32.RegistryHive]::CurrentUser) { "Użytkownik" } else { "Komputer" };
                                     InstallLocation = $location;
                                 });
                             }
@@ -578,6 +617,62 @@ function Install-AppPackage {
 }
 
 # --- Glowny przeplyw programu ---
+
+if ($VerifyInstalledApps) {
+    $systemInventory = Get-WindowsInstalledApplications;
+    if ($systemInventory.Count -eq 0) {
+        Write-Host "Nie znaleziono zainstalowanych aplikacji w sprawdzonych galeziach rejestru." -ForegroundColor Yellow;
+        return;
+    }
+
+    $reportLines = [System.Collections.Generic.List[string]]::new();
+    $reportLines.Add("Zainstalowane programy: $($systemInventory.Count)");
+    foreach ($publisherGroup in ($systemInventory | Group-Object -Property Publisher | Sort-Object -Property Name)) {
+        $reportLines.Add("");
+        $reportLines.Add("=== $($publisherGroup.Name) ===");
+        $summaryTable = $publisherGroup.Group |
+            Sort-Object -Property InstallDateSort -Descending |
+            Format-Table `
+                @{Label = "Program"; Expression = { $_.DisplayName }; Width = 46}, `
+                @{Label = "Wersja"; Expression = { $_.DisplayVersion }; Width = 28}, `
+                @{Label = "Instalacja"; Expression = { if ($_.InstallDateSort) { $_.InstallDateSort.ToString("yyyy-MM-dd") } elseif ($_.InstallDate -eq "Brak wpisu daty w rejestrze") { "Brak danych" } else { $_.InstallDate } }; Width = 12} `
+            -Wrap -AutoSize | Out-String -Width 120;
+        $reportLines.Add($summaryTable.TrimEnd());
+
+        $locationTable = $publisherGroup.Group |
+            Sort-Object -Property InstallDateSort -Descending |
+            Format-Table `
+                @{Label = "Program"; Expression = { $_.DisplayName }; Width = 36}, `
+                @{Label = "Arch / zakres / MB"; Expression = { "$($_.Architecture) / $($_.Scope) / $(if ($null -ne $_.SizeMB) { "$($_.SizeMB) MB" } else { 'n/d' })" }; Width = 26}, `
+                @{Label = "Lokalizacja instalacji"; Expression = { $_.InstallLocation }; Width = 56} `
+            -Wrap -AutoSize | Out-String -Width 120;
+        $reportLines.Add($locationTable.TrimEnd());
+    }
+
+    $reportText = $reportLines -join [Environment]::NewLine;
+    Write-Host $reportText;
+
+    if ($PSBoundParameters.ContainsKey("LogPath")) {
+        if ([string]::IsNullOrWhiteSpace($LogPath)) {
+            $defaultLogDir = "C:\Logs";
+            $timeMarker = (Get-Date).ToString("yyyyMMdd_HHmmss");
+            $compName = $env:COMPUTERNAME;
+            $userName = $env:USERNAME;
+            $reportFileName = "${timeMarker}-${compName}-${userName}-$($SCRIPT_INFO.Name)-installedApplications.txt";
+            $resolvedReportPath = Join-Path $defaultLogDir $reportFileName;
+        } else {
+            $resolvedReportPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LogPath);
+        }
+
+        $reportDirectory = [System.IO.Path]::GetDirectoryName($resolvedReportPath);
+        if (-not [string]::IsNullOrWhiteSpace($reportDirectory) -and -not [System.IO.Directory]::Exists($reportDirectory)) {
+            [System.IO.Directory]::CreateDirectory($reportDirectory) | Out-Null;
+        }
+        [System.IO.File]::WriteAllText($resolvedReportPath, $reportText + [Environment]::NewLine, [System.Text.Encoding]::UTF8);
+        Write-Host "`nRaport zapisano w: $resolvedReportPath" -ForegroundColor Cyan;
+    }
+    return;
+}
 
 Clear-Host;
 Write-Log "================================================================================" Cyan;
