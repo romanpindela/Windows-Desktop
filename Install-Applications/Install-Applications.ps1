@@ -1,46 +1,48 @@
 <#
 ================================================================================
-  Nazwa skryptu : Install-Applications.ps1
-  Autor         : Roman Pindela
-  Kontakt       : roman.pindela@gmail.com
-  Wersja        : 1.9.9
-  Data wydania  : 2026-10-04
-  Licencja      : MIT
-  Repozytorium  : https://github.com/roman/install-applications
+  Script Name : Install-Applications.ps1
+  Author      : Roman Pindela
+  Contact     : roman.pindela@gmail.com
+  Version     : 1.9.9
+  Release Date: 2026-10-04
+  License     : MIT
+  Repository  : https://github.com/roman/install-applications
 
-  OPIS:
-    Skrypt automatyzuje instalacje i konfiguracje oprogramowania stacji roboczej
-    w srodowisku Windows (architektura x64) w oparciu o winget oraz plik JSON.
-    Wykorzystuje natywne API .NET Registry do precyzyjnego audytu i odczytu
-    metadanych zainstalowanych aplikacji (DisplayName, DisplayVersion,
-    InstallDate, InstallLocation). Pomija programy obecne juz w systemie,
-    wspiera instalacje profilu uzytkownika (non-admin fallback dla np. Spotify).
-    Procedura awaryjna ODT dla pakietu Office 365 uruchamiana jest WYLACZNIE
-    wtedy, gdy uzytkownik jawnie przekaże przelacznik -Fallback.
-    Posiada modul rejestrowania pelnego przebiegu instalacji do pliku logu.
+  DESCRIPTION:
+    Automates workstation software installation and configuration in Windows
+    (x64 architecture) based on winget and a JSON configuration file.
+    Utilizes native .NET Registry API for fast in-memory auditing and retrieval
+    of installed application metadata (DisplayName, DisplayVersion,
+    InstallDate, InstallLocation). Skips programs already present on the system
+    and supports user-profile fallback (non-admin execution for apps like Spotify).
+    The emergency Office Deployment Tool (ODT) procedure for Microsoft 365
+    is executed ONLY when the user explicitly provides the -Fallback switch.
+    Includes comprehensive execution logging to a file.
 
 ================================================================================
 .SYNOPSIS
-    Automatycznie pobiera, audytuje i instaluje aplikacje z pliku JSON przy uzyciu winget.
+    Automatically retrieves, audits, and installs applications from a JSON file using winget.
 .PARAMETER ConfigPath
-    Sciezka do pliku JSON z lista programow do zainstalowania.
+    Path to the JSON file containing the list of software packages to install.
 .PARAMETER LogPath
-    Sciezka do logu instalacji lub raportu zainstalowanych aplikacji.
-    W trybie raportu pusta wartosc (-l "") zapisuje raport pod domyslna nazwa
-    zakonczona sufiksem -installedApplications.txt.
-    W trybie -VerifyInstalledApps parametr -l zapisuje raport. Pusta wartosc
-    (-l "") wybiera domyslna nazwe z sufiksem -installedApplications.
+    Path to the installation log or installed applications report.
+    In report mode, an empty value (-l "") saves the report under a default name
+    with the suffix -installedApplications.txt.
 .PARAMETER Fallback
-    Zezwala na uzycie procedury awaryjnej ODT dla pakietu Office w przypadku
-    bledu instalatora winget (np. niezgodnosci sumy kontrolnej). Domyslnie wylaczone.
+    Allows fallback to the Office Deployment Tool (ODT) procedure for Microsoft 365
+    in case of winget checksum mismatch errors. Disabled by default.
 .PARAMETER VerifyInstalledApps
-    Wyswietla zainstalowane programy pogrupowane wedlug producenta.
+    Displays installed programs grouped by publisher and sorted by install date.
 .PARAMETER Help
-    Wyswietla szczegolowe menu pomocy i informacje o autorze.
+    Displays detailed help menu, version, and author information.
 .EXAMPLE
     .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
 .EXAMPLE
     .\Install-Applications.ps1 -ConfigPath .\ApplicationList.json -Fallback
+.EXAMPLE
+    .\Install-Applications.ps1 -VerifyInstalledApps
+.EXAMPLE
+    .\Install-Applications.ps1 -v -l ""
 .EXAMPLE
     .\Install-Applications.ps1 -h
 #>
@@ -51,7 +53,7 @@ param (
     [ValidateScript({
         $resolved = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($_);
         if ([System.IO.File]::Exists($resolved)) { $true }
-        else { throw "Plik konfiguracji nie istnieje pod podana sciezka: $_" }
+        else { throw "Configuration file does not exist at specified path: $_" }
     })]
     [string]$ConfigPath,
 
@@ -84,7 +86,7 @@ $SCRIPT_INFO = @{
     ReleaseDate = "2026-10-04";
 };
 
-# Globalna zmienna przechowujaca sciezke aktywnego pliku dziennika
+# Global variable holding active log file path
 $script:ActiveLogFile = $null;
 
 function Write-Log {
@@ -110,37 +112,37 @@ function Show-HelpGuide {
     Write-Host @"
 ================================================================================
   $($SCRIPT_INFO.Name) - v$($SCRIPT_INFO.Version)
-  Autor: $($SCRIPT_INFO.Author) | Kontakt: $($SCRIPT_INFO.Contact)
+  Author: $($SCRIPT_INFO.Author) | Contact: $($SCRIPT_INFO.Contact)
 ================================================================================
-OPIS:
-  Automatyczny instalator stacji roboczej Windows x64 z pelnym audytem rejestru
-  oraz rejestrowaniem dzialan do pliku dziennika.
+DESCRIPTION:
+  Automated Windows x64 workstation deployment tool featuring complete
+  in-memory registry auditing and structured activity logging.
 
-UZYCIE:
-  .\Install-Applications.ps1 -ConfigPath <sciezka_do_pliku.json> [-LogPath <sciezka_do_logu.txt>] [-Fallback]
-    .\Install-Applications.ps1 -VerifyInstalledApps [-LogPath <sciezka_do_raportu.txt>]
-    .\Install-Applications.ps1 -v [-l ""]
+USAGE:
+  .\Install-Applications.ps1 -ConfigPath <path_to_file.json> [-LogPath <path_to_log.txt>] [-Fallback]
+  .\Install-Applications.ps1 -VerifyInstalledApps [-LogPath <path_to_report.txt>]
+  .\Install-Applications.ps1 -v [-l ""]
   .\Install-Applications.ps1 -h | -Help
 
-PARAMETRY:
-  -ConfigPath, -c, -Path : [Wymagany] Sciezka do pliku JSON z konfiguracja pakietow.
-    -LogPath, -l, -Log     : [Opcjonalny] Sciezka pliku logu instalacji. Z -v zapisuje
-                                                     raport; -v -l "" wybiera domyslna nazwe zakonczona
-                                                     -installedApplications.txt.
-  -Fallback, -fo         : [Opcjonalny] Wlacza procedure awaryjna ODT dla pakietu Office
-                           w razie bledu sumy kontrolnej w winget. Bez tej flagi
-                           procedura awaryjna nie zostanie uruchomiona.
-    -VerifyInstalledApps, -v : Wyswietla programy pogrupowane wedlug producenta,
-                                                            posortowane wedlug daty instalacji.
-  -Help, -h              : Wyswietla to menu pomocy oraz informacje o autorze.
+PARAMETERS:
+  -ConfigPath, -c, -Path : [Required] Path to JSON file with package configurations.
+  -LogPath, -l, -Log     : [Optional] Path to installation log file. With -v, saves
+                           the report; -v -l "" selects default name ending with
+                           -installedApplications.txt.
+  -Fallback, -fo         : [Optional] Enables emergency ODT procedure for Office 365
+                           in case of winget checksum mismatch. Without this flag,
+                           the emergency procedure is skipped.
+  -VerifyInstalledApps, -v : Displays installed programs grouped by publisher,
+                             sorted by installation date.
+  -Help, -h              : Displays this help menu and author info.
 
-PRZYKLADY:
+EXAMPLES:
   .\Install-Applications.ps1 -h
   .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
   .\Install-Applications.ps1 -c .\ApplicationList.json -Fallback
-    .\Install-Applications.ps1 -v
-    .\Install-Applications.ps1 -v -l ""
-    .\Install-Applications.ps1 -v -l "C:\Reports\InstalledApps.txt"
+  .\Install-Applications.ps1 -v
+  .\Install-Applications.ps1 -v -l ""
+  .\Install-Applications.ps1 -v -l "C:\Reports\InstalledApps.txt"
   .\Install-Applications.ps1 .\ApplicationList.json -LogPath "C:\Deploy\log.txt"
 ================================================================================
 "@ -ForegroundColor Yellow;
@@ -151,7 +153,7 @@ if ($Help -or ([string]::IsNullOrWhiteSpace($ConfigPath) -and -not $VerifyInstal
     return;
 }
 
-# Inicjalizacja domyslnej sciezki logowania, jesli nie zostala wskazana
+# Initialize default log path if not provided
 if (-not $VerifyInstalledApps) {
     if ([string]::IsNullOrWhiteSpace($LogPath)) {
         $defaultLogDir = "C:\Logs";
@@ -184,7 +186,7 @@ function Assert-WingetPrerequisites {
     $needsUpdate = $false;
 
     if (-not $wingetCmd) {
-        Write-Log "[!] Narzedzie winget nie jest zainstalowane." Yellow;
+        Write-Log "[!] winget tool is not installed." Yellow;
         $needsUpdate = $true;
     }
     else {
@@ -194,10 +196,10 @@ function Assert-WingetPrerequisites {
             while ($parsedParts.Count -lt 2) { $parsedParts += "0"; }
             $installedVer = [version]($parsedParts -join '.');
 
-            Write-Log "[i] Wykryto wersje winget: $rawVer" Gray;
+            Write-Log "[i] Detected winget version: $rawVer" Gray;
 
             if ($installedVer -lt [version]$MinimumVersion) {
-                Write-Log "[!] Wersja winget ($rawVer) wymaga aktualizacji (min. $MinimumVersion)..." Yellow;
+                Write-Log "[!] winget version ($rawVer) requires update (min. $MinimumVersion)..." Yellow;
                 $needsUpdate = $true;
             }
         }
@@ -207,11 +209,11 @@ function Assert-WingetPrerequisites {
     }
 
     if (-not $needsUpdate) {
-        Write-Log "[+] Srodowisko winget jest gotowe do pracy." Green;
+        Write-Log "[+] winget environment is ready." Green;
         return;
     }
 
-    Write-Log "[*] Instalowanie aktualizacji winget wraz z zaleznosciami..." Cyan;
+    Write-Log "[*] Installing winget updates and dependencies..." Cyan;
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
 
     try {
@@ -229,15 +231,15 @@ function Assert-WingetPrerequisites {
         $userPath    = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::User);
         $env:Path    = "$machinePath;$userPath";
 
-        Write-Log "[+] Winget zostal pomyslnie zaktualizowany." Green;
+        Write-Log "[+] winget was successfully updated." Green;
     }
     catch {
-        throw "Nie udalo sie zaktualizowac winget: $_";
+        throw "Failed to update winget: $_";
     }
 }
 
 function Install-OfficeFallback {
-    Write-Log "    [!] Uruchamianie procedury awaryjnej (Office Deployment Tool - PL x64)..." Yellow;
+    Write-Log "    [!] Starting emergency procedure (Office Deployment Tool - x64)..." Yellow;
 
     $tempDir = Join-Path ($env:TEMP) "OfficeInstall";
     if (-not [System.IO.Directory]::Exists($tempDir)) {
@@ -252,7 +254,7 @@ function Install-OfficeFallback {
 <Configuration>
   <Add OfficeClientEdition="64" Channel="Current">
     <Product ID="O365ProPlusRetail">
-      <Language ID="pl-pl" />
+      <Language ID="MatchOS" />
     </Product>
   </Add>
   <Display Level="None" AcceptEULA="TRUE" />
@@ -281,14 +283,14 @@ function Install-OfficeFallback {
         $process = Start-Process @officeProcParams;
 
         if ($process.ExitCode -eq 0) {
-            Write-Log "    [+] Sukces: Microsoft 365 Apps zostal zainstalowany." Green;
+            Write-Log "    [+] Success: Microsoft 365 Apps installed successfully." Green;
         }
         else {
-            Write-Log "    [-] Instalator Office zakonczyl dzialanie z kodem: $($process.ExitCode)" Yellow;
+            Write-Log "    [-] Office installer exited with code: $($process.ExitCode)" Yellow;
         }
     }
     catch {
-        Write-Log "    [-] Blad podczas instalacji Office w trybie awaryjnym: $_" Red;
+        Write-Log "    [-] Error during Office fallback installation: $_" Red;
     }
     finally {
         if ([System.IO.Directory]::Exists($tempDir)) {
@@ -297,7 +299,7 @@ function Install-OfficeFallback {
     }
 }
 
-# --- Silnik inwentaryzacji i dopasowywania aplikacji (.NET Registry API) ---
+# --- Inventory & Matching Engine (.NET Registry API) ---
 
 function Get-WindowsInstalledApplications {
     [CmdletBinding()]
@@ -334,8 +336,9 @@ function Get-WindowsInstalledApplications {
                                 $rawIcon = $appKey.GetValue("DisplayIcon");
                                 $rawPublisher = $appKey.GetValue("Publisher");
                                 $rawSize = $appKey.GetValue("EstimatedSize");
-                                # Formatowanie daty instalacji YYYYMMDD -> YYYY-MM-DD
-                                $formattedDate = "Brak wpisu daty w rejestrze";
+                                
+                                # Date formatting YYYYMMDD -> YYYY-MM-DD
+                                $formattedDate = "No date entry in registry";
                                 $installDateSort = $null;
                                 if ($null -ne $rawDate) {
                                     $dStr = [string]$rawDate;
@@ -359,7 +362,7 @@ function Get-WindowsInstalledApplications {
                                     }
                                 }
 
-                                # Okreslanie sciezki instalacji
+                                # Installation path determination
                                 $location = "";
                                 if ($null -ne $rawLoc -and -not [string]::IsNullOrWhiteSpace([string]$rawLoc)) {
                                     $location = [string]$rawLoc;
@@ -371,19 +374,19 @@ function Get-WindowsInstalledApplications {
                                 }
 
                                 if (-not $location) {
-                                    $location = "Katalog domyslny systemu / profilu";
+                                    $location = "Default system / profile directory";
                                 }
 
                                 $installedList.Add([PSCustomObject]@{
                                     KeyName         = $keyName;
                                     DisplayName     = $displayName;
-                                    DisplayVersion  = if ($null -ne $rawVer) { [string]$rawVer } else { "Brak danych o wersji" };
-                                    Publisher       = if ($null -ne $rawPublisher -and -not [string]::IsNullOrWhiteSpace([string]$rawPublisher)) { [string]$rawPublisher } else { "Nieznany producent" };
+                                    DisplayVersion  = if ($null -ne $rawVer) { [string]$rawVer } else { "Version data unavailable" };
+                                    Publisher       = if ($null -ne $rawPublisher -and -not [string]::IsNullOrWhiteSpace([string]$rawPublisher)) { [string]$rawPublisher } else { "Unknown publisher" };
                                     InstallDate     = $formattedDate;
                                     InstallDateSort = $installDateSort;
                                     SizeMB          = $sizeMB;
                                     Architecture    = if ($target.View -eq [Microsoft.Win32.RegistryView]::Registry32) { "32-bit" } else { "64-bit" };
-                                    Scope           = if ($target.Hive -eq [Microsoft.Win32.RegistryHive]::CurrentUser) { "Użytkownik" } else { "Komputer" };
+                                    Scope           = if ($target.Hive -eq [Microsoft.Win32.RegistryHive]::CurrentUser) { "User" } else { "Machine" };
                                     InstallLocation = $location;
                                 });
                             }
@@ -415,7 +418,7 @@ function Find-InstalledApp {
 
     $cleanTargetName = ($TargetName -replace '\s*\([^)]*\)', '').Trim();
 
-    # 1. Przeszukiwanie pamieci inwentarza rejestru
+    # 1. Search in-memory registry inventory
     foreach ($item in $SystemInventory) {
         if (-not [string]::IsNullOrWhiteSpace($TargetId) -and $item.KeyName -eq $TargetId) {
             return $item;
@@ -430,11 +433,11 @@ function Find-InstalledApp {
         }
     }
 
-    # 2. Awaryjny odczyt winget list dla aplikacji bez wpisu ARP
+    # 2. Fallback query winget list for apps without standard ARP entries
     if (-not [string]::IsNullOrWhiteSpace($TargetId)) {
         try {
             $wOut = (& winget.exe list --exact --id $TargetId --accept-source-agreements 2>$null | Out-String).Trim();
-            if ($wOut -and $wOut -notmatch "Nie znaleziono" -and $wOut -notmatch "No installed") {
+            if ($wOut -and $wOut -notmatch "No installed" -and $wOut -notmatch "Nie znaleziono") {
                 $lines = $wOut -split "[\r\n]+" | Where-Object {
                     $_ -match [regex]::Escape($TargetId) -and
                     $_ -notmatch '^-{3,}' -and
@@ -445,14 +448,14 @@ function Find-InstalledApp {
                     $row = ($lines[0] -replace '\s{2,}', '|').Trim();
                     $cols = $row -split '\|';
                     $wName = if ($cols.Count -ge 1) { $cols[0].Trim() } else { $TargetName };
-                    $wVer  = if ($cols.Count -ge 3) { $cols[2].Trim() } elseif ($cols.Count -ge 2) { $cols[1].Trim() } else { "Biezaca (winget)" };
+                    $wVer  = if ($cols.Count -ge 3) { $cols[2].Trim() } elseif ($cols.Count -ge 2) { $cols[1].Trim() } else { "Current (winget)" };
 
                     return [PSCustomObject]@{
                         KeyName         = $TargetId;
                         DisplayName     = $wName;
                         DisplayVersion  = $wVer;
-                        InstallDate     = "Zainstalowano przez winget";
-                        InstallLocation = "Standardowy folder aplikacji";
+                        InstallDate     = "Installed via winget";
+                        InstallLocation = "Standard application folder";
                     };
                 }
             }
@@ -466,14 +469,14 @@ function Find-InstalledApp {
 function Show-AppMetadata {
     param (
         [PSCustomObject]$Info,
-        [string]$Header = "Informacje o zainstalowanym pakiecie:"
+        [string]$Header = "Installed package information:"
     )
     Write-Log "    ----------------------------------------------------------------" DarkGray;
     Write-Log "    $Header" DarkCyan;
-    Write-Log "      * Nazwa aplikacji  : $($Info.DisplayName)" Gray;
-    Write-Log "      * Wersja programu  : $($Info.DisplayVersion)" Gray;
-    Write-Log "      * Data instalacji  : $($Info.InstallDate)" Gray;
-    Write-Log "      * Lokalizacja      : $($Info.InstallLocation)" Gray;
+    Write-Log "      * Application Name : $($Info.DisplayName)" Gray;
+    Write-Log "      * Program Version  : $($Info.DisplayVersion)" Gray;
+    Write-Log "      * Install Date     : $($Info.InstallDate)" Gray;
+    Write-Log "      * Location         : $($Info.InstallLocation)" Gray;
     Write-Log "    ----------------------------------------------------------------" DarkGray;
 }
 
@@ -482,8 +485,8 @@ function Invoke-UserContextInstall {
         [string]$AppId,
         [string]$AppName
     )
-    Write-Log "    [!] Pakiet $AppName wymaga instalacji w profilu uzytkownika." Yellow;
-    Write-Log "        -> Uruchamianie zadania w kontekscie zalogowanego uzytkownika..." Cyan;
+    Write-Log "    [!] Package $AppName requires installation in user profile." Yellow;
+    Write-Log "        -> Starting task in logged-on user context..." Cyan;
 
     $loggedUser = (Get-CimInstance -ClassName Win32_ComputerSystem).UserName;
     if (-not $loggedUser) { $loggedUser = [Environment]::UserName; }
@@ -545,19 +548,19 @@ function Install-AppPackage {
     )
 
     $prefix = "[$CurrentIndex/$TotalCount]";
-    Write-Log "`n$prefix Sprawdzanie i przygotowanie: $($App.Name) (ID: $($App.Id))..." Cyan;
+    Write-Log "`n$prefix Verifying and preparing: $($App.Name) (ID: $($App.Id))..." Cyan;
 
-    # 1. Sprawdzenie obecnosci w zindeksowanym inwentarzu rejestru
+    # 1. Check presence in indexed registry inventory
     $match = Find-InstalledApp ($App.Name) ($App.Id) ($SystemInventory);
-    if ($null -ne$match) {
-        Write-Log "    [V] Pominieto: Aplikacja jest juz zainstalowana w systemie." Green;
-        Show-AppMetadata ($match) ("Wykryte parametry zainstalowanej aplikacji:");
+    if ($null -ne $match) {
+        Write-Log "    [V] Skipped: Application is already installed on system." Green;
+        Show-AppMetadata ($match) ("Detected parameters of installed application:");
         return;
     }
 
-    Write-Log "    [-] Brak aplikacji w systemie. Rozpoczynanie pobierania i instalacji..." Yellow;
+    Write-Log "    [-] Application not found on system. Starting download and installation..." Yellow;
 
-    # 2. Standardowa instalacja winget
+    # 2. Standard winget installation
     $installArgs = @(
         "install",
         "--exact",
@@ -577,74 +580,75 @@ function Install-AppPackage {
         };
         $process = Start-Process @procParams;
 
-        if ($process.ExitCode -eq -1978335146) {$userResult = Invoke-UserContextInstall ($App.Id) ($App.Name);
-            if ($userResult -eq 0 -or$userResult -eq -1978335189) {
-                Write-Log "    [+] Pomyslnie zakonczono instalacje w profilu uzytkownika." Green;
+        if ($process.ExitCode -eq -1978335146) {
+            $userResult = Invoke-UserContextInstall ($App.Id) ($App.Name);
+            if ($userResult -eq 0 -or $userResult -eq -1978335189) {
+                Write-Log "    [+] Successfully completed installation in user profile." Green;
             } else {
-                Write-Log "    [-] Instalator uzytkownika zwrocil kod: $userResult" Yellow;
+                Write-Log "    [-] User installer returned code: $userResult" Yellow;
             }
         }
-        elseif ($process.ExitCode -eq 0 -or$process.ExitCode -eq -1978335189) {
-            Write-Log "    [+] Sukces: Proces instalacji $($App.Name) zakonczony pomyslnie." Green;
+        elseif ($process.ExitCode -eq 0 -or $process.ExitCode -eq -1978335189) {
+            Write-Log "    [+] Success: Installation of $($App.Name) completed successfully." Green;
         }
         elseif ($process.ExitCode -eq -1978335215) {
-            Write-Log "    [-] Wykryto niezgodnosc sumy kontrolnej w winget dla $($App.Name)." Yellow;
+            Write-Log "    [-] Detected checksum mismatch in winget for $($App.Name)." Yellow;
             if ($App.Id -eq "Microsoft.Office" -or $App.Id -like "*Office*") {
                 if ($EnableOfficeFallback) {
-                    Write-Log "    [!] Flaga -Fallback aktywna. Uruchamianie procedury awaryjnej ODT..." Cyan;
+                    Write-Log "    [!] -Fallback flag active. Running emergency ODT procedure..." Cyan;
                     Install-OfficeFallback;
                 } else {
-                    Write-Log "    [!] Procedura awaryjna ODT jest wylaczona (brak parametru -Fallback). Instalacja pakietu Office zostala przerwana." Yellow;
+                    Write-Log "    [!] Emergency ODT procedure disabled (no -Fallback parameter). Office installation aborted." Yellow;
                 }
             }
         }
         else {
-            Write-Log "    [-] Kod zakonczenia instalatora $($App.Name): $($process.ExitCode)" Yellow;
+            Write-Log "    [-] Installer exit code for $($App.Name): $($process.ExitCode)" Yellow;
         }
 
-        # 3. Odswiezenie i wyswietlenie metadanych bezposrednio po udanej instalacji
+        # 3. Refresh and show metadata directly after successful install
         $refreshedInventory = Get-WindowsInstalledApplications;
         $postMatch = Find-InstalledApp ($App.Name) ($App.Id) ($refreshedInventory);
-        if ($null -ne$postMatch) {
-            Show-AppMetadata ($postMatch) ("Szczegoly nowo zainstalowanej aplikacji:");
+        if ($null -ne $postMatch) {
+            Show-AppMetadata ($postMatch) ("Details of newly installed application:");
         } else {
-            Write-Log "    [i] Stan rejestracji pakietu sprawdzony." Gray;
+            Write-Log "    [i] Package registration state verified." Gray;
         }
     }
     catch {
-        Write-Log "    Blad krytyczny podczas instalacji $($App.Name):$_" Red;
+        Write-Log "    Critical error during installation of $($App.Name): $_" Red;
     }
 }
 
-# --- Glowny przeplyw programu ---
+# --- Main Program Flow ---
 
 if ($VerifyInstalledApps) {
     $systemInventory = Get-WindowsInstalledApplications;
     if ($systemInventory.Count -eq 0) {
-        Write-Host "Nie znaleziono zainstalowanych aplikacji w sprawdzonych galeziach rejestru." -ForegroundColor Yellow;
+        Write-Host "No installed applications found in inspected registry hives." -ForegroundColor Yellow;
         return;
     }
 
     $reportLines = [System.Collections.Generic.List[string]]::new();
-    $reportLines.Add("Zainstalowane programy: $($systemInventory.Count)");
+    $reportLines.Add("Installed applications: $($systemInventory.Count)");
     foreach ($publisherGroup in ($systemInventory | Group-Object -Property Publisher | Sort-Object -Property Name)) {
         $reportLines.Add("");
         $reportLines.Add("=== $($publisherGroup.Name) ===");
         $summaryTable = $publisherGroup.Group |
             Sort-Object -Property InstallDateSort -Descending |
             Format-Table `
-                @{Label = "Program"; Expression = { $_.DisplayName }; Width = 46}, `
-                @{Label = "Wersja"; Expression = { $_.DisplayVersion }; Width = 28}, `
-                @{Label = "Instalacja"; Expression = { if ($_.InstallDateSort) { $_.InstallDateSort.ToString("yyyy-MM-dd") } elseif ($_.InstallDate -eq "Brak wpisu daty w rejestrze") { "Brak danych" } else { $_.InstallDate } }; Width = 12} `
+                @{Label = "Application"; Expression = { $_.DisplayName }; Width = 46}, `
+                @{Label = "Version"; Expression = { $_.DisplayVersion }; Width = 28}, `
+                @{Label = "Installed"; Expression = { if ($_.InstallDateSort) { $_.InstallDateSort.ToString("yyyy-MM-dd") } elseif ($_.InstallDate -eq "No date entry in registry") { "Unavailable" } else { $_.InstallDate } }; Width = 12} `
             -Wrap -AutoSize | Out-String -Width 120;
         $reportLines.Add($summaryTable.TrimEnd());
 
         $locationTable = $publisherGroup.Group |
             Sort-Object -Property InstallDateSort -Descending |
             Format-Table `
-                @{Label = "Program"; Expression = { $_.DisplayName }; Width = 36}, `
-                @{Label = "Arch / zakres / MB"; Expression = { "$($_.Architecture) / $($_.Scope) / $(if ($null -ne $_.SizeMB) { "$($_.SizeMB) MB" } else { 'n/d' })" }; Width = 26}, `
-                @{Label = "Lokalizacja instalacji"; Expression = { $_.InstallLocation }; Width = 56} `
+                @{Label = "Application"; Expression = { $_.DisplayName }; Width = 36}, `
+                @{Label = "Arch / Scope / MB"; Expression = { "$($_.Architecture) / $($_.Scope) / $(if ($null -ne $_.SizeMB) { "$($_.SizeMB) MB" } else { 'n/a' })" }; Width = 26}, `
+                @{Label = "Install Location"; Expression = { $_.InstallLocation }; Width = 56} `
             -Wrap -AutoSize | Out-String -Width 120;
         $reportLines.Add($locationTable.TrimEnd());
     }
@@ -669,64 +673,66 @@ if ($VerifyInstalledApps) {
             [System.IO.Directory]::CreateDirectory($reportDirectory) | Out-Null;
         }
         [System.IO.File]::WriteAllText($resolvedReportPath, $reportText + [Environment]::NewLine, [System.Text.Encoding]::UTF8);
-        Write-Host "`nRaport zapisano w: $resolvedReportPath" -ForegroundColor Cyan;
+        Write-Host "`nReport saved to: $resolvedReportPath" -ForegroundColor Cyan;
     }
     return;
 }
 
 Clear-Host;
 Write-Log "================================================================================" Cyan;
-Write-Log "  $($SCRIPT_INFO.Name) v$($SCRIPT_INFO.Version) - Inicjalizacja srodowiska" Cyan;
-Write-Log "  Autor: $($SCRIPT_INFO.Author) | Kontakt: $($SCRIPT_INFO.Contact)" Gray;
-Write-Log "  Plik dziennika: $resolvedLogPath" DarkCyan;
-Write-Log "  Fallback ODT  : $(if ($Fallback) { 'WLACZONY' } else { 'WYLACZONY (domyslnie)' })" $(if ($Fallback) { [ConsoleColor]::Yellow } else { [ConsoleColor]::Gray });
+Write-Log "  $($SCRIPT_INFO.Name) v$($SCRIPT_INFO.Version) - Environment Initialization" Cyan;
+Write-Log "  Author: $($SCRIPT_INFO.Author) | Contact: $($SCRIPT_INFO.Contact)" Gray;
+Write-Log "  Log File: $resolvedLogPath" DarkCyan;
+Write-Log "  ODT Fallback  : $(if ($Fallback) { 'ENABLED' } else { 'DISABLED (default)' })" $(if ($Fallback) { [ConsoleColor]::Yellow } else { [ConsoleColor]::Gray });
 Write-Log "================================================================================" Cyan;
 
 if (-not (Test-IsAdmin)) {
-    throw "Skrypt wymaga uprawnien administratora. Uruchom PowerShell jako Administrator.";
+    throw "Script requires administrator privileges. Run PowerShell as Administrator.";
 }
 
-# 1. Weryfikacja srodowiska winget
+# 1. Verify winget environment
 Assert-WingetPrerequisites "1.7.0";
 
-# 2. Wczytanie konfiguracji z pliku JSON
+# 2. Load configuration from JSON file
 try {
-    Write-Log "[i] Wczytywanie konfiguracji z: $ConfigPath" Gray;
+    Write-Log "[i] Loading configuration from: $ConfigPath" Gray;
     $fullPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfigPath);
     $jsonRaw = [System.IO.File]::ReadAllText($fullPath, [System.Text.Encoding]::UTF8);
-    $applications =$jsonRaw | ConvertFrom-Json;
+    $applications = $jsonRaw | ConvertFrom-Json;
 }
 catch {
-    throw "Blad podczas odczytu lub parsowania pliku JSON: $_";
+    throw "Error reading or parsing JSON file: $_";
 }
 
-if ($null -eq $applications -or$applications.Count -eq 0) {
-    Write-Log "Wskazany plik JSON jest pusty. Zamykanie skryptu." Yellow;
+if ($null -eq $applications -or $applications.Count -eq 0) {
+    Write-Log "Specified JSON file is empty. Exiting script." Yellow;
     return;
 }
 
-# 3. Skanowanie rejestru Windows w pamieci RAM (.NET API)
-Write-Log "[*] Skanowanie zainstalowanego oprogramowania (.NET Registry API)..." Gray;
+# 3. Scan Windows registry in RAM (.NET API)
+Write-Log "[*] Scanning installed software (.NET Registry API)..." Gray;
 $systemInventory = Get-WindowsInstalledApplications;
-Write-Log "[+] Zindeksowano $($systemInventory.Count) zainstalowanych wpisow w rejestrze." Green;
+Write-Log "[+] Indexed $($systemInventory.Count) installed entries in registry." Green;
 
 $totalApps = [int]$applications.Count;
-Write-Log "`nZnaleziono $totalApps pozycji do weryfikacji i instalacji." DarkCyan;
-Write-Log "Rozpoczynanie procesu instalacji...`n" DarkCyan;
+Write-Log "`nFound $totalApps items to verify and install." DarkCyan;
+Write-Log "Starting installation process...`n" DarkCyan;
 
-# 4. Przetwarzanie pakietow w petli
+# 4. Process packages in loop
 $currentIndex = 0;
 
-foreach ($app in $applications) {$currentIndex++;
+foreach ($app in $applications) {
+    $currentIndex++;
 
-    if (-not ($app.PSObject.Properties['Id'] -and$app.PSObject.Properties['Name'])) {
-        Write-Log "Pominieto niepoprawny wpis JSON (wymagane pola: 'Id', 'Name')." Yellow;
+    if (-not ($app.PSObject.Properties['Id'] -and $app.PSObject.Properties['Name'])) {
+        Write-Log "Skipped invalid JSON entry (required fields: 'Id', 'Name')." Yellow;
         continue;
     }
 
-    $percentComplete = [math]::Round(((($currentIndex - 1) / $totalApps) * 100));$progParams = @{
-        Activity        = "Instalacja oprogramowania stacji roboczej"
-        Status          = "Przetwarzanie ($currentIndex z$totalApps): $($app.Name)"
+    $percentComplete = [math]::Round(((($currentIndex - 1) / $totalApps) * 100));
+    $progParams = @{
+        Activity        = "Windows Workstation Software Deployment"
+        Status          = "Processing ($currentIndex of $totalApps): $($app.Name)"
         PercentComplete = $percentComplete
     };
     Write-Progress @progParams;
@@ -741,10 +747,10 @@ foreach ($app in $applications) {$currentIndex++;
     Install-AppPackage @callArgs;
 }
 
-Write-Progress -Activity "Instalacja oprogramowania stacji roboczej" -Completed;
+Write-Progress -Activity "Windows Workstation Software Deployment" -Completed;
 
 Write-Log "`n================================================================================" Green;
-Write-Log "  [+] Zakonczono sprawdzanie wszystkich pakietow ($totalApps/$totalApps)." Green;
-Write-Log "  [+] Raport z przebiegu zapisano w: $resolvedLogPath" Green;
+Write-Log "  [+] Completed checking all packages ($totalApps/$totalApps)." Green;
+Write-Log "  [+] Execution report saved to: $resolvedLogPath" Green;
 Write-Log "================================================================================" Green;
-Write-Log "Kontakt z autorem: $($SCRIPT_INFO.Contact)`n" Gray;
+Write-Log "Author contact: $($SCRIPT_INFO.Contact)`n" Gray;

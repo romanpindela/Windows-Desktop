@@ -1,106 +1,106 @@
 # enable-hibernation (Windows Power Management Configuration)
   
-Dokumentacja techniczna skryptu automatyzującego zarządzanie podsystemem hibernacji oraz widocznością przycisku hibernacji w menu zasilania Start w systemach Windows.
+Technical documentation for the automation script managing the hibernation subsystem and the visibility of the Hibernate option in the Windows Start menu power options.
   
-## Informacje o projekcie
+## Project Information
   
-| Parametr | Wartość |
+| Parameter | Value |
 | :--- | :--- |
-| **Nazwa projektu** | enable-hibernation (Windows Power Management Configuration) |
-| **Autor** | Roman Pindela |
-| **Kontakt** | roman.pindela@gmail.com |
-| **Wersja** | 1.1.1 |
-| **Data wydania** | 08.10.2026 |
-| **Licencja** | MIT |
-| **Repozytorium** | [GitHub - roman/enable-hibernation](https://github.com/roman/enable-hibernation) |
+| **Project Name** | enable-hibernation (Windows Power Management Configuration) |
+| **Author** | Roman Pindela |
+| **Contact** | roman.pindela@gmail.com |
+| **Version** | 1.1.1 |
+| **Release Date** | 2026-10-08 |
+| **License** | MIT |
+| **Repository** | [GitHub - roman/enable-hibernation](https://github.com/roman/enable-hibernation) |
   
 ---
   
-## Główne możliwości
+## Key Features
   
-* **Tryb interaktywnej pomocy przy starcie:** Uruchomienie skryptu bez parametrów lub z przełącznikiem `-h` / `-Help` natychmiast wyświetla informacje o wersji, autorze, składni oraz przykłady użycia.
-* **Dwukierunkowe zarządzanie stanem:**
-  * `-EnableHibernation`: tworzy plik `hiberfil.sys`, aktywuje mechanizm ACPI oraz dodaje przycisk do menu Start.
-  * `-DisableHibernation`: usuwa plik `hiberfil.sys` (zwalniając gigabajty na dysku systemowym) oraz ukrywa przycisk w menu Start.
-* **Pełna idempotencja:** Skrypt weryfikuje aktualną wartość `ShowHibernateOption` w rejestrze; jeśli żądany stan jest już ustawiony, modyfikacja jest bezpiecznie pomijana.
-* **Zaawansowane logowanie do pliku tekstowego:** Każde wykonanie tworzy szczegółowy plik dziennika z dokładnymi znacznikami czasu `[RRRR-MM-DD GG:MM:SS]`.
-  * Ścieżka domyślna: `C:\Logs\<DataIGodzina>-<Komputer>-<Użytkownik>-Enable-Hibernation.txt`.
-  * Automatyczne tworzenie brakującego katalogu docelowego.
-  * Możliwość zdefiniowania własnej ścieżki za pomocą parametru `-LogPath`.
-* **Modyfikacja i audyt rejestru przez .NET Registry API:** Bezpośrednie operacje za pośrednictwem klasy `[Microsoft.Win32.RegistryKey]` na gałęzi `HKLM` (64-bit view) w ścieżce `SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings`.
-* **Weryfikacja stanu końcowego:** Automatyczny audyt obecności pliku `hiberfil.sys` na dysku systemowym oraz poprawności flagi DWORD w rejestrze.
+* **Interactive Help on Launch:** Running the script without parameters or with `-h` / `-Help` immediately displays version information, author metadata, syntax, and usage examples.
+* **Bidirectional State Management:**
+  * `-EnableHibernation`: Allocates `hiberfil.sys`, activates the ACPI mechanism, and adds Hibernate to the Start menu power options.
+  * `-DisableHibernation`: Removes `hiberfil.sys` (freeing gigabytes of system disk space) and hides Hibernate from the Start menu.
+* **Full Idempotence:** The script verifies the existing value of `ShowHibernateOption` in the registry; if the desired state is already set, modifications are safely skipped.
+* **Advanced Text Logging:** Every execution creates a detailed log file with precise timestamps `[YYYY-MM-DD HH:MM:SS]`.
+  * Default path: `C:\Logs\<DateTime>-<Computer>-<User>-Enable-Hibernation.txt`.
+  * Automatically creates missing target directories.
+  * Allows custom path specification via the `-LogPath` parameter.
+* **Direct Registry Audit & Modification via .NET Registry API:** Native operations via `[Microsoft.Win32.RegistryKey]` on the 64-bit `HKLM` view under `SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings`.
+* **Post-Execution State Verification:** Automated audit verifying the presence of `hiberfil.sys` on the system drive and the exact DWORD registry state.
   
 ---
   
-## Struktura katalogu
+## Directory Structure
   
 ```shell
 enable-hibernation/
 ├── assets/
-│   ├── Standard_run.jpg          # Widok uruchomienia pomocy / standardowy
-│   ├── enable_hibernation.jpg     # Zrzut ekranu z włączenia hibernacji
-│   └── disable_hibernation.jpg    # Zrzut ekranu z wyłączenia hibernacji
-├── enable-hibernation.ps1        # Główny skrypt konfiguracyjny PowerShell
-└── README.md                     # Niniejsza dokumentacja techniczna
+│   ├── Standard_run.jpg          # Standard run / help menu view
+│   ├── enable_hibernation.jpg     # Screenshot of enabling hibernation
+│   └── disable_hibernation.jpg    # Screenshot of disabling hibernation
+├── enable-hibernation.ps1        # Main PowerShell configuration script
+└── README.md                     # Technical documentation
 ```
   
-## Wymagania systemowe
+## System Requirements
   
-- **System operacyjny:** Windows 10 / Windows 11 (architektura 64-bit).
-- **Uprawnienia:** Konsola PowerShell uruchomiona z uprawnieniami Administratora (niezbędna do manipulacji plikiem `hiberfil.sys` oraz gałęzią HKLM).
+- **Operating System:** Windows 10 / Windows 11 (64-bit architecture).
+- **Privileges:** PowerShell console running with Administrator privileges (required for `hiberfil.sys` management and HKLM modifications).
   
-## Instrukcja uruchomienia
+## Usage Guide
   
-### 1. Zezwolenie na wykonywanie skryptów (jeśli jest zablokowane)
+### 1. Allow Script Execution (If Restricted)
 ```shell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
   
-### 2. Wyświetlenie menu pomocy i danych autora
+### 2. Display Help Menu & Author Information
 ```shell
 .\enable-hibernation.ps1
-# (lub: .\enable-hibernation.ps1 -h)
+# (or: .\enable-hibernation.ps1 -h)
 ```
   
-### 3. Włączenie hibernacji i dodanie do menu Start
+### 3. Enable Hibernation and Add to Start Menu
 ```shell
 .\enable-hibernation.ps1 -EnableHibernation
-# (lub: .\enable-hibernation.ps1 -e)
+# (or: .\enable-hibernation.ps1 -e)
 ```
   
-### 4. Wyłączenie hibernacji i zwolnienie miejsca na dysku
+### 4. Disable Hibernation and Free Disk Space
 ```shell
 .\enable-hibernation.ps1 -DisableHibernation
-# (lub: .\enable-hibernation.ps1 -d)
+# (or: .\enable-hibernation.ps1 -d)
 ```
   
-### 5. Uruchomienie z własną ścieżką do logu
+### 5. Run with Custom Log File Path
 ```shell
 .\enable-hibernation.ps1 -EnableHibernation -LogPath "C:\Deploy\hibernation.txt"
 ```
   
 ## Screenshots
   
-### Standard Run / Pomoc
-![Standard Run / Pomoc](assets/Standard_run.jpg)
+### Standard Run / Help
+![Standard Run / Help](assets/Standard_run.jpg)
   
-### Włączenie hibernacji (-EnableHibernation)
-![Włączenie hibernacji](assets/enable_hibernation.jpg)
+### Enabling Hibernation (-EnableHibernation)
+![Enabling Hibernation](assets/enable_hibernation.jpg)
   
-### Wyłączenie hibernacji (-DisableHibernation)
-![Wyłączenie hibernacji](assets/disable_hibernation.jpg)
+### Disabling Hibernation (-DisableHibernation)
+![Disabling Hibernation](assets/disable_hibernation.jpg)
   
-## Kody zakończenia i diagnostyka
+## Exit Codes & Diagnostics
   
-| Kod błędu / Status | Znaczenie techniczne | Działanie skryptu |
+| Status / Exit Code | Technical Meaning | Script Action |
 | :--- | :--- | :--- |
-| **0** | Sukces wykonania | Zadana operacja (włączenie/wyłączenie) zakończona powodzeniem. |
-| **Brak uprawnień admina** | Uruchomienie bez podwyższonych uprawnień UAC | Rzucenie wyjątku i natychmiastowe zatrzymanie wykonania (throw). |
-| **Błąd powercfg** | Kod zakończenia powercfg.exe inny niż 0 | Odnotowanie ostrzeżenia w konsoli i pliku logu. |
+| **0** | Successful execution | Desired operation (enable/disable) completed successfully. |
+| **Missing admin rights** | Executed without elevated UAC privileges | Throws exception and immediately stops execution (`throw`). |
+| **powercfg error** | Exit code of `powercfg.exe` other than 0 | Logs warning to console and log file. |
   
-## Kontakt i wsparcie
+## Contact & Support
   
-W razie problemów z wdrożeniem lub pytań technicznych:
-- **Autor:** Roman Pindela
-- **Adres e-mail:** roman.pindela@gmail.com
-- **Licencja:** MIT License
+For questions or issues regarding deployment:
+- **Author:** Roman Pindela
+- **Email:** roman.pindela@gmail.com
+- **License:** MIT License

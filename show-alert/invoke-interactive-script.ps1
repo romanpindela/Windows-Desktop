@@ -121,8 +121,8 @@ try {
         
         $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $PSArgs
         
-        # Rozwiązanie zlokalizowanej nazwy grupy 'Użytkownicy' za pomocą SID (S-1-5-32-545)
-        # Pozwala to na uruchomienie zadania na pulpicie bez znajomości hasła zalogowanego użytkownika
+        # Resolve localized 'Users' group name via well-known SID (S-1-5-32-545)
+        # Allows running the task on the desktop without knowing the logged-on user's password
         $UsersGroup = (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-545')).Translate([System.Security.Principal.NTAccount]).Value
         $Principal = New-ScheduledTaskPrincipal -GroupId $UsersGroup
         

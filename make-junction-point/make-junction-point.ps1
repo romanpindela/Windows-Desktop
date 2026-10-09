@@ -36,34 +36,34 @@ function Show-ScriptHelp {
     Write-Host "  .\make-junction-point.ps1 -h"
 }
 
-# 1. Automatyczny Help przy braku parametrów lub fladze -h
+# 1. Automatic help when no parameters or -h flag is present
 if ($ShowHelp -or ([string]::IsNullOrWhiteSpace($JunctionPath) -and [string]::IsNullOrWhiteSpace($TargetPath))) {
     Show-ScriptHelp
     exit
 }
 
 try {
-    # 2. Ochrona przed pustym inputem
+    # 2. Guard against empty input
     if ([string]::IsNullOrWhiteSpace($JunctionPath) -or [string]::IsNullOrWhiteSpace($TargetPath)) {
         throw "Error: Both JunctionPath and TargetPath must be provided."
     }
 
-    # 3. Weryfikacja ścieżek bezwzględnych
+    # 3. Absolute path validation
     if (-not ([System.IO.Path]::IsPathRooted($JunctionPath)) -or -not ([System.IO.Path]::IsPathRooted($TargetPath))) {
          throw "Error: Please provide absolute (full) paths for security."
     }
 
-    # 4. Sprawdzenie czy cel istnieje i jest katalogiem
+    # 4. Verify target exists and is a directory
     if (-not (Test-Path -Path $TargetPath -PathType Container)) {
         throw "Error: The target directory '$TargetPath' does not exist."
     }
 
-    # 5. Ochrona przed nadpisaniem istniejących danych
+    # 5. Guard against overwriting existing data
     if (Test-Path -Path $JunctionPath) {
         throw "Error: The path '$JunctionPath' already exists."
     }
 
-    # Tworzenie Junction Point
+    # Create Junction Point
     New-Item -Path $JunctionPath -ItemType Junction -Value $TargetPath | Out-Null
 
     Write-Host "Success: Junction created successfully!" -ForegroundColor Green

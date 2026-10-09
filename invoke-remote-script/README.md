@@ -27,8 +27,8 @@ To view all available parameters and usage guidelines, run the script without ar
 .\invoke-remote-script -h
 ```
 
-### Wywołanie z poświadczeniami
-Parametr `-Credential` przyjmuje obiekt `PSCredential`, zawierający nazwę użytkownika i hasło.
+### Invocation with Credentials
+The `-Credential` parameter accepts a `PSCredential` object containing the username and password.
 
 ```powershell
 $Credential = Get-Credential

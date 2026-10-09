@@ -1,85 +1,94 @@
-﻿# install-applications (Windows Workstation Deployment)
-Dokumentacja techniczna skryptu automatyzującego audyt, pobieranie, instalację oraz bezobsługowe wdrażanie stacji roboczej Windows.
+# install-applications (Windows Workstation Deployment)
+Technical documentation for the automation script facilitating system auditing, downloading, installing, and unattended deployment of software on Windows workstations.
 
-## Informacje o projekcie
+## Project Information
 
-| Parametr | Wartość |
+| Parameter | Value |
 | :--- | :--- |
-| **Nazwa projektu** | install-applications (Windows Workstation Deployment) |
-| **Autor** | Roman Pindela |
-| **Kontakt** | roman.pindela@gmail.com |
-| **Wersja** | 1.9.9 |
-| **Data wydania** | 04.10.2026 |
-| **Licencja** | MIT |
-| **Repozytorium** | [GitHub - roman/install-applications](https://github.com/roman/install-applications) |
+| **Project Name** | install-applications (Windows Workstation Deployment) |
+| **Author** | Roman Pindela |
+| **Contact** | roman.pindela@gmail.com |
+| **Version** | 1.9.9 |
+| **Release Date** | 2026-10-04 |
+| **License** | MIT |
+| **Repository** | [GitHub - roman/install-applications](https://github.com/roman/install-applications) |
 
 ---
 
-## Główne możliwości
+## Key Features
 
-* **Brak hardkodowania:** Lista aplikacji pobierana jest wyłącznie ze wskazanego pliku konfiguracyjnego JSON.
-* **Zaawansowane logowanie do pliku tekstowego:** Każde uruchomienie tworzy szczegółowy plik dziennika z dokładnymi znacznikami czasu `[RRRR-MM-DD GG:MM:SS]`.
-  * Ścieżka domyślna: `C:\Logs\<DataIGodzina>-<Komputer>-<Użytkownik>-Install-Applications.txt`.
-  * Automatyczne tworzenie brakującego katalogu docelowego.
-  * Możliwość zdefiniowania własnej ścieżki za pomocą parametru `-LogPath`.
-* **Audyt rejestru przez .NET Registry API:** Jednorazowa, błyskawiczna inwentaryzacja oprogramowania w pamięci RAM za pośrednictwem natywnej klasy `[Microsoft.Win32.RegistryKey]`. Skrypt skanuje gałęzie:
+* **No Hardcoded Packages:** The application list is parsed exclusively from a user-specified JSON configuration file.
+* **Structured Text Logging:** Every execution generates a comprehensive log file with precise timestamps `[YYYY-MM-DD HH:MM:SS]`.
+  * Default path: `C:\Logs\<DateTime>-<Computer>-<User>-Install-Applications.txt`.
+  * Automatically creates missing destination directories.
+  * Custom paths supported via `-LogPath`.
+* **In-Memory Registry Audit via .NET Registry API:** Fast, single-pass in-memory software inventory via native `[Microsoft.Win32.RegistryKey]`. Scans the following hives:
   * `HKLM` 64-bit (`SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`)
   * `HKLM` 32-bit / WOW6432Node (`SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall`)
-  * `HKCU` profil zalogowanego użytkownika (`SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`)
-* **Inteligentne dopasowywanie (Smart Matching):** Skrypt oczyszcza nazwy pakietów z nawiasów i porównuje trzon programu, bezbłędnie kojarząc pakiety z wpisami rejestru Windows.
-* **Precyzyjne metadane aplikacji:** Dla każdego programu skrypt rejestruje pełną nazwę (`DisplayName`), wersję (`DisplayVersion`), datę instalacji (`InstallDate`) oraz ścieżkę instalacji (`InstallLocation` / `DisplayIcon`).
-* **Raport zainstalowanych programów:** Parametr `-VerifyInstalledApps` (skrót `-v`) wyświetla programy pogrupowane według producenta i posortowane według daty instalacji. Raport zawiera wersję, datę instalacji, rozmiar, architekturę, zakres instalacji i lokalizację. Długie nazwy, wersje i ścieżki są zawijane do kolejnych linii.
-* **Pełna idempotencja (Skip Already Installed):** Programy wykryte w systemie są natychmiast pomijane wraz z prezentacją ich metadanych[cite: 1, 3].
-* **Automatyczna instalacja User-Context (Non-Admin Fallback):** Pakiety odrzucające uprawnienia administratora (kod `0x8A150056` / `-1978335146`, np. Spotify) są delegowane do uruchomienia w kontekście zalogowanego użytkownika (`--scope user`) przez zadanie `ScheduledTask`[cite: 1, 3].
-* **Opcjonalna procedura awaryjna Office 365 (ODT Fallback):** Uruchamiana **wyłącznie po podaniu przełącznika `-Fallback`** w sytuacji wystąpienia błędu sumy kontrolnej hash (`-1978335215`) w winget. Domyślnie procedura ODT jest wyłączona, co zapobiega niekontrolowanemu pobieraniu instalatora awaryjnego.
-* **Automatyczna samonaprawa winget:** Weryfikacja minimalnej wersji menedżera pakietów (>= 1.7.0) oraz naprawa modułem `Microsoft.WinGet.Client`[cite: 1, 3].
-* **Wizualizacja postępu:** Pasek postępu `Write-Progress` oraz numeracja zadań `[X/Y]`[cite: 1, 3].
+  * `HKCU` logged-on user profile (`SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`)
+* **Smart Matching:** Strips parenthetical noise and correlates base product names reliably with Windows registry uninstall entries.
+* **Precise Application Metadata:** Captures product name (`DisplayName`), version (`DisplayVersion`), installation date (`InstallDate`), and location (`InstallLocation` / `DisplayIcon`).
+* **Installed Applications Report:** The `-VerifyInstalledApps` switch (alias `-v`) generates a clear report grouped by software publisher and sorted by install date, including architecture, installation scope, and disk footprint. Long names wrap cleanly.
+* **Full Idempotence (Skip Already Installed):** Detected applications are immediately skipped while displaying their existing installation metadata.
+* **Automatic User-Context Installation (Non-Admin Fallback):** Packages rejecting elevated administrator contexts (error code `0x8A150056` / `-1978335146`, e.g., Spotify) are automatically dispatched to run under the interactive user profile (`--scope user`) via a temporary `ScheduledTask`.
+* **Optional Office 365 Fallback (ODT):** Executed **strictly when `-Fallback` is specified** in situations where winget encounters a hash checksum mismatch (`-1978335215`). Disabled by default to avoid unintended downloads.
+* **Automated WinGet Self-Repair:** Validates the minimum required package manager version (>= 1.7.0) and repairs the installation via `Microsoft.WinGet.Client` when needed.
+* **Visual Progress Tracking:** Real-time console progress bar using `Write-Progress` with `[X/Y]` task indices.
 
 ---
 
-## Struktura katalogu wdrożeniowego
+## Deployment Directory Structure
 
 ```shell
 install-applications/
-├── Install-Applications.ps1       # Główny skrypt instalacyjny PowerShell
-├── ApplicationList-Roman.json     # Dedykowana lista aplikacji roboczych
-├── ApplicationList.json           # Domyślny szablon konfiguracji pakietów
-└── README.md                      # Niniejsza dokumentacja techniczna
+├── Install-Applications.ps1       # Main PowerShell installation script
+├── ApplicationList-Roman.json     # Custom workstation package list
+├── ApplicationList.json           # Default template package list
+└── README.md                      # Technical documentation
 ```
----
-## Wymagania systemowe
-* **System operacyjny:** Windows 10 / Windows 11 (architektura 64-bit).
-* **Uprawnienia:** Konsola PowerShell uruchomiona z uprawnieniami Administratora (niezbędna do instalacji globalnych i rejestracji zadań fallback). Sam raport `-VerifyInstalledApps` można uruchomić bez podwyższonych uprawnień.
-* **Połączenie sieciowe:** Dostęp do sieci Internet (oficjalne serwery CDN producentów oraz repozytorium WinGet).
----
-## Instrukcja uruchomienia
-### 1. Zezwolenie na wykonywanie skryptów (jeśli jest zablokowane)
 
+---
+
+## System Requirements
+* **Operating System:** Windows 10 / Windows 11 (64-bit architecture).
+* **Privileges:** PowerShell running with Administrator privileges (required for machine-wide installs and fallback task registration). The audit report (`-VerifyInstalledApps`) can run without elevation.
+* **Network Connectivity:** Internet access to official vendor CDNs and the WinGet package repository.
+
+---
+
+## Usage Guide
+
+### 1. Allow Script Execution (If Restricted)
 ```shell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
-### 2. Wyświetlenie menu pomocy i danych autora
+
+### 2. Display Help Menu & Author Information
 ```shell
 .\Install-Applications.ps1 -h
 ```
-### 3. Uruchomienie instalacji pakietów
+
+### 3. Run Package Installation
 ```shell
 .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
 ```
-*(Dopuszczalna jest również składnia skrócona: `.\Install-Applications.ps1 .\ApplicationList-Roman.json`)*
-### 4. Raport zainstalowanych programów
+*(Positional syntax is also supported: `.\Install-Applications.ps1 .\ApplicationList-Roman.json`)*
+
+### 4. Generate Installed Applications Audit Report
 ```shell
 .\Install-Applications.ps1 -VerifyInstalledApps
-# Skrót:
+# Short form:
 .\Install-Applications.ps1 -v
-# Zapis do domyślnego pliku w C:\Logs (sufiks -installedApplications):
+# Save to default file in C:\Logs (suffix -installedApplications.txt):
 .\Install-Applications.ps1 -v -l ""
-# Zapis pod wskazaną ścieżką:
+# Save to a custom path:
 .\Install-Applications.ps1 -v -l "C:\Reports\InstalledApps.txt"
 ```
+
 ---
-## Struktura i przykład pliku konfiguracyjnego JSON
-Plik JSON zawiera tablicę obiektów, gdzie każdy obiekt posiada pola `Name` (czytelna nazwa) oraz `Id` (identyfikator pakietu w winget):
+
+## JSON Configuration Format & Example
+The JSON file contains an array of objects, each defining a human-readable `Name` and its corresponding `Id` in the winget repository:
 
 ```json
 [
@@ -106,75 +115,81 @@ Plik JSON zawiera tablicę obiektów, gdzie każdy obiekt posiada pola `Name` (c
   { "Name": "Windows Terminal", "Id": "Microsoft.WindowsTerminal" }
 ]
 ```
----
-## Przykładowy widok konsoli podczas pracy
 
+---
+
+## Sample Console Output During Run
 
 ```shell
 ================================================================================
-  Install-Applications v1.9.6 - Inicjalizacja srodowiska
-  Autor: Roman Pindela | Kontakt: roman.pindela@gmail.com
+  Install-Applications v1.9.9 - Environment Initialization
+  Author: Roman Pindela | Contact: roman.pindela@gmail.com
 ================================================================================
-[i] Wykryto wersje winget: 1.29.380
-[+] Srodowisko winget jest gotowe do pracy.
-[i] Wczytywanie konfiguracji z: .\ApplicationList-Roman.json
-[*] Skanowanie zainstalowanego oprogramowania (.NET Registry API)...
-[+] Zindeksowano 41 zainstalowanych wpisow w rejestrze.
+[i] Detected winget version: 1.29.380
+[+] winget environment is ready.
+[i] Loading configuration from: .\ApplicationList-Roman.json
+[*] Scanning installed software (.NET Registry API)...
+[+] Indexed 41 installed entries in registry.
 
-Znaleziono 26 pozycji do weryfikacji i instalacji.
-Rozpoczynanie procesu instalacji...
+Found 26 items to verify and install.
+Starting installation process...
 
-[1/26] Sprawdzanie i przygotowanie: 7-Zip (ID: 7zip.7zip)...
-    [V] Pominieto: Aplikacja jest juz zainstalowana w systemie.
+[1/26] Verifying and preparing: 7-Zip (ID: 7zip.7zip)...
+    [V] Skipped: Application is already installed on system.
     ----------------------------------------------------------------
-    Wykryte parametry zainstalowanej aplikacji:
-      * Nazwa aplikacji  : 7-Zip 24.08 (x64)
-      * Wersja programu  : 24.08.00.0
-      * Data instalacji  : 2026-10-02
-      * Lokalizacja      : C:\Program Files\7-Zip
+    Detected parameters of installed application:
+      * Application Name : 7-Zip 24.08 (x64)
+      * Program Version  : 24.08.00.0
+      * Install Date     : 2026-10-02
+      * Location         : C:\Program Files\7-Zip
     ----------------------------------------------------------------
 
-[2/26] Sprawdzanie i przygotowanie: Spotify (ID: Spotify.Spotify)...
-    [-] Brak aplikacji w systemie. Rozpoczynanie pobierania i instalacji...
-    [!] Pakiet Spotify wymaga instalacji w profilu uzytkownika.
-        -> Uruchamianie zadania w kontekscie zalogowanego uzytkownika...
-    [+] Pomyslnie zakonczono instalacje w profilu uzytkownika.
+[2/26] Verifying and preparing: Spotify (ID: Spotify.Spotify)...
+    [-] Application not found on system. Starting download and installation...
+    [!] Package Spotify requires installation in user profile.
+        -> Starting task in logged-on user context...
+    [+] Successfully completed installation in user profile.
     ----------------------------------------------------------------
-    Szczegoly nowo zainstalowanej aplikacji:
-      * Nazwa aplikacji  : Spotify
-      * Wersja programu  : 1.2.50.335
-      * Data instalacji  : 2026-10-04
-      * Lokalizacja      : C:\Users\rpindela\AppData\Roaming\Spotify
+    Details of newly installed application:
+      * Application Name : Spotify
+      * Program Version  : 1.2.50.335
+      * Install Date     : 2026-10-04
+      * Location         : C:\Users\rpindela\AppData\Roaming\Spotify
     ----------------------------------------------------------------
 ```
----
-## Kody zakończenia i diagnostyka
 
-| Kod błędu / Status | Znaczenie techniczne | Działanie skryptu |
-| --- | --- | --- |
-| **0** | Sukces instalatora | Pobranie i prezentacja metadanych nowo zainstalowanego pakietu. |
-| **-1978335189 (0x8A15002B)** | Pakiet jest już zarejestrowany w systemie | Pobranie wpisu z inwentarza rejestru, wyświetlenie metadanych i pominięcie instalacji. |
-| **-1978335146 (0x8A150056)** | Blokada uruchomienia w kontekście administratora | Automatyczna instalacja w profilu użytkownika za pomocą izolowanego zadania ScheduledTask (--scope user). |
-| **-1978335215 (0x8A150011)** | Niezgodność hasha (*Hash Mismatch*) | Uruchomienie procedury awaryjnej (dla pakietu Office: automatyczne wdrożenie ODT). |
-| **-1073741819 (0xC0000005)** | Błąd krytyczny starszej wersji winget | Automatyczna naprawa i aktualizacja pakietów przez Microsoft.WinGet.Client. |
 ---
+
+## Exit Codes & Diagnostics
+
+| Status / Exit Code | Technical Meaning | Script Action |
+| --- | --- | --- |
+| **0** | Installer success | Retrieves and logs metadata of newly installed package. |
+| **-1978335189 (0x8A15002B)** | Package is already registered in system | Pulls entry from registry inventory, displays metadata, and skips install. |
+| **-1978335146 (0x8A150056)** | Elevated admin context blocked by installer | Automatically dispatches user profile install via scheduled task (`--scope user`). |
+| **-1978335215 (0x8A150011)** | Hash checksum mismatch (*Hash Mismatch*) | Executes emergency fallback routine (if `-Fallback` was specified). |
+| **-1073741819 (0xC0000005)** | Legacy winget critical crash | Automated repair and update via `Microsoft.WinGet.Client`. |
+
+---
+
 ## Screenshots - Execution View
 
 ### Standard Run
 ![Standard Run](assets/standard_run.jpg)
 
-### Log file
+### Log File
 ![Help Output](assets/Log_file.jpg)
 
-### Installing apps
+### Installing Apps
 ![Help Output](assets/Installing_apps.jpg)
 
-### Installing apps 2
+### Installing Apps 2
 ![Help Output](assets/Installing_apps2.jpg)
 
 ---
-## Kontakt i wsparcie
-W razie problemów z wdrożeniem lub pytań technicznych:
-* **Autor:** Roman Pindela
-* **Adres e-mail:** roman.pindela@gmail.com
-* **Licencja:** MIT License
+
+## Contact & Support
+For deployment questions or technical support:
+* **Author:** Roman Pindela
+* **Email:** roman.pindela@gmail.com
+* **License:** MIT License

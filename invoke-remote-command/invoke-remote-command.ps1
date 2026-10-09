@@ -60,13 +60,13 @@ if ([string]::IsNullOrWhiteSpace($RemoteCommand)) {
 try {
     Write-Host "Executing '$RemoteCommand' on $($ComputerName)..." -ForegroundColor Yellow
     
-    # Konwersja tekstu na ScriptBlock
+    # Convert text to ScriptBlock
     $block = [scriptblock]::Create($RemoteCommand)
     
     Invoke-Command -ComputerName $ComputerName -Credential $Credential -ScriptBlock $block -ErrorAction Stop
     
     Write-Host "Execution successful." -ForegroundColor Green
 } catch {
-    # Używamy $($ComputerName) aby uniknąć błędów parsera
+    # Using $($ComputerName) to avoid parser errors
     Write-Error "Failed to execute on $($ComputerName): $($_.Exception.Message)"
 }

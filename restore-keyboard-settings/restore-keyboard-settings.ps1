@@ -1,38 +1,38 @@
 <#
 .SYNOPSIS
-    Skrypt resetujący ustawienia klawiatury w Windows 11 do standardu Polski (Programisty)
-    oraz wyłączający funkcje ułatwień dostępu (Klawisze trwałe itp.).
+    Script resetting keyboard settings in Windows 11 to Polish (Programmers) layout
+    and disabling accessibility ease-of-access shortcuts (Sticky Keys, etc.).
 #>
 
-Write-Host "Rozpoczynanie naprawy i przywracania domyślnych ustawień klawiatury..." -ForegroundColor Cyan
+Write-Host "Starting repair and restoration of default keyboard settings..." -ForegroundColor Cyan
 
-# 1. Ustawienie układu klawiatury na Polski (Programisty) jako jedyny/główny
-Write-Host "-> Ustawianie układu klawiatury: Polski (programisty)..." -ForegroundColor Green
+# 1. Set keyboard layout to Polish (Programmers) as the primary/only layout
+Write-Host "-> Setting keyboard layout: Polish (Programmers)..." -ForegroundColor Green
 $LanguageList = New-WinUserLanguageList -Language "pl-PL"
 $LanguageList[0].InputMethodTips.Clear()
-$LanguageList[0].InputMethodTips.Add('0415:00000415') # Kod dla układu Polski (programisty)
+$LanguageList[0].InputMethodTips.Add('0415:00000415') # Identifier for Polish (Programmers) layout
 Set-WinUserLanguageList -LanguageList $LanguageList -Force
 
-# 2. Wyłączenie Klawiszy Trwałych (Sticky Keys) w rejestrze
-Write-Host "-> Wyłączanie Klawiszy Trwałych i skrótów aktywujących..." -ForegroundColor Green
+# 2. Disable Sticky Keys in the registry
+Write-Host "-> Disabling Sticky Keys and activation shortcuts..." -ForegroundColor Green
 $AccessibilityPath = "HKCU:\Control Panel\Accessibility"
 
-# Flags: 506 wyłącza Klawisze trwałe oraz zapobiega ich włączeniu przez 5-krotne wciśnięcie Shift
+# Flags: 506 disables Sticky Keys and prevents activation via 5x Shift keypress
 Set-ItemProperty -Path "$AccessibilityPath\StickyKeys" -Name "Flags" -Value "506"
 
-# 3. Wyłączenie Klawiszy Filtrujących (Filter Keys) i Klawiszy Przełączających (Toggle Keys)
-Write-Host "-> Wyłączanie Klawiszy Filtrujących i Przełączających..." -ForegroundColor Green
+# 3. Disable Filter Keys and Toggle Keys
+Write-Host "-> Disabling Filter Keys and Toggle Keys..." -ForegroundColor Green
 Set-ItemProperty -Path "$AccessibilityPath\Keyboard Response" -Name "Flags" -Value "122"
 Set-ItemProperty -Path "$AccessibilityPath\ToggleKeys" -Name "Flags" -Value "58"
 
-# 4. Przywrócenie domyślnej prędkości i opóźnienia powtarzania klawiszy
-Write-Host "-> Przywracanie domyślnej prędkości wpisywania..." -ForegroundColor Green
-Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "KeyboardDelay" -Value "1"     # Standardowe opóźnienie
-Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "KeyboardSpeed" -Value "31"    # Maksymalna standardowa prędkość
+# 4. Restore default keyboard repeat rate and delay
+Write-Host "-> Restoring default typing rate and delay..." -ForegroundColor Green
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "KeyboardDelay" -Value "1"     # Standard delay
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "KeyboardSpeed" -Value "31"    # Maximum standard speed
 
-# 5. Restart procesu Explorer w celu natychmiastowego zastosowania części ustawień
-Write-Host "-> Odświeżanie interfejsu systemowego..." -ForegroundColor Green
+# 5. Restart Explorer process to immediately apply UI changes
+Write-Host "-> Refreshing system shell interface..." -ForegroundColor Green
 Stop-Process -Name explorer -Force
 
-Write-Host "`n[SUKCES] Ustawienia zostały przywrócone do normy!" -ForegroundColor Yellow
-Write-Host "Zaleca się ponowne uruchomienie komputera (Restart), aby wszystkie zmiany w rejestrze weszły w życie." -ForegroundColor Cyan
+Write-Host "`n[SUCCESS] Settings have been restored to default!" -ForegroundColor Yellow
+Write-Host "A system restart is recommended for all registry changes to take full effect." -ForegroundColor Cyan

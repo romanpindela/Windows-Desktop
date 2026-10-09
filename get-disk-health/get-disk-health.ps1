@@ -306,12 +306,12 @@ try {
             }
         }
 
-        # Dynamiczne wyświetlanie z oznaczaniem kolorami progów ostrzegawczych
+        # Dynamic display with warning threshold color-coding
         Write-Host ""
         foreach ($key in $details.Keys) {
             $val = $details[$key]
             
-            # Nagłówki separatora
+            # Separator headers
             if ($key -eq "---") {
                 Write-Host $val -ForegroundColor DarkCyan
                 $HtmlReport += "<div style='margin-top: 10px; margin-bottom: 5px; color: #008B8B; font-weight: bold;'>$val</div>"
@@ -322,28 +322,28 @@ try {
 
             $HtmlColorClass = "white"
 
-            # Kolorowanie progu "Wear (%)"
+            # Color-code "Wear (%)" threshold
             if ($key -eq "Wear (%)" -and $val -match "(\d+)") {
                 $wear = [int]$matches[1]
                 if ($wear -ge 90) { Write-Host $val -ForegroundColor Red; $HtmlColorClass = "danger" }
                 elseif ($wear -ge 75) { Write-Host $val -ForegroundColor Yellow; $HtmlColorClass = "warning" }
                 else { Write-Host $val -ForegroundColor Green; $HtmlColorClass = "success" }
             }
-            # Kolorowanie zapasu sektorów (odwrotnie, mało = źle)
+            # Color-code available spare sectors (inverted: lower is worse)
             elseif ($key -eq "Available Spare" -and $val -match "(\d+)") {
                 $spare = [int]$matches[1]
                 if ($spare -le 10) { Write-Host $val -ForegroundColor Red; $HtmlColorClass = "danger" }
                 elseif ($spare -le 30) { Write-Host $val -ForegroundColor Yellow; $HtmlColorClass = "warning" }
                 else { Write-Host $val -ForegroundColor Green; $HtmlColorClass = "success" }
             }
-            # Kolorowanie temperatury
+            # Color-code temperature
             elseif ($key -match "Temperature" -and $val -match "(\d+)") {
                 $temp = [int]$matches[1]
                 if ($temp -ge 70) { Write-Host $val -ForegroundColor Red; $HtmlColorClass = "danger" }
                 elseif ($temp -ge 55) { Write-Host $val -ForegroundColor Yellow; $HtmlColorClass = "warning" }
                 else { Write-Host $val -ForegroundColor Green; $HtmlColorClass = "success" }
             }
-            # Kolorowanie statusów, błędów i flag krytycznych
+            # Color-code statuses, errors, and critical flags
             elseif ($key -match "Status") {
                 if ($val -match "FAILED|Error|Degraded|Pred Fail") { Write-Host $val -ForegroundColor Red; $HtmlColorClass = "danger" }
                 elseif ($val -match "Warning") { Write-Host $val -ForegroundColor Yellow; $HtmlColorClass = "warning" }
@@ -357,7 +357,7 @@ try {
                 if ($val -match "^0" -or $val -eq 0) { Write-Host $val -ForegroundColor Green; $HtmlColorClass = "success" }
                 else { Write-Host $val -ForegroundColor Red; $HtmlColorClass = "danger" }
             }
-            # Domyślny kolor dla reszty atrybutów
+            # Default color for remaining attributes
             else {
                 Write-Host $val -ForegroundColor White
                 $HtmlColorClass = "white"
