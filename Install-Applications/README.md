@@ -44,7 +44,13 @@ install-applications/
 ├── Install-Applications.ps1       # Main PowerShell installation & management script
 ├── ApplicationList-Roman.json     # Custom workstation package list
 ├── ApplicationList.json           # Default template package list
-└── README.md                      # Technical documentation
+├── README.md                      # Technical documentation
+└── assets/                        # Execution screenshots
+    ├── standard_run.jpg           # Standard batch installation view
+    ├── upgrading_apps.jpg         # WinGet application upgrade view
+    ├── Installing_apps.jpg        # In-progress package installation
+    ├── Installing_apps2.jpg       # Finished package installation
+    └── Log_file.jpg               # Execution log file view
 ```
 
 ---
@@ -79,6 +85,8 @@ Upgrade a specific application:
 ```powershell
 .\Install-Applications.ps1 -Upgrade -Target "7zip.7zip"
 ```
+
+![Upgrading Applications](assets/upgrading_apps.jpg)
 
 ### 4. Install a Single Application by Package Name or ID
 Install by exact ID or name:
@@ -261,14 +269,17 @@ Chrome Remote Desktop Host                      Google.ChromeRemoteDesktopHost  
 ### Standard Run
 ![Standard Run](assets/standard_run.jpg)
 
-### Log File
-![Help Output](assets/Log_file.jpg)
+### Upgrading Applications
+![Upgrading Applications](assets/upgrading_apps.jpg)
 
 ### Installing Apps
-![Help Output](assets/Installing_apps.jpg)
+![Installing Apps](assets/Installing_apps.jpg)
 
 ### Installing Apps 2
-![Help Output](assets/Installing_apps2.jpg)
+![Installing Apps 2](assets/Installing_apps2.jpg)
+
+### Log File
+![Log File](assets/Log_file.jpg)
 
 ---
 
