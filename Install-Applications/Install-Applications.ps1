@@ -3,42 +3,69 @@
   Script Name : Install-Applications.ps1
   Author      : Roman Pindela
   Contact     : roman.pindela@gmail.com
-  Version     : 1.9.9
-  Release Date: 2026-10-04
+  Version     : 2.0.0
+  Release Date: 2026-10-12
   License     : MIT
   Repository  : https://github.com/roman/install-applications
 
   DESCRIPTION:
-    Automates workstation software installation and configuration in Windows
-    (x64 architecture) based on winget and a JSON configuration file.
+    Automates workstation software installation, upgrades, and catalog search
+    in Windows (x64 architecture) based on winget and optional JSON configurations.
     Utilizes native .NET Registry API for fast in-memory auditing and retrieval
     of installed application metadata (DisplayName, DisplayVersion,
     InstallDate, InstallLocation). Skips programs already present on the system
     and supports user-profile fallback (non-admin execution for apps like Spotify).
+    Supports:
+    - Workstation software deployment from a JSON configuration file.
+    - Upgrading all installed applications (or a specific package) via winget.
+    - Installing individual applications by package name/ID with disambiguation.
+    - Searching the online winget repository by keyword/pattern (e.g. "Google").
+    - Generating an audit report of currently installed workstation software.
     The emergency Office Deployment Tool (ODT) procedure for Microsoft 365
     is executed ONLY when the user explicitly provides the -Fallback switch.
     Includes comprehensive execution logging to a file.
 
 ================================================================================
 .SYNOPSIS
-    Automatically retrieves, audits, and installs applications from a JSON file using winget.
+    Installs, upgrades, searches, and audits software packages using winget and native registry inspection.
 .PARAMETER ConfigPath
     Path to the JSON file containing the list of software packages to install.
-.PARAMETER LogPath
-    Path to the installation log or installed applications report.
-    In report mode, an empty value (-l "") saves the report under a default name
-    with the suffix -installedApplications.txt.
-.PARAMETER Fallback
-    Allows fallback to the Office Deployment Tool (ODT) procedure for Microsoft 365
-    in case of winget checksum mismatch errors. Disabled by default.
+.PARAMETER Install
+    Package ID or name of an application to install via winget. If ambiguous, displays matching candidates with a clarification request.
+    Aliases: -Package, -PackageName, -Id, -Name, -App, -i.
+.PARAMETER Upgrade
+    Upgrades installed workstation applications via winget. If -Package is omitted, upgrades all packages with available updates.
+    Aliases: -u, -Update, -UpgradeAll.
+.PARAMETER UpgradeTarget
+    Optional target package ID or name when used with -Upgrade.
+    Aliases: -Target, -TargetPackage, -TargetApp.
+.PARAMETER Search
+    Searches the online winget repository by pattern or keyword (e.g. "Google"), returning matching publisher, name, moniker, and tag results.
+    Aliases: -s, -Find, -Query.
 .PARAMETER VerifyInstalledApps
     Displays installed programs grouped by publisher and sorted by install date.
+    Aliases: -v.
+.PARAMETER LogPath
+    Path to the installation/upgrade log or report.
+    Aliases: -l, -Log.
+.PARAMETER Fallback
+    Allows fallback to the Office Deployment Tool (ODT) procedure for Microsoft 365 in case of winget checksum mismatch errors. Disabled by default.
+    Aliases: -fo, -FallbackOffice.
 .PARAMETER Help
     Displays detailed help menu, version, and author information.
+    Aliases: -h.
 .EXAMPLE
     .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
 .EXAMPLE
-    .\Install-Applications.ps1 -ConfigPath .\ApplicationList.json -Fallback
+    .\Install-Applications.ps1 -Upgrade
+.EXAMPLE
+    .\Install-Applications.ps1 -Upgrade -Package "7zip.7zip"
+.EXAMPLE
+    .\Install-Applications.ps1 -Install "Google Chrome"
+.EXAMPLE
+    .\Install-Applications.ps1 -Install "Chrome"
+.EXAMPLE
+    .\Install-Applications.ps1 -Search "Google"
 .EXAMPLE
     .\Install-Applications.ps1 -VerifyInstalledApps
 .EXAMPLE
@@ -46,9 +73,10 @@
 .EXAMPLE
     .\Install-Applications.ps1 -h
 #>
-[CmdletBinding(DefaultParameterSetName = "Install")]
+[CmdletBinding(DefaultParameterSetName = "Config")]
 param (
-    [Parameter(ParameterSetName = "Install", Position = 0)]
+    # --- Mode: Deploy from JSON configuration ---
+    [Parameter(ParameterSetName = "Config", Position = 0)]
     [Alias("c", "Path")]
     [ValidateScript({
         $resolved = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($_);
@@ -57,19 +85,45 @@ param (
     })]
     [string]$ConfigPath,
 
-    [Parameter(ParameterSetName = "Install", Position = 1)]
+    # --- Mode: Single Package Installation ---
+    [Parameter(ParameterSetName = "InstallPackage", Mandatory = $true, Position = 0)]
+    [Alias("Package", "PackageName", "Id", "Name", "App", "i")]
+    [string]$Install,
+
+    # --- Mode: Upgrade Installed Applications ---
+    [Parameter(ParameterSetName = "Upgrade", Mandatory = $true)]
+    [Alias("u", "Update", "UpgradeAll")]
+    [switch]$Upgrade,
+
+    [Parameter(ParameterSetName = "Upgrade", Mandatory = $false, Position = 0)]
+    [Alias("Target", "TargetPackage", "TargetApp")]
+    [string]$UpgradeTarget,
+
+    # --- Mode: Online Search ---
+    [Parameter(ParameterSetName = "Search", Mandatory = $true, Position = 0)]
+    [Alias("s", "Find", "Query")]
+    [string]$Search,
+
+    # --- Mode: Verify Installed Applications Report ---
+    [Parameter(ParameterSetName = "Verify", Mandatory = $true)]
+    [Alias("v")]
+    [switch]$VerifyInstalledApps,
+
+    # --- Global Switches and Options ---
+    [Parameter(ParameterSetName = "Config")]
+    [Parameter(ParameterSetName = "InstallPackage")]
+    [Alias("fo", "FallbackOffice")]
+    [switch]$Fallback,
+
+    [Parameter(ParameterSetName = "Config", Position = 1)]
+    [Parameter(ParameterSetName = "InstallPackage")]
+    [Parameter(ParameterSetName = "Upgrade")]
+    [Parameter(ParameterSetName = "Search")]
     [Parameter(ParameterSetName = "Verify")]
     [Alias("l", "Log")]
     [string]$LogPath,
 
-    [Parameter(ParameterSetName = "Install")]
-    [Alias("fo", "FallbackOffice")]
-    [switch]$Fallback,
-
-    [Parameter(ParameterSetName = "Verify")]
-    [Alias("v")]
-    [switch]$VerifyInstalledApps,
-
+    # --- Help Mode ---
     [Parameter(ParameterSetName = "Help")]
     [Alias("h")]
     [switch]$Help
@@ -80,10 +134,10 @@ $ErrorActionPreference = "Stop";
 
 $SCRIPT_INFO = @{
     Name        = "Install-Applications";
-    Version     = "1.9.9";
+    Version     = "2.0.0";
     Author      = "Roman Pindela";
     Contact     = "roman.pindela@gmail.com";
-    ReleaseDate = "2026-10-04";
+    ReleaseDate = "2026-10-12";
 };
 
 # Global variable holding active log file path
@@ -94,7 +148,7 @@ function Write-Log {
         [string]$Message,
         [ConsoleColor]$Color = [ConsoleColor]::White
     )
-    [Console]::CursorLeft = 0;
+    try { [Console]::CursorLeft = 0; } catch {}
     Write-Host "$Message" -ForegroundColor $Color;
 
     if (-not [string]::IsNullOrWhiteSpace($script:ActiveLogFile)) {
@@ -108,53 +162,77 @@ function Write-Log {
 }
 
 function Show-HelpGuide {
-    [Console]::CursorLeft = 0;
+    try { [Console]::CursorLeft = 0; } catch {}
     Write-Host @"
 ================================================================================
   $($SCRIPT_INFO.Name) - v$($SCRIPT_INFO.Version)
   Author: $($SCRIPT_INFO.Author) | Contact: $($SCRIPT_INFO.Contact)
 ================================================================================
 DESCRIPTION:
-  Automated Windows x64 workstation deployment tool featuring complete
-  in-memory registry auditing and structured activity logging.
+  Automated Windows x64 workstation deployment, upgrade, search, and auditing tool
+  powered by winget and native .NET Registry inspection.
 
 USAGE:
-  .\Install-Applications.ps1 -ConfigPath <path_to_file.json> [-LogPath <path_to_log.txt>] [-Fallback]
-  .\Install-Applications.ps1 -VerifyInstalledApps [-LogPath <path_to_report.txt>]
+  # 1. Batch installation from JSON configuration file:
+  .\Install-Applications.ps1 -ConfigPath <path.json> [-LogPath <log.txt>] [-Fallback]
+  .\Install-Applications.ps1 .\ApplicationList.json
+
+  # 2. Upgrade installed applications via winget:
+  .\Install-Applications.ps1 -Upgrade [-LogPath <log.txt>]
+  .\Install-Applications.ps1 -Upgrade -Package <PackageId>
+  .\Install-Applications.ps1 -u
+
+  # 3. Single application installation with disambiguation:
+  .\Install-Applications.ps1 -Install <PackageNameOrId> [-Fallback] [-LogPath <log.txt>]
+  .\Install-Applications.ps1 -Package "Google.Chrome"
+  .\Install-Applications.ps1 -i "Chrome"
+
+  # 4. Search online winget catalog by pattern/keyword:
+  .\Install-Applications.ps1 -Search <pattern> [-LogPath <report.txt>]
+  .\Install-Applications.ps1 -s "Google"
+
+  # 5. Generate installed applications audit report:
+  .\Install-Applications.ps1 -VerifyInstalledApps [-LogPath <report.txt>]
   .\Install-Applications.ps1 -v [-l ""]
+
+  # 6. Display help menu:
   .\Install-Applications.ps1 -h | -Help
 
 PARAMETERS:
-  -ConfigPath, -c, -Path : [Required] Path to JSON file with package configurations.
-  -LogPath, -l, -Log     : [Optional] Path to installation log file. With -v, saves
-                           the report; -v -l "" selects default name ending with
-                           -installedApplications.txt.
-  -Fallback, -fo         : [Optional] Enables emergency ODT procedure for Office 365
-                           in case of winget checksum mismatch. Without this flag,
-                           the emergency procedure is skipped.
-  -VerifyInstalledApps, -v : Displays installed programs grouped by publisher,
-                             sorted by installation date.
+  -ConfigPath, -c, -Path : Path to JSON file containing application package list.
+  -Upgrade, -u, -Update  : Upgrades installed applications via winget. If -Package is omitted,
+                           upgrades all applications with available updates.
+  -Install, -Package, -i : Installs an application by package name or ID. If ambiguous,
+                           lists matching candidates and asks to clarify.
+  -Search, -s, -Find     : Searches online winget repository by pattern (e.g. "Google").
+  -VerifyInstalledApps, -v : Displays installed programs grouped by publisher and install date.
+  -LogPath, -l, -Log     : Path to log file or report. If omitted in install/upgrade mode,
+                           defaults to C:\Logs\<DateTime>-<Computer>-<User>-Install-Applications.txt.
+  -Fallback, -fo         : Enables emergency ODT procedure for Office 365 on checksum mismatch.
   -Help, -h              : Displays this help menu and author info.
 
 EXAMPLES:
   .\Install-Applications.ps1 -h
   .\Install-Applications.ps1 -ConfigPath .\ApplicationList-Roman.json
-  .\Install-Applications.ps1 -c .\ApplicationList.json -Fallback
+  .\Install-Applications.ps1 -Upgrade
+  .\Install-Applications.ps1 -Upgrade -Package "7zip.7zip"
+  .\Install-Applications.ps1 -Install "Google Chrome"
+  .\Install-Applications.ps1 -Install "Chrome"
+  .\Install-Applications.ps1 -Search "Google"
   .\Install-Applications.ps1 -v
   .\Install-Applications.ps1 -v -l ""
-  .\Install-Applications.ps1 -v -l "C:\Reports\InstalledApps.txt"
-  .\Install-Applications.ps1 .\ApplicationList.json -LogPath "C:\Deploy\log.txt"
 ================================================================================
 "@ -ForegroundColor Yellow;
 }
 
-if ($Help -or ([string]::IsNullOrWhiteSpace($ConfigPath) -and -not $VerifyInstalledApps)) {
+if ($Help -or (-not $Upgrade -and -not $VerifyInstalledApps -and [string]::IsNullOrWhiteSpace($ConfigPath) -and [string]::IsNullOrWhiteSpace($Install) -and [string]::IsNullOrWhiteSpace($Search))) {
     Show-HelpGuide;
     return;
 }
 
-# Initialize default log path if not provided
-if (-not $VerifyInstalledApps) {
+# Initialize default log path if not provided (for modifying operations)
+$needsLogging = (-not $VerifyInstalledApps -and [string]::IsNullOrWhiteSpace($Search));
+if ($needsLogging) {
     if ([string]::IsNullOrWhiteSpace($LogPath)) {
         $defaultLogDir = "C:\Logs";
         $timeMarker = (Get-Date).ToString("yyyyMMdd_HHmmss");
@@ -620,8 +698,428 @@ function Install-AppPackage {
     }
 }
 
+# --- WinGet Parsing & Output Engine ---
+
+function Parse-WingetOutput {
+    param ([string]$Raw)
+
+    $items = [System.Collections.Generic.List[PSCustomObject]]::new();
+    if ([string]::IsNullOrWhiteSpace($Raw)) { return @($items); }
+
+    $lines = $Raw -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) };
+    $headerIdx = -1;
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match '\b(Name|Nazwa)\b' -and $lines[$i] -match '\b(Id|Identyfikator)\b') {
+            $headerIdx = $i;
+            break;
+        }
+    }
+
+    if ($headerIdx -lt 0 -or ($headerIdx + 1) -ge $lines.Count) { return @($items); }
+
+    $header = $lines[$headerIdx];
+    $mId    = [regex]::Match($header, '\b(Id|Identyfikator)\b');
+    $mVer   = [regex]::Match($header, '\b(Version|Wersja)\b');
+    $mAvail = [regex]::Match($header, '\b(Available|Dostępne)\b');
+    $mMatch = [regex]::Match($header, '\b(Match|Dopasowanie)\b');
+    $mSrc   = [regex]::Match($header, '(?i)\bSource\b|\b.*r.*d.*o\b|\S+$');
+
+    $idPos    = if ($mId.Success) { $mId.Index } else { 30 };
+    $verPos   = if ($mVer.Success) { $mVer.Index } else { 60 };
+    $availPos = if ($mAvail.Success) { $mAvail.Index } else { -1 };
+    $matchPos = if ($mMatch.Success) { $mMatch.Index } else { -1 };
+    $srcPos   = if ($mSrc.Success) { $mSrc.Index } else { -1 };
+
+    for ($j = $headerIdx + 2; $j -lt $lines.Count; $j++) {
+        $line = $lines[$j];
+        if ($line -match '^-{3,}') { continue; }
+        if ($line.Length -gt $idPos) {
+            $name = $line.Substring(0, [math]::Min($idPos, $line.Length)).Trim();
+
+            $id = if ($line.Length -gt $verPos) { $line.Substring($idPos, $verPos - $idPos).Trim() } else { $line.Substring($idPos).Trim() };
+
+            $colAfterVer = -1;
+            if ($availPos -gt $verPos) { $colAfterVer = $availPos; }
+            elseif ($matchPos -gt $verPos) { $colAfterVer = $matchPos; }
+            elseif ($srcPos -gt $verPos) { $colAfterVer = $srcPos; }
+
+            $ver = if ($colAfterVer -gt 0 -and $line.Length -gt $colAfterVer) {
+                $line.Substring($verPos, $colAfterVer - $verPos).Trim();
+            } elseif ($line.Length -gt $verPos) {
+                $line.Substring($verPos).Trim();
+            } else { ""; };
+
+            $avail = "";
+            if ($availPos -gt 0 -and $line.Length -gt $availPos) {
+                $availEnd = if ($srcPos -gt $availPos) { $srcPos } else { $line.Length };
+                $avail = if ($line.Length -gt $availEnd) { $line.Substring($availPos, $availEnd - $availPos).Trim() } else { $line.Substring($availPos).Trim() };
+            }
+
+            $matchVal = "";
+            if ($matchPos -gt 0 -and $line.Length -gt $matchPos) {
+                $matchEnd = if ($srcPos -gt $matchPos) { $srcPos } else { $line.Length };
+                $matchVal = if ($line.Length -gt $matchEnd) { $line.Substring($matchPos, $matchEnd - $matchPos).Trim() } else { $line.Substring($matchPos).Trim() };
+            }
+
+            $src = if ($srcPos -gt 0 -and $line.Length -gt $srcPos) { $line.Substring($srcPos).Trim() } else { ""; };
+
+            if (-not [string]::IsNullOrWhiteSpace($id)) {
+                $items.Add([PSCustomObject]@{
+                    Name      = $name;
+                    Id        = $id;
+                    Version   = $ver;
+                    Available = $avail;
+                    Match     = $matchVal;
+                    Source    = $src;
+                });
+            }
+        }
+    }
+    return @($items);
+}
+
+function Search-WingetCatalog {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Query,
+        [switch]$ExactId,
+        [switch]$ExactName
+    )
+
+    $cmdArgs = @("search", "--accept-source-agreements");
+    if ($ExactId) {
+        $cmdArgs += @("--exact", "--id", $Query);
+    } elseif ($ExactName) {
+        $cmdArgs += @("--exact", "--name", $Query);
+    } else {
+        $cmdArgs += $Query;
+    }
+
+    try {
+        $raw = (& winget.exe @cmdArgs 2>&1 | Out-String);
+        return @(Parse-WingetOutput -Raw $raw);
+    }
+    catch {
+        return @();
+    }
+}
+
+function Get-WingetAvailableUpgrades {
+    try {
+        $raw = (& winget.exe upgrade --accept-source-agreements 2>&1 | Out-String);
+        return @(Parse-WingetOutput -Raw $raw);
+    }
+    catch {
+        return @();
+    }
+}
+
+function Invoke-ApplicationsUpgrade {
+    param (
+        [string]$TargetPackage
+    )
+
+    try { Clear-Host; } catch {}
+    Write-Log "================================================================================" Cyan;
+    Write-Log "  $($SCRIPT_INFO.Name) v$($SCRIPT_INFO.Version) - Workstation Software Upgrade" Cyan;
+    Write-Log "  Author: $($SCRIPT_INFO.Author) | Contact: $($SCRIPT_INFO.Contact)" Gray;
+    Write-Log "  Log File: $resolvedLogPath" DarkCyan;
+    Write-Log "================================================================================" Cyan;
+
+    Write-Log "[*] Checking for available software upgrades via winget..." Gray;
+    $upgrades = @(Get-WingetAvailableUpgrades);
+
+    if ($upgrades.Count -eq 0) {
+        Write-Log "[+] All installed applications are up to date. No upgrades available." Green;
+        return;
+    }
+
+    Write-Log "[*] Found $($upgrades.Count) application(s) with available upgrades:" Cyan;
+    $summaryTable = $upgrades |
+        Format-Table `
+            @{Label = "Application"; Expression = { $_.Name }; Width = 40}, `
+            @{Label = "Package ID"; Expression = { $_.Id }; Width = 36}, `
+            @{Label = "Current Version"; Expression = { $_.Version }; Width = 18}, `
+            @{Label = "Available Version"; Expression = { $_.Available }; Width = 18} `
+        -Wrap -AutoSize | Out-String -Width 120;
+    Write-Log $summaryTable.TrimEnd() Gray;
+
+    # If user specified a specific package to upgrade
+    if (-not [string]::IsNullOrWhiteSpace($TargetPackage)) {
+        $filtered = @($upgrades | Where-Object {
+            $_.Id -ieq $TargetPackage -or
+            $_.Name -ieq $TargetPackage -or
+            $_.Id -like "*$TargetPackage*" -or
+            $_.Name -like "*$TargetPackage*"
+        });
+
+        if ($filtered.Count -eq 0) {
+            Write-Log "[i] No available upgrades found matching target '$TargetPackage'." Yellow;
+            Write-Log "    The package might already be up to date or is not installed via winget." Gray;
+            return;
+        }
+
+        if ($filtered.Count -gt 1 -and -not ($filtered | Where-Object { $_.Id -ieq $TargetPackage -or $_.Name -ieq $TargetPackage })) {
+            Write-Log "[!] Multiple upgrade candidates match '$TargetPackage'. Please specify exact Id:" Yellow;
+            foreach ($cand in $filtered) {
+                Write-Log "    * $($cand.Name) (Id: $($cand.Id))" Gray;
+            }
+            return;
+        }
+
+        $targetObj = if ($filtered.Count -eq 1) { $filtered[0] } else { ($filtered | Where-Object { $_.Id -ieq $TargetPackage -or $_.Name -ieq $TargetPackage })[0] };
+        $toUpgradeList = @($targetObj);
+    } else {
+        $toUpgradeList = $upgrades;
+    }
+
+    if (-not (Test-IsAdmin)) {
+        throw "Script requires administrator privileges to upgrade software. Run PowerShell as Administrator.";
+    }
+
+    Assert-WingetPrerequisites "1.7.0";
+
+    $total = $toUpgradeList.Count;
+    Write-Log "`nStarting upgrade process for $total package(s)...`n" DarkCyan;
+
+    $idx = 0;
+    foreach ($pkg in $toUpgradeList) {
+        $idx++;
+        $prefix = "[$idx/$total]";
+        Write-Log "$prefix Upgrading: $($pkg.Name) (ID: $($pkg.Id))..." Cyan;
+        Write-Log "    Current: $($pkg.Version) -> Latest: $($pkg.Available)" Gray;
+
+        $percentComplete = [math]::Round(((($idx - 1) / $total) * 100));
+        Write-Progress -Activity "Windows Workstation Software Upgrade" `
+                       -Status "Upgrading ($idx of $total): $($pkg.Name)" `
+                       -PercentComplete $percentComplete;
+
+        $upgradeArgs = @(
+            "upgrade",
+            "--exact",
+            "--id", $pkg.Id,
+            "--silent",
+            "--accept-package-agreements",
+            "--accept-source-agreements"
+        );
+
+        try {
+            $procParams = @{
+                FilePath     = "winget.exe"
+                ArgumentList = $upgradeArgs
+                NoNewWindow  = $true
+                Wait         = $true
+                PassThru     = $true
+            };
+            $process = Start-Process @procParams;
+
+            if ($process.ExitCode -eq 0 -or $process.ExitCode -eq -1978335189) {
+                Write-Log "    [+] Success: Upgrade of $($pkg.Name) completed successfully." Green;
+            }
+            elseif ($process.ExitCode -eq -1978335146) {
+                # User-context fallback if elevated admin rejected
+                $userResult = Invoke-UserContextInstall ($pkg.Id) ($pkg.Name);
+                if ($userResult -eq 0 -or $userResult -eq -1978335189) {
+                    Write-Log "    [+] Successfully completed upgrade in user profile." Green;
+                } else {
+                    Write-Log "    [-] User installer returned code: $userResult" Yellow;
+                }
+            }
+            else {
+                Write-Log "    [-] Upgrade exit code for $($pkg.Name): $($process.ExitCode)" Yellow;
+            }
+        }
+        catch {
+            Write-Log "    [-] Critical error during upgrade of $($pkg.Name): $_" Red;
+        }
+    }
+
+    Write-Progress -Activity "Windows Workstation Software Upgrade" -Completed;
+
+    Write-Log "`n================================================================================" Green;
+    Write-Log "  [+] Upgrade procedure completed for $total package(s)." Green;
+    Write-Log "  [+] Execution report saved to: $resolvedLogPath" Green;
+    Write-Log "================================================================================" Green;
+}
+
+function Invoke-SinglePackageInstall {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$PackageQuery
+    )
+
+    try { Clear-Host; } catch {}
+    Write-Log "================================================================================" Cyan;
+    Write-Log "  $($SCRIPT_INFO.Name) v$($SCRIPT_INFO.Version) - Single Package Installation" Cyan;
+    Write-Log "  Author: $($SCRIPT_INFO.Author) | Contact: $($SCRIPT_INFO.Contact)" Gray;
+    Write-Log "  Log File: $resolvedLogPath" DarkCyan;
+    Write-Log "  ODT Fallback  : $(if ($Fallback) { 'ENABLED' } else { 'DISABLED (default)' })" $(if ($Fallback) { [ConsoleColor]::Yellow } else { [ConsoleColor]::Gray });
+    Write-Log "================================================================================" Cyan;
+
+    if (-not (Get-Command -Name "winget.exe" -ErrorAction SilentlyContinue)) {
+        throw "winget.exe is not available on this system.";
+    }
+
+    Write-Log "[*] Resolving package in winget repositories: '$PackageQuery'..." Gray;
+
+    # 1. Try exact ID match
+    $exactIdMatches = @(Search-WingetCatalog -Query $PackageQuery -ExactId);
+    $targetPackage = $null;
+
+    if ($exactIdMatches.Count -eq 1) {
+        $targetPackage = $exactIdMatches[0];
+        Write-Log "[+] Found exact package ID match: $($targetPackage.Name) ($($targetPackage.Id))" Green;
+    }
+
+    # 2. Try exact Name match if not resolved by ID
+    if ($null -eq $targetPackage) {
+        $exactNameMatches = @(Search-WingetCatalog -Query $PackageQuery -ExactName);
+        if ($exactNameMatches.Count -eq 1) {
+            $targetPackage = $exactNameMatches[0];
+            Write-Log "[+] Found exact package Name match: $($targetPackage.Name) ($($targetPackage.Id))" Green;
+        }
+    }
+
+    # 3. If still not resolved, perform broad search
+    if ($null -eq $targetPackage) {
+        $broadMatches = @(Search-WingetCatalog -Query $PackageQuery);
+
+        # Check if any broad match has exact case-insensitive match on Id or Name
+        $caseInsensitiveMatch = @($broadMatches | Where-Object { $_.Id -ieq $PackageQuery -or $_.Name -ieq $PackageQuery });
+        if ($caseInsensitiveMatch.Count -eq 1) {
+            $targetPackage = $caseInsensitiveMatch[0];
+            Write-Log "[+] Resolved matching package: $($targetPackage.Name) ($($targetPackage.Id))" Green;
+        }
+        elseif ($broadMatches.Count -eq 1) {
+            $targetPackage = $broadMatches[0];
+            Write-Log "[+] Resolved single matching package: $($targetPackage.Name) ($($targetPackage.Id))" Green;
+        }
+        elseif ($broadMatches.Count -eq 0) {
+            Write-Log "[-] Nie znaleziono żadnego pakietu odpowiadającego: '$PackageQuery'." Yellow;
+            Write-Log "    Upewnij się, że nazwa jest poprawna lub użyj -Search `"$PackageQuery`" aby przeszukać katalog online." Gray;
+            return;
+        }
+        else {
+            # Multiple candidates found - prompt user to clarify
+            Write-Log "`n[!] Nie znaleziono jednoznacznego pakietu dla: '$PackageQuery'" Yellow;
+            Write-Log "[!] Znaleziono $($broadMatches.Count) pasujących pakietów. Proszę doprecyzować wybór:`n" Yellow;
+
+            $candidateTable = $broadMatches |
+                Format-Table `
+                    @{Label = "Application"; Expression = { $_.Name }; Width = 38}, `
+                    @{Label = "Package ID"; Expression = { $_.Id }; Width = 38}, `
+                    @{Label = "Version"; Expression = { $_.Version }; Width = 16}, `
+                    @{Label = "Match"; Expression = { $_.Match }; Width = 20}, `
+                    @{Label = "Source"; Expression = { $_.Source }; Width = 8} `
+                -Wrap -AutoSize | Out-String -Width 130;
+            Write-Host $candidateTable.TrimEnd() -ForegroundColor Gray;
+
+            Write-Log "`n[*] Aby zainstalować wybrany pakiet, uruchom ponownie skrypt podając dokładny identyfikator (Id):" Cyan;
+            Write-Log "    .\Install-Applications.ps1 -Install <PackageId>" White;
+            Write-Log "    Przykład: .\Install-Applications.ps1 -Install `"$($broadMatches[0].Id)`"`n" DarkCyan;
+            return;
+        }
+    }
+
+    # Scan local registry inventory to check if package is already present
+    Write-Log "[*] Scanning installed software (.NET Registry API)..." Gray;
+    $systemInventory = Get-WindowsInstalledApplications;
+
+    $match = Find-InstalledApp ($targetPackage.Name) ($targetPackage.Id) ($systemInventory);
+    if ($null -ne $match) {
+        Write-Log "    [V] Skipped: Application '$($targetPackage.Name)' is already installed on system." Green;
+        Show-AppMetadata ($match) ("Detected parameters of installed application:");
+        return;
+    }
+
+    # Verify admin privileges and prerequisites before making system changes
+    if (-not (Test-IsAdmin)) {
+        throw "Script requires administrator privileges to install software. Run PowerShell as Administrator.";
+    }
+
+    Assert-WingetPrerequisites "1.7.0";
+
+    $appObj = [PSCustomObject]@{
+        Name = $targetPackage.Name
+        Id   = $targetPackage.Id
+    };
+
+    $callArgs = @{
+        App                  = $appObj
+        CurrentIndex         = 1
+        TotalCount           = 1
+        SystemInventory      = $systemInventory
+        EnableOfficeFallback = $Fallback
+    };
+    Install-AppPackage @callArgs;
+
+    Write-Log "`n================================================================================" Green;
+    Write-Log "  [+] Process completed for $($targetPackage.Name)." Green;
+    Write-Log "  [+] Execution report saved to: $resolvedLogPath" Green;
+    Write-Log "================================================================================" Green;
+}
+
+function Invoke-OnlineCatalogSearch {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Pattern
+    )
+
+    if (-not (Get-Command -Name "winget.exe" -ErrorAction SilentlyContinue)) {
+        throw "winget.exe is not available on this system.";
+    }
+
+    Write-Host "`n[*] Przeszukiwanie internetowego repozytorium winget dla wzorca: '$Pattern'..." -ForegroundColor Cyan;
+    $searchResults = @(Search-WingetCatalog -Query $Pattern);
+
+    if ($searchResults.Count -eq 0) {
+        Write-Host "[-] Nie znaleziono żadnych pakietów pasujących do wzorca '$Pattern'." -ForegroundColor Yellow;
+        return;
+    }
+
+    Write-Host "[+] Znaleziono $($searchResults.Count) pakietów:" -ForegroundColor Green;
+
+    $tableText = $searchResults |
+        Format-Table `
+            @{Label = "Application"; Expression = { $_.Name }; Width = 38}, `
+            @{Label = "Package ID"; Expression = { $_.Id }; Width = 38}, `
+            @{Label = "Version"; Expression = { $_.Version }; Width = 16}, `
+            @{Label = "Match"; Expression = { $_.Match }; Width = 22}, `
+            @{Label = "Source"; Expression = { $_.Source }; Width = 8} `
+        -Wrap -AutoSize | Out-String -Width 130;
+
+    Write-Host $tableText.TrimEnd();
+
+    Write-Host "`n[*] Aby zainstalować wybrany pakiet, użyj polecenia:" -ForegroundColor Cyan;
+    Write-Host "    .\Install-Applications.ps1 -Install <PackageId>" -ForegroundColor White;
+    Write-Host "    Przykład: .\Install-Applications.ps1 -Install `"$($searchResults[0].Id)`"`n" -ForegroundColor DarkCyan;
+
+    # If log path was specified, save the search report
+    if ($PSBoundParameters.ContainsKey("LogPath")) {
+        if ([string]::IsNullOrWhiteSpace($LogPath)) {
+            $defaultLogDir = "C:\Logs";
+            $timeMarker = (Get-Date).ToString("yyyyMMdd_HHmmss");
+            $compName = $env:COMPUTERNAME;
+            $userName = $env:USERNAME;
+            $reportFileName = "${timeMarker}-${compName}-${userName}-$($SCRIPT_INFO.Name)-search-${Pattern}.txt";
+            $resolvedReportPath = Join-Path $defaultLogDir $reportFileName;
+        } else {
+            $resolvedReportPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LogPath);
+        }
+
+        $reportDirectory = [System.IO.Path]::GetDirectoryName($resolvedReportPath);
+        if (-not [string]::IsNullOrWhiteSpace($reportDirectory) -and -not [System.IO.Directory]::Exists($reportDirectory)) {
+            [System.IO.Directory]::CreateDirectory($reportDirectory) | Out-Null;
+        }
+        $fullReport = "Online search results for pattern: '$Pattern'`r`nTotal packages: $($searchResults.Count)`r`n`r`n" + $tableText;
+        [System.IO.File]::WriteAllText($resolvedReportPath, $fullReport, [System.Text.Encoding]::UTF8);
+        Write-Host "Search report saved to: $resolvedReportPath" -ForegroundColor Cyan;
+    }
+}
+
 # --- Main Program Flow ---
 
+# 1. Verification/Audit mode (-VerifyInstalledApps, -v)
 if ($VerifyInstalledApps) {
     $systemInventory = Get-WindowsInstalledApplications;
     if ($systemInventory.Count -eq 0) {
@@ -678,7 +1176,26 @@ if ($VerifyInstalledApps) {
     return;
 }
 
-Clear-Host;
+# 2. Online search mode (-Search, -s)
+if (-not [string]::IsNullOrWhiteSpace($Search)) {
+    Invoke-OnlineCatalogSearch -Pattern $Search;
+    return;
+}
+
+# 3. Upgrade mode (-Upgrade, -u)
+if ($Upgrade) {
+    Invoke-ApplicationsUpgrade -TargetPackage $UpgradeTarget;
+    return;
+}
+
+# 4. Single package install mode (-Install, -Package, -i)
+if (-not [string]::IsNullOrWhiteSpace($Install)) {
+    Invoke-SinglePackageInstall -PackageQuery $Install;
+    return;
+}
+
+# 5. Batch installation mode from JSON configuration file (-ConfigPath)
+try { Clear-Host; } catch {}
 Write-Log "================================================================================" Cyan;
 Write-Log "  $($SCRIPT_INFO.Name) v$($SCRIPT_INFO.Version) - Environment Initialization" Cyan;
 Write-Log "  Author: $($SCRIPT_INFO.Author) | Contact: $($SCRIPT_INFO.Contact)" Gray;
