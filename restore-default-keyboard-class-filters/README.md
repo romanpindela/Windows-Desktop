@@ -117,6 +117,9 @@ When these programs are uninstalled, updated, or encounter driver signature enfo
 
 ```shell
 restore-default-keyboard-class-filters/
+├── assets/
+│   ├── Standard_run2.jpg                 # Built-in help guide and syntax view
+│   └── restoring_keyboard_settings.jpg   # Interactive repair, backup, and restoration process
 ├── restore-default-keyboard-class-filters.ps1   # Main PowerShell repair & audit script
 └── README.md                                   # Comprehensive technical documentation
 ```
@@ -158,6 +161,8 @@ Running without parameters or with `-h` / `-Help` displays parameter description
 .\restore-default-keyboard-class-filters.ps1 -h
 .\restore-default-keyboard-class-filters.ps1 -Help
 ```
+
+![Standard Run / Help Guide](assets/Standard_run2.jpg)
 
 ---
 
@@ -202,6 +207,8 @@ Prompts the user before taking action, exports a `.reg` backup, resets `UpperFil
 .\restore-default-keyboard-class-filters.ps1 -Repair
 ```
 
+![Restoring Keyboard Settings](assets/restoring_keyboard_settings.jpg)
+
 ---
 
 ### 4. Unattended / Silent Repair (`-Force`)
@@ -237,6 +244,20 @@ Simulates the modification without writing to the registry:
 ```powershell
 .\restore-default-keyboard-class-filters.ps1 -Repair -WhatIf
 ```
+
+---
+
+## Screenshots
+
+### Standard Run & Help Menu View
+Displays full guidance, parameter descriptions, and usage examples when executed without arguments:
+
+![Standard Run](assets/Standard_run2.jpg)
+
+### Restoring Default Keyboard Class Filters (`-Repair`)
+Interactive remediation workflow showing audit inspection, user confirmation, pre-repair registry backup (`.reg`), restoration of `UpperFilters` to `kbdclass`, removal of `LowerFilters`, post-repair verification, and system reboot advisory:
+
+![Restoring Keyboard Settings](assets/restoring_keyboard_settings.jpg)
 
 ---
 
