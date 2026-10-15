@@ -24,4 +24,29 @@ These tools are built to help IT Administrators and power users streamline daily
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/romanpindela/Windows-Desktop.git](https://github.com/romanpindela/Windows-Desktop.git)
+   git clone https://github.com/romanpindela/Windows-Desktop.git
+   cd Windows-Desktop
+   ```
+
+2. **Unblock downloaded scripts:**
+   ```powershell
+   Unblock-File -Path .\Add-NetworkPrinter\Add-NetworkPrinter.ps1
+   ```
+
+---
+
+## 🖨️ Featured Scripts & Tools
+
+### [Add-NetworkPrinter](Add-NetworkPrinter/README.md)
+* **Script:** [`Add-NetworkPrinter.ps1`](Add-NetworkPrinter/Add-NetworkPrinter.ps1)
+* **Author:** Roman Pindela (`roman.pindela@gmail.com`)
+* **Description:** Enterprise-grade automation script for deploying network TCP/IP printers in local area networks (LAN).
+  * **Network Diagnostics:** Automatically verifies Print Spooler service, performs ICMP Ping and RAW TCP port 9100 availability tests.
+  * **Driver Flexibility:** Supports installing via pre-existing system drivers (e.g. `KONICA MINOLTA Universal PCL`), local `.inf` files/directories, or downloading driver archives (.zip / .inf) directly over HTTPS.
+  * **Reliable Setup:** Idempotently creates TCP/IP ports and printer queues with optional automated test page printing (`-PrintTestPage`).
+  * **Standards Compliant:** Interactive console help on zero parameters (`-h`), language-independent UAC auto-elevation (supports English and Polish Windows), and strict input sanitization.
+* **Quick Example:**
+  ```powershell
+  # Deploy network printer using system driver (e.g., Konica Minolta C224e at 10.10.1.71)
+  .\Add-NetworkPrinter\Add-NetworkPrinter.ps1 -PrinterIP "10.10.1.71" -PrinterName "Konica Minolta C224e"
+  ```
