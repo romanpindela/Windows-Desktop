@@ -83,6 +83,8 @@ Upgrade all installed applications that have newer versions available:
 ```
 Upgrade a specific application:
 ```powershell
+.\Install-Applications.ps1 -Upgrade -Package "7zip.7zip"
+# Aliases: -Target, -UpgradeTarget, -TargetPackage
 .\Install-Applications.ps1 -Upgrade -Target "7zip.7zip"
 ```
 
@@ -139,8 +141,7 @@ Deploy software defined in a JSON package list:
 | :--- | :--- | :--- | :--- |
 | `-ConfigPath` | `-c`, `-Path` | Config | Path to JSON file containing application package list. |
 | `-Upgrade` | `-u`, `-Update`, `-UpgradeAll` | Upgrade | Upgrades installed applications via winget. |
-| `-UpgradeTarget` | `-Target`, `-TargetPackage`, `-TargetApp` | Upgrade | Target package ID or name to upgrade. |
-| `-Install` | `-Package`, `-PackageName`, `-Id`, `-Name`, `-App`, `-i` | InstallPackage | Installs an application by package name or ID with disambiguation. |
+| `-Package` | `-Install`, `-Target`, `-UpgradeTarget`, `-PackageName`, `-Id`, `-Name`, `-App`, `-i` | InstallPackage / Upgrade | Target package ID or name to install or upgrade. |
 | `-Search` | `-s`, `-Find`, `-Query` | Search | Searches online winget repository by pattern (e.g. "Google"). |
 | `-VerifyInstalledApps` | `-v` | Verify | Displays installed applications grouped by publisher and install date. |
 | `-Fallback` | `-fo`, `-FallbackOffice` | Config / InstallPackage | Enables emergency ODT procedure for Office 365 on checksum mismatch. |

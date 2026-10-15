@@ -30,15 +30,12 @@
     Installs, upgrades, searches, and audits software packages using winget and native registry inspection.
 .PARAMETER ConfigPath
     Path to the JSON file containing the list of software packages to install.
-.PARAMETER Install
-    Package ID or name of an application to install via winget. If ambiguous, displays matching candidates with a clarification request.
-    Aliases: -Package, -PackageName, -Id, -Name, -App, -i.
+.PARAMETER Package
+    Package ID or name of an application to install or upgrade via winget. If ambiguous in install mode, displays matching candidates with a clarification request. If omitted in upgrade mode, upgrades all packages with available updates.
+    Aliases: -Install, -PackageName, -Id, -Name, -App, -i, -Target, -TargetPackage, -TargetApp, -UpgradeTarget.
 .PARAMETER Upgrade
     Upgrades installed workstation applications via winget. If -Package is omitted, upgrades all packages with available updates.
     Aliases: -u, -Update, -UpgradeAll.
-.PARAMETER UpgradeTarget
-    Optional target package ID or name when used with -Upgrade.
-    Aliases: -Target, -TargetPackage, -TargetApp.
 .PARAMETER Search
     Searches the online winget repository by pattern or keyword (e.g. "Google"), returning matching publisher, name, moniker, and tag results.
     Aliases: -s, -Find, -Query.
@@ -85,19 +82,16 @@ param (
     })]
     [string]$ConfigPath,
 
-    # --- Mode: Single Package Installation ---
+    # --- Mode: Single Package Installation / Upgrade Target ---
     [Parameter(ParameterSetName = "InstallPackage", Mandatory = $true, Position = 0)]
-    [Alias("Package", "PackageName", "Id", "Name", "App", "i")]
-    [string]$Install,
+    [Parameter(ParameterSetName = "Upgrade", Mandatory = $false, Position = 0)]
+    [Alias("Install", "PackageName", "Id", "Name", "App", "i", "Target", "TargetPackage", "TargetApp", "UpgradeTarget")]
+    [string]$Package,
 
     # --- Mode: Upgrade Installed Applications ---
     [Parameter(ParameterSetName = "Upgrade", Mandatory = $true)]
     [Alias("u", "Update", "UpgradeAll")]
     [switch]$Upgrade,
-
-    [Parameter(ParameterSetName = "Upgrade", Mandatory = $false, Position = 0)]
-    [Alias("Target", "TargetPackage", "TargetApp")]
-    [string]$UpgradeTarget,
 
     # --- Mode: Online Search ---
     [Parameter(ParameterSetName = "Search", Mandatory = $true, Position = 0)]
@@ -225,7 +219,7 @@ EXAMPLES:
 "@ -ForegroundColor Yellow;
 }
 
-if ($Help -or (-not $Upgrade -and -not $VerifyInstalledApps -and [string]::IsNullOrWhiteSpace($ConfigPath) -and [string]::IsNullOrWhiteSpace($Install) -and [string]::IsNullOrWhiteSpace($Search))) {
+if ($Help -or (-not $Upgrade -and -not $VerifyInstalledApps -and [string]::IsNullOrWhiteSpace($ConfigPath) -and [string]::IsNullOrWhiteSpace($Package) -and [string]::IsNullOrWhiteSpace($Search))) {
     Show-HelpGuide;
     return;
 }
@@ -1184,13 +1178,13 @@ if (-not [string]::IsNullOrWhiteSpace($Search)) {
 
 # 3. Upgrade mode (-Upgrade, -u)
 if ($Upgrade) {
-    Invoke-ApplicationsUpgrade -TargetPackage $UpgradeTarget;
+    Invoke-ApplicationsUpgrade -TargetPackage $Package;
     return;
 }
 
 # 4. Single package install mode (-Install, -Package, -i)
-if (-not [string]::IsNullOrWhiteSpace($Install)) {
-    Invoke-SinglePackageInstall -PackageQuery $Install;
+if (-not [string]::IsNullOrWhiteSpace($Package)) {
+    Invoke-SinglePackageInstall -PackageQuery $Package;
     return;
 }
 
