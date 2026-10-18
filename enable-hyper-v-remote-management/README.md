@@ -1,6 +1,6 @@
 # Enable Hyper-V Remote Management (`enable-hyper-v-remote-management`)
 
-**Version:** 1.2.0  
+**Version:** 1.3.0  
 **Release Date:** 2026-10-18  
 **Author:** Roman Pindela  
 **License:** MIT  
@@ -18,7 +18,7 @@ An enterprise-grade, clean-code PowerShell automation tool that configures a **W
 | **Author** | Roman Pindela |
 | **Email** | [roman.pindela@gmail.com](mailto:roman.pindela@gmail.com) |
 | **GitHub** | [https://github.com/romanpindela](https://github.com/romanpindela) |
-| **Version** | 1.2.0 |
+| **Version** | 1.3.0 |
 | **Release Date** | 2026-10-18 |
 | **License** | MIT |
 
