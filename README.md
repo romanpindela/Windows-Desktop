@@ -69,20 +69,3 @@ These tools are built to help IT Administrators and power users streamline daily
   .\Manage-WindowsOptionalFeatures\Manage-WindowsOptionalFeatures.ps1 -Action Enable -FeatureName "TelnetClient", "Containers-DisposableClientVM"
   ```
 
----
-
-### [enable-hyper-v-remote-management](enable-hyper-v-remote-management/README.md)
-* **Script:** [`enable-hyper-v-remote-management.ps1`](enable-hyper-v-remote-management/enable-hyper-v-remote-management.ps1)
-* **Author:** Roman Pindela (`roman.pindela@gmail.com`)
-* **Description:** Enterprise-grade PowerShell tool that configures a Windows 10/11 client workstation (or target Hyper-V host) for remote management via **Hyper-V Manager (`virtmgmt.msc`)** in a Workgroup or LAN environment.
-  * **Workgroup Name Resolution (`hosts`):** Automatically backs up and updates `C:\Windows\System32\drivers\etc\hosts` (`<ServerIP> <ServerName>`) and verifies connectivity via `Test-Connection`.
-  * **WinRM, TrustedHosts & CredSSP Delegation:** Configures the `WinRM` service, appends `<ServerName>` to `WSMan:\localhost\Client\TrustedHosts`, and enables `CredSSP Client` delegation (`Enable-WSManCredSSP -Role Client -DelegateComputer <ServerName>`).
-  * **Automated Group Policy (NTLM Credential Delegation):** Configures `HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation` (*"Allow delegating fresh credentials with NTLM-only server authentication"* -> `wsman/<ServerName>`) and executes `gpupdate /force`.
-  * **Standards Compliant:** Zero-parameter interactive help (`-h`), language-independent UAC auto-elevation via SID (`S-1-5-32-544`), input sanitization, `-DryRun` simulation, and detailed logging to `C:\Logs`.
-* **Quick Example:**
-  ```powershell
-  # Configure client PC to manage Hyper-V server 'HV-SRV01' at 10.10.1.10
-  .\enable-hyper-v-remote-management\enable-hyper-v-remote-management.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10"
-  ```
-
-
