@@ -737,8 +737,154 @@ if (-not $NoLog -and $script:ActiveLogFile) {
 Write-Log "================================================================================" -Level HEADER
 
 # ==============================================================================
-# HELPER FUNCTIONS: FEATURE METADATA & DETAILS RETRIEVAL
+# HELPER FUNCTIONS: CONSOLE WIDTH, METADATA & FORMATTED OUTPUT
 # ==============================================================================
+function Get-ConsoleSafeWidth {
+    <#
+    .SYNOPSIS
+        Returns the usable character width of the current PowerShell console
+        window without throwing handle exceptions in non-interactive hosts.
+    #>
+    try {
+        if ($null -ne $Host -and $null -ne $Host.UI -and $null -ne $Host.UI.RawUI) {
+            $w = $Host.UI.RawUI.WindowSize.Width
+            if ($w -ge 80) {
+                return ($w - 1)
+            }
+        }
+    }
+    catch {}
+    return 112
+}
+
+function Format-TruncatedText {
+    param (
+        [AllowNull()]
+        [string]$Text,
+        [int]$MaxLength
+    )
+    if ([string]::IsNullOrEmpty($Text)) {
+        return "".PadRight($MaxLength)
+    }
+    if ($MaxLength -le 3) {
+        return $Text.Substring(0, [Math]::Min($Text.Length, $MaxLength)).PadRight($MaxLength)
+    }
+    if ($Text.Length -gt $MaxLength) {
+        return ($Text.Substring(0, $MaxLength - 3) + "...")
+    }
+    return $Text.PadRight($MaxLength)
+}
+
+function Resolve-FeatureDescription {
+    <#
+    .SYNOPSIS
+        Provides a meaningful description for a Windows Optional Feature when
+        bulk WMI/CIM queries return an empty Description property.
+    #>
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$FeatureName,
+
+        [Parameter(Mandatory = $false)]
+        [string]$DisplayName,
+
+        [Parameter(Mandatory = $false)]
+        [string]$RawDescription
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($RawDescription)) {
+        return ($RawDescription -replace "\r?\n", " ").Trim()
+    }
+
+    $knownDescriptions = @{
+        "AppServerClient"                           = "Remote Desktop Services Application Server client components."
+        "Client-DeviceLockdown"                     = "Enables Device Lockdown capabilities (Shell Launcher, Keyboard Filter, Unified Write Filter)."
+        "Client-EmbeddedBootExp"                    = "Suppresses Windows boot UI elements (Unbranded Boot) for kiosk/embedded devices."
+        "Client-EmbeddedLogon"                      = "Allows hiding or customizing Windows logon screen elements (Custom Logon)."
+        "Client-EmbeddedShellLauncher"              = "Replaces the default Explorer.exe shell with a custom application shell (Shell Launcher)."
+        "Client-KeyboardFilter"                     = "Blocks undesirable key presses or key combinations (e.g., Ctrl+Alt+Del, Win key) on kiosks."
+        "Client-ProjFS"                             = "Windows Projected File System (ProjFS) for projecting virtual file trees (e.g., VFS for Git)."
+        "Client-UnifiedWriteFilter"                 = "Protects physical storage media by intercepting and redirecting disk writes to a virtual overlay."
+        "ClientForNFS-Infrastructure"               = "Allows this Windows computer to access files on UNIX-based Network File System (NFS) servers."
+        "Containers"                                = "Provides OS-level virtualization services to create and run Windows Server and Windows containers."
+        "Containers-DisposableClientVM"             = "Windows Sandbox: lightweight desktop environment to safely run untrusted applications in isolation."
+        "Containers-HNS"                            = "Host Network Service (HNS) for Windows Containers and virtualized compute networking."
+        "Containers-SDN"                            = "Software Defined Networking (SDN) support for Windows Containers."
+        "Containers-Server-For-Application-Guard"   = "Isolated container runtime infrastructure supporting Microsoft Defender Application Guard."
+        "DataCenterBridging"                        = "IEEE Data Center Bridging (DCB) standards for converged Ethernet storage and networking."
+        "DirectPlay"                                = "Legacy DirectX networking API required by older games developed for Windows 98/XP."
+        "DirectoryServices-ADAM-Client"             = "Active Directory Lightweight Directory Services (AD LDS) directory service and tools."
+        "HostGuardian"                              = "Host Guardian Hyper-V Support for running Shielded Virtual Machines and Guarded Fabrics."
+        "HypervisorPlatform"                        = "Windows Hypervisor Platform APIs for third-party virtualization stacks (QEMU, Android Emulator, VirtualBox)."
+        "LegacyComponents"                          = "Legacy Windows multimedia and gaming components (such as DirectPlay)."
+        "MediaPlayback"                             = "Core Windows Media Playback technologies and Windows Media Player support."
+        "Microsoft-Hyper-V"                         = "Hyper-V hypervisor and virtualization services for running virtual machines."
+        "Microsoft-Hyper-V-All"                     = "Full Hyper-V suite including Hypervisor, Services, GUI Manager, and PowerShell Module."
+        "Microsoft-Hyper-V-Hypervisor"              = "Windows Hyper-V Hypervisor core layer."
+        "Microsoft-Hyper-V-Management-Clients"      = "Hyper-V Manager graphical user interface (GUI) and Virtual Machine Connection tools."
+        "Microsoft-Hyper-V-Management-PowerShell"   = "Hyper-V module for Windows PowerShell cmdlets."
+        "Microsoft-Hyper-V-Services"                = "Hyper-V Virtual Machine Management Service (VMMS) and background services."
+        "Microsoft-Hyper-V-Tools-All"               = "All GUI and PowerShell management tools for administering Hyper-V hosts."
+        "Microsoft-RemoteDesktopConnection"         = "Remote Desktop Connection (mstsc.exe) client application."
+        "Microsoft-Windows-Subsystem-Linux"         = "Windows Subsystem for Linux (WSL) for running native Linux distributions on Windows."
+        "MultiPoint-Connector"                      = "Enables MultiPoint Manager and Dashboard to monitor and manage this computer."
+        "MultiPoint-Connector-Services"             = "Background services for Windows MultiPoint Connector."
+        "MultiPoint-Tools"                          = "MultiPoint Manager and MultiPoint Dashboard administrative tools."
+        "NetFx3"                                    = ".NET Framework 3.5 runtime environment (includes support for .NET 2.0 and .NET 3.0 applications)."
+        "NetFx4-AdvSrvs"                            = ".NET Framework 4.8 Advanced Services and Windows Communication Foundation (WCF)."
+        "NetFx4Extended-ASPNET45"                   = "ASP.NET 4.8 web application framework support."
+        "NFS-Administration"                        = "Administrative tools (`nfsadmin`, MMC snap-in) for managing Services for Network File System (NFS)."
+        "Printing-Foundation-Features"              = "Core Windows Print and Document Services infrastructure."
+        "Printing-Foundation-InternetPrinting-Client"= "Enables connecting and printing to shared printers over HTTP/HTTPS (IPP)."
+        "Printing-Foundation-LPDPrintService"       = "Line Printer Daemon (LPD) service allowing UNIX/Linux hosts to print via TCP/IP."
+        "Printing-Foundation-LPRPortMonitor"        = "Line Printer Remote (LPR) port monitor for printing to UNIX/LPD print servers."
+        "Printing-PrintToPDFServices-Features"      = "Microsoft Print to PDF virtual printer driver for saving documents as PDF files."
+        "Printing-XPSServices-Features"             = "Microsoft XPS Document Writer virtual printer and XPS document support."
+        "SearchEngine-Client-Package"               = "Windows Search indexing service for fast file, email, and content search."
+        "ServicesForNFS-ClientOnly"                 = "Services for Network File System (NFS) parent package."
+        "SimpleTCP"                                 = "Simple TCP/IP Services (Character Generator, Daytime, Discard, Echo, Quote of the Day)."
+        "SMB1Protocol"                              = "Legacy SMB 1.0/CIFS File Sharing Support (deprecated; recommended to keep Disabled for security)."
+        "SMB1Protocol-Client"                       = "Legacy SMB 1.0/CIFS Client for connecting to older NAS/Windows XP/2003 shares."
+        "SMB1Protocol-Deprecation"                  = "Automatic removal of SMB 1.0/CIFS when unused."
+        "SMB1Protocol-Server"                       = "Legacy SMB 1.0/CIFS Server component for hosting old SMBv1 shares."
+        "SmbDirect"                                 = "SMB Direct (RDMA) network adapter support for high-throughput, low-latency SMB file transfers."
+        "TelnetClient"                              = "Telnet command-line client for connecting to remote Telnet servers and testing raw TCP ports."
+        "TFTP"                                      = "Trivial File Transfer Protocol (TFTP) command-line client for transferring files over UDP."
+        "TIFFIFilter"                               = "Windows TIFF IFilter for Optical Character Recognition (OCR) indexing of TIFF image documents."
+        "VirtualMachinePlatform"                    = "Enables platform support for virtual machines, WSL 2, and container workloads."
+        "Windows-Defender-Application-Guard"        = "Hardware-isolated Hyper-V browsing and document container for Microsoft Edge and Office."
+        "Windows-Defender-Default-Definitions"      = "Baseline built-in malware definition signatures for Microsoft Defender Antivirus."
+        "Windows-Identity-Foundation"               = "Windows Identity Foundation (WIF) 3.5 framework for claims-based identity applications."
+        "WindowsMediaPlayer"                        = "Classic Windows Media Player desktop application."
+        "WorkFolders-Client"                        = "Work Folders Client for synchronizing corporate work files with a file server."
+    }
+
+    if ($knownDescriptions.ContainsKey($FeatureName)) {
+        return $knownDescriptions[$FeatureName]
+    }
+
+    $cleanDisplay = if (-not [string]::IsNullOrWhiteSpace($DisplayName) -and $DisplayName -ne $FeatureName) {
+        $DisplayName
+    } else {
+        $FeatureName
+    }
+
+    if ($FeatureName -like "IIS-*") {
+        return "Internet Information Services (IIS) Web Server component: $cleanDisplay."
+    }
+    if ($FeatureName -like "WCF-*") {
+        return "Windows Communication Foundation (WCF) activation and messaging component: $cleanDisplay."
+    }
+    if ($FeatureName -like "MSMQ-*") {
+        return "Microsoft Message Queuing (MSMQ) infrastructure service: $cleanDisplay."
+    }
+    if ($FeatureName -like "Was-*") {
+        return "Windows Process Activation Service (WAS) component: $cleanDisplay."
+    }
+
+    return "Windows Optional Feature component: $cleanDisplay."
+}
+
 function Get-CimOptionalFeatureMap {
     <#
     .SYNOPSIS
@@ -793,16 +939,15 @@ function ConvertTo-DetailedFeatureObject {
         $displayName = $featName
     }
 
-    $description = $null
+    $rawDesc = $null
     if ($DismFeature.PSObject.Properties.Name -contains "Description" -and -not [string]::IsNullOrWhiteSpace($DismFeature.Description)) {
-        $description = [string]$DismFeature.Description
+        $rawDesc = [string]$DismFeature.Description
     }
     elseif ($null -ne $cimEntry -and -not [string]::IsNullOrWhiteSpace($cimEntry.Description)) {
-        $description = [string]$cimEntry.Description
+        $rawDesc = [string]$cimEntry.Description
     }
-    else {
-        $description = "No additional description provided by Windows Component Store."
-    }
+
+    $description = Resolve-FeatureDescription -FeatureName $featName -DisplayName $displayName -RawDescription $rawDesc
 
     $restartReq = "Possible"
     if ($DismFeature.PSObject.Properties.Name -contains "RestartRequired" -and $null -ne $DismFeature.RestartRequired) {
@@ -827,7 +972,7 @@ function ConvertTo-DetailedFeatureObject {
         DisplayName      = $displayName
         State            = [string]$DismFeature.State
         RestartRequired  = $restartReq
-        Description      = ($description -replace "\r?\n", " ").Trim()
+        Description      = $description
         CustomProperties = $customPropsText
         Online           = [bool]$DismFeature.Online
     }
@@ -855,10 +1000,48 @@ function Get-SingleFeatureFullDetails {
     return (ConvertTo-DetailedFeatureObject -DismFeature $advFeature -CimMap $CimMap)
 }
 
+function Format-WrappedLines {
+    <#
+    .SYNOPSIS
+        Word-wraps a text string into multiple lines of at most $MaxLineLength chars.
+    #>
+    param (
+        [string]$Text,
+        [int]$MaxLineLength = 60
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return @("")
+    }
+
+    $words = $Text -split '\s+'
+    $lines = [System.Collections.Generic.List[string]]::new()
+    $currentLine = ""
+
+    foreach ($word in $words) {
+        if ([string]::IsNullOrEmpty($currentLine)) {
+            $currentLine = $word
+        }
+        elseif (($currentLine.Length + 1 + $word.Length) -le $MaxLineLength) {
+            $currentLine += " $word"
+        }
+        else {
+            $lines.Add($currentLine)
+            $currentLine = $word
+        }
+    }
+    if (-not [string]::IsNullOrEmpty($currentLine)) {
+        $lines.Add($currentLine)
+    }
+
+    return $lines
+}
+
 function Show-FeatureDetailCard {
     <#
     .SYNOPSIS
-        Prints a formatted, color-coded detail card for a Windows Optional Feature.
+        Prints a formatted, color-coded detail card for a Windows Optional Feature
+        with clean word-wrapping so text never breaks mid-word across console edges.
     #>
     param (
         [Parameter(Mandatory = $true)]
@@ -867,6 +1050,11 @@ function Show-FeatureDetailCard {
         [Parameter(Mandatory = $false)]
         [string]$ContextTitle = "FEATURE DETAILS"
     )
+
+    $consoleWidth = Get-ConsoleSafeWidth
+    $ruleLen = [Math]::Min(100, $consoleWidth)
+    $ruleLine = "-" * $ruleLen
+    $descWrapWidth = [Math]::Max(40, $ruleLen - 23)
 
     $stateColor = switch ($FeatureDetail.State) {
         "Enabled"                    { [ConsoleColor]::Green }
@@ -877,17 +1065,179 @@ function Show-FeatureDetailCard {
         default                      { [ConsoleColor]::White }
     }
 
-    Write-Log "--------------------------------------------------------------------------------" -Color DarkCyan
+    Write-Log $ruleLine -Color DarkCyan
     Write-Log "  [$ContextTitle] $($FeatureDetail.FeatureName)" -Color Cyan
-    Write-Log "--------------------------------------------------------------------------------" -Color DarkCyan
+    Write-Log $ruleLine -Color DarkCyan
     Write-Log "  Feature Name      : $($FeatureDetail.FeatureName)" -Color White
     Write-Log "  Display Name      : $($FeatureDetail.DisplayName)" -Color White
     Write-Log "  Current State     : $($FeatureDetail.State)" -Color $stateColor
     Write-Log "  Restart Required  : $($FeatureDetail.RestartRequired)" -Color White
-    Write-Log "  Description       : $($FeatureDetail.Description)" -Color Gray
-    if ($FeatureDetail.CustomProperties -ne "None") {
-        Write-Log "  Custom Properties : $($FeatureDetail.CustomProperties)" -Color DarkGray
+
+    $wrappedDesc = @(Format-WrappedLines -Text $FeatureDetail.Description -MaxLineLength $descWrapWidth)
+    for ($i = 0; $i -lt $wrappedDesc.Count; $i++) {
+        if ($i -eq 0) {
+            Write-Log "  Description       : $($wrappedDesc[$i])" -Color Gray
+        }
+        else {
+            Write-Log "                      $($wrappedDesc[$i])" -Color Gray
+        }
     }
+
+    if ($FeatureDetail.CustomProperties -ne "None") {
+        $wrappedProps = @(Format-WrappedLines -Text $FeatureDetail.CustomProperties -MaxLineLength $descWrapWidth)
+        for ($i = 0; $i -lt $wrappedProps.Count; $i++) {
+            if ($i -eq 0) {
+                Write-Log "  Custom Properties : $($wrappedProps[$i])" -Color DarkGray
+            }
+            else {
+                Write-Log "                      $($wrappedProps[$i])" -Color DarkGray
+            }
+        }
+    }
+}
+
+function Show-FeatureCatalogTable {
+    <#
+    .SYNOPSIS
+        Renders a clean, single-line-per-feature colorized catalog table that
+        dynamically fits the PowerShell console width without line-wrapping.
+    #>
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Generic.List[PSCustomObject]]$Features
+    )
+
+    $consoleWidth = Get-ConsoleSafeWidth
+
+    # Column widths tuned to fit standard ~110-120 char consoles on a single line
+    $colNoWidth      = 4   # e.g. "  1."
+    $colNameWidth    = 43  # max FeatureName in Windows 11 is 43 chars
+    $colStateWidth   = 11  # e.g. "Enabled    ", "Disabled   "
+    $colRestartWidth = 8   # e.g. "Possible"
+
+    # Fixed characters before DisplayName: 1 + 4 + 2 + 43 + 2 + 11 + 2 + 8 + 2 = 75
+    $fixedPrefixLen = 1 + $colNoWidth + 2 + $colNameWidth + 2 + $colStateWidth + 2 + $colRestartWidth + 2
+    $colDisplayWidth = [Math]::Max(24, $consoleWidth - $fixedPrefixLen)
+    $totalTableWidth = [Math]::Min($consoleWidth, $fixedPrefixLen + $colDisplayWidth)
+
+    $headerLine = " {0}  {1}  {2}  {3}  {4}" -f `
+        "No.".PadLeft($colNoWidth),
+        "FeatureName".PadRight($colNameWidth),
+        "State".PadRight($colStateWidth),
+        "Restart".PadRight($colRestartWidth),
+        "DisplayName"
+
+    $separatorLine = " {0}  {1}  {2}  {3}  {4}" -f `
+        ("-" * $colNoWidth),
+        ("-" * $colNameWidth),
+        ("-" * $colStateWidth),
+        ("-" * $colRestartWidth),
+        ("-" * [Math]::Min(35, $colDisplayWidth))
+
+    Write-Host ""
+    Write-Log $headerLine -Color Cyan
+    Write-Log $separatorLine -Color DarkCyan
+
+    $rowIndex = 0
+    foreach ($item in $Features) {
+        $rowIndex++
+
+        $shortState = switch ($item.State) {
+            "DisabledWithPayloadRemoved" { "Disabled*" }
+            default                      { $item.State }
+        }
+
+        $numStr     = ("{0,3}." -f $rowIndex)
+        $nameStr    = Format-TruncatedText -Text $item.FeatureName -MaxLength $colNameWidth
+        $stateStr   = Format-TruncatedText -Text $shortState -MaxLength $colStateWidth
+        $restartStr = Format-TruncatedText -Text $item.RestartRequired -MaxLength $colRestartWidth
+        $dispStr    = Format-TruncatedText -Text $item.DisplayName -MaxLength $colDisplayWidth
+
+        $isEnabled = ($item.State -eq "Enabled")
+        $isPending = ($item.State -like "*Pending*")
+
+        $nameColor = if ($isEnabled) { [ConsoleColor]::White } elseif ($isPending) { [ConsoleColor]::Yellow } else { [ConsoleColor]::Gray }
+        $stateColor = if ($isEnabled) { [ConsoleColor]::Green } elseif ($isPending) { [ConsoleColor]::Cyan } elseif ($item.State -eq "DisabledWithPayloadRemoved") { [ConsoleColor]::DarkYellow } else { [ConsoleColor]::DarkGray }
+        $dispColor = if ($isEnabled) { [ConsoleColor]::Green } else { [ConsoleColor]::DarkGray }
+
+        try { [Console]::CursorLeft = 0 } catch {}
+        Write-Host (" {0}  " -f $numStr) -ForegroundColor DarkGray -NoNewline
+        Write-Host ("{0}  " -f $nameStr) -ForegroundColor $nameColor -NoNewline
+        Write-Host ("{0}  " -f $stateStr) -ForegroundColor $stateColor -NoNewline
+        Write-Host ("{0}  " -f $restartStr) -ForegroundColor DarkGray -NoNewline
+        Write-Host $dispStr -ForegroundColor $dispColor
+
+        if (-not $NoLog -and -not [string]::IsNullOrWhiteSpace($script:ActiveLogFile)) {
+            try {
+                $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+                $plainLine = "[$timestamp] [LIST]  $numStr  $nameStr  $stateStr  $restartStr  $($item.DisplayName)`r`n"
+                [System.IO.File]::AppendAllText($script:ActiveLogFile, $plainLine, [System.Text.Encoding]::UTF8)
+            }
+            catch {}
+        }
+    }
+
+    Write-Host ""
+    Write-Log (" " + ("-" * [Math]::Min(100, $totalTableWidth - 1))) -Color DarkCyan
+    Write-Log " [i] Legend : Green = Enabled | Gray = Disabled | Disabled* = Payload Removed" -Color Gray
+    Write-Log " [i] Details: Run with '-Detailed' or '-FeatureName <Name>' for full descriptions." -Color Cyan
+}
+
+function Show-OperationSummaryTable {
+    <#
+    .SYNOPSIS
+        Renders a clean, non-wrapping summary table after Enable/Disable operations.
+    #>
+    param (
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Generic.List[PSCustomObject]]$Results
+    )
+
+    $colNameWidth   = 38
+    $colPrevWidth   = 12
+    $colCurrWidth   = 14
+    $colStatusWidth = 22
+    $colRebootWidth = 8
+
+    $header = " {0}  {1}  {2}  {3}  {4}" -f `
+        "FeatureName".PadRight($colNameWidth),
+        "PrevState".PadRight($colPrevWidth),
+        "CurrentState".PadRight($colCurrWidth),
+        "Status".PadRight($colStatusWidth),
+        "Reboot"
+
+    $sep = " {0}  {1}  {2}  {3}  {4}" -f `
+        ("-" * $colNameWidth),
+        ("-" * $colPrevWidth),
+        ("-" * $colCurrWidth),
+        ("-" * $colStatusWidth),
+        ("-" * $colRebootWidth)
+
+    Write-Host ""
+    Write-Log $header -Color Cyan
+    Write-Log $sep -Color DarkCyan
+
+    foreach ($r in $Results) {
+        $line = " {0}  {1}  {2}  {3}  {4}" -f `
+            (Format-TruncatedText -Text $r.FeatureName -MaxLength $colNameWidth),
+            (Format-TruncatedText -Text $r.PreviousState -MaxLength $colPrevWidth),
+            (Format-TruncatedText -Text $r.CurrentState -MaxLength $colCurrWidth),
+            (Format-TruncatedText -Text $r.OperationStatus -MaxLength $colStatusWidth),
+            ([string]$r.RestartNeeded).PadRight($colRebootWidth)
+
+        $rowColor = if ($r.OperationStatus -like "Failed*") {
+            [ConsoleColor]::Red
+        }
+        elseif ($r.CurrentState -eq "Enabled" -or $r.OperationStatus -like "*Successfully") {
+            [ConsoleColor]::Green
+        }
+        else {
+            [ConsoleColor]::White
+        }
+
+        Write-Log $line -Color $rowColor
+    }
+    Write-Host ""
 }
 
 function Request-BilingualConfirmation {
@@ -1011,7 +1361,7 @@ try {
         }
 
         $detailedResults = [System.Collections.Generic.List[PSCustomObject]]::new()
-        $useDeepDismLookup = ($Action -eq "Details") -or $Detailed -or ($filteredFeatures.Count -le 25)
+        $useDeepDismLookup = ($Action -eq "Details") -or ($Detailed -and $filteredFeatures.Count -le 35) -or ($filteredFeatures.Count -le 10)
 
         Write-Log "[*] Collecting feature details for $($filteredFeatures.Count) feature(s)..." -Level STEP
 
@@ -1041,24 +1391,13 @@ try {
         Write-Log "  WINDOWS OPTIONAL FEATURES - DETAILED CATALOG ($($detailedResults.Count) Features)" -Level HEADER
         Write-Log "================================================================================" -Level HEADER
 
-        if ($Detailed -or $Action -eq "Details" -or $detailedResults.Count -le 10) {
+        if ($Detailed -or $Action -eq "Details" -or $detailedResults.Count -le 5) {
             foreach ($item in $detailedResults) {
                 Show-FeatureDetailCard -FeatureDetail $item -ContextTitle "OPTIONAL FEATURE DETAILS"
             }
         }
         else {
-            # Display rich table with FeatureName, State, DisplayName, RestartRequired, and Description
-            $tableOutput = $detailedResults | Select-Object `
-                FeatureName,
-                State,
-                DisplayName,
-                RestartRequired,
-                @{ Name = "Description"; Expression = {
-                    if ($_.Description.Length -gt 75) { $_.Description.Substring(0, 72) + "..." } else { $_.Description }
-                }} | Format-Table -AutoSize -Wrap | Out-String -Width 180
-
-            Write-Host $tableOutput
-            Write-Log " [i] Tip: Use '-Detailed' or '-FeatureName <Name>' to view full multi-line descriptions and custom properties." -Color Cyan
+            Show-FeatureCatalogTable -Features $detailedResults
         }
 
         # Summary breakdown by state
@@ -1231,14 +1570,7 @@ try {
     Write-Log "  OPERATION EXECUTION SUMMARY ($Action)" -Level HEADER
     Write-Log "================================================================================" -Level HEADER
 
-    $summaryTable = $operationResults | Select-Object `
-        FeatureName,
-        DisplayName,
-        PreviousState,
-        CurrentState,
-        OperationStatus,
-        RestartNeeded | Format-Table -AutoSize | Out-String -Width 160
-    Write-Host $summaryTable
+    Show-OperationSummaryTable -Results $operationResults
 
     if (-not [string]::IsNullOrWhiteSpace($ExportPath)) {
         Export-FeatureReport -Data $operationResults -DestinationPath $ExportPath
