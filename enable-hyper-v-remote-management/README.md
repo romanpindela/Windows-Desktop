@@ -63,8 +63,11 @@ Connecting the graphical **Hyper-V Manager (`virtmgmt.msc`)** console from a Win
 
 ```shell
 enable-hyper-v-remote-management/
-├── enable-hyper-v-remote-management.ps1   # Main PowerShell client/server configuration script
-└── README.md                              # Technical documentation and usage guide
+├── assets/
+│   ├── Configuring_hyper-v_client.jpg      # Screenshot of live client configuration for Hyper-V remote management
+│   └── Standard_run.jpg                    # Screenshot of zero-parameter run / interactive help menu
+├── enable-hyper-v-remote-management.ps1    # Main PowerShell client/server configuration script
+└── README.md                               # Technical documentation and usage guide
 ```
 
 ---
@@ -177,6 +180,16 @@ Previews all operations that would be performed for `HV-SRV01` (`10.10.1.10`) wi
 ```powershell
 .\enable-hyper-v-remote-management.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -DryRun
 ```
+
+---
+
+## 📸 Screenshots & Visual Verification
+
+### 1. Standard Run & Interactive Help Menu (`.\enable-hyper-v-remote-management.ps1`)
+![Standard Run & Interactive Help Menu](assets/Standard_run.jpg)
+
+### 2. Configuring Hyper-V Client Workstation (`-ServerName` & `-ServerIP`)
+![Configuring Hyper-V Client Workstation](assets/Configuring_hyper-v_client.jpg)
 
 ---
 
