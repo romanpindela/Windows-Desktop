@@ -56,8 +56,11 @@ Deploying the WireGuard VPN Client across corporate workstations or servers ofte
 
 ```shell
 deploy-WireGuardClient/
-├── deploy-WireGuardClient.ps1   # Main PowerShell deployment & configuration script
-└── README.md                    # Technical documentation and usage guide
+├── assets/
+│   ├── Deploying_Wireguard_with_config_file.jpg   # Screenshot of deploying WireGuard client and importing .conf file
+│   └── Standard_run.jpg                           # Screenshot of zero-parameter run / interactive help menu
+├── deploy-WireGuardClient.ps1                     # Main PowerShell deployment & configuration script
+└── README.md                                      # Technical documentation and usage guide
 ```
 
 ---
@@ -172,6 +175,16 @@ Validates the `.conf` file structure (interface address, DNS, peer endpoints, al
 ```powershell
 .\deploy-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -ActivateTunnel -DryRun
 ```
+
+---
+
+## 📸 Screenshots & Visual Verification
+
+### 1. Standard Run & Interactive Help Menu (`.\deploy-WireGuardClient.ps1`)
+![Standard Run & Interactive Help Menu](assets/Standard_run.jpg)
+
+### 2. Deploying WireGuard Client & Importing Configuration File (`-ConfigPath`)
+![Deploying WireGuard Client with Configuration File](assets/Deploying_Wireguard_with_config_file.jpg)
 
 ---
 
