@@ -3,7 +3,7 @@
   Script Name : enable-hyper-v-remote-management.ps1
   Author      : Roman Pindela
   Contact     : roman.pindela@gmail.com
-  Version     : 1.2.0
+  Version     : 1.3.0
   Release Date: 2026-10-18
   License     : MIT
   Repository  : https://github.com/romanpindela
@@ -215,7 +215,7 @@
     Author      : Roman Pindela
     Contact     : roman.pindela@gmail.com
     GitHub      : https://github.com/romanpindela
-    Version     : 1.2.0
+    Version     : 1.3.0
     Compatible  : Windows 10, Windows 11, Windows Server 2016/2019/2022/2025 (EN/PL)
     Privileges  : Requires Administrator privileges (auto-elevates via UAC using SID).
 #>
@@ -292,7 +292,7 @@ $ErrorActionPreference = "Stop"
 $SCRIPT_INFO = @{
     Name        = "enable-hyper-v-remote-management"
     FileName    = "enable-hyper-v-remote-management.ps1"
-    Version     = "1.2.0"
+    Version     = "1.3.0"
     Author      = "Roman Pindela"
     Contact     = "roman.pindela@gmail.com"
     GitHub      = "https://github.com/romanpindela"
@@ -783,6 +783,64 @@ function Get-GpoDelegationList {
     return $delegatedServers.ToArray()
 }
 
+function Get-RemoteNetBiosHostName {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$TargetHostOrIP
+    )
+
+    # Sends a standard DCE/RPC Bind request with an NTLMSSP Type 1 Negotiate token to TCP 135
+    # and parses the TargetName / AvPairs from the NTLMSSP Type 2 Challenge to discover the real NetBIOS ComputerName.
+    $rpcBindPacket = [byte[]]@(
+        0x05, 0x00, 0x0b, 0x03, 0x10, 0x00, 0x00, 0x00, 0x78, 0x00, 0x28, 0x00, 0x01, 0x00, 0x00, 0x00,
+        0xb8, 0x10, 0xb8, 0x10, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
+        0x08, 0x83, 0xaf, 0xe1, 0x1f, 0x5d, 0xc9, 0x11, 0x91, 0xa4, 0x08, 0x00, 0x2b, 0x14, 0xa0, 0xfa,
+        0x03, 0x00, 0x00, 0x00, 0x04, 0x5d, 0x88, 0x8a, 0xeb, 0x1c, 0xc9, 0x11, 0x9f, 0xe8, 0x08, 0x00,
+        0x2b, 0x10, 0x48, 0x60, 0x02, 0x00, 0x00, 0x00, 0x0a, 0x02, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+        0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00, 0x01, 0x00, 0x00, 0x00, 0x07, 0x82, 0x08, 0xa2,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x0a, 0x00, 0x61, 0x4a, 0x00, 0x00, 0x00, 0x0f
+    )
+
+    $tcpClient = New-Object System.Net.Sockets.TcpClient
+    try {
+        $asyncRes = $tcpClient.BeginConnect($TargetHostOrIP, 135, $null, $null)
+        if (-not $asyncRes.AsyncWaitHandle.WaitOne(1500, $false) -or -not $tcpClient.Connected) {
+            return $null
+        }
+        $tcpClient.EndConnect($asyncRes)
+        $stream = $tcpClient.GetStream()
+        $stream.ReadTimeout = 1500
+        $stream.WriteTimeout = 1500
+        $stream.Write($rpcBindPacket, 0, $rpcBindPacket.Length)
+
+        $buffer = New-Object byte[] 2048
+        $bytesRead = $stream.Read($buffer, 0, $buffer.Length)
+        if ($bytesRead -le 40) {
+            return $null
+        }
+
+        $asciiText = [System.Text.Encoding]::ASCII.GetString($buffer, 0, $bytesRead)
+        $ntlmOffset = $asciiText.IndexOf("NTLMSSP")
+        if ($ntlmOffset -ge 0 -and ($ntlmOffset + 20) -le $bytesRead) {
+            $nameLen = [System.BitConverter]::ToUInt16($buffer, $ntlmOffset + 12)
+            $nameRelOffset = [System.BitConverter]::ToInt32($buffer, $ntlmOffset + 16)
+            if ($nameLen -gt 0 -and ($ntlmOffset + $nameRelOffset + $nameLen) -le $bytesRead) {
+                $discoveredName = [System.Text.Encoding]::Unicode.GetString($buffer, $ntlmOffset + $nameRelOffset, $nameLen).Trim()
+                if (-not [string]::IsNullOrWhiteSpace($discoveredName) -and $discoveredName -match '^[a-zA-Z0-9\-]+$') {
+                    return $discoveredName
+                }
+            }
+        }
+    }
+    catch {}
+    finally {
+        $tcpClient.Close()
+        $tcpClient.Dispose()
+    }
+    return $null
+}
+
 function Get-HyperVRemoteManagementState {
     param (
         [string]$TargetServerName
@@ -1008,8 +1066,9 @@ if ($normalizedRole -eq "Server") {
         }
     }
 
-    Write-Log "`n[STEP 3/$serverSteps] Enabling Firewall Rules for WMI/DCOM, WinRM & Hyper-V Management..." -Level STEP
+    Write-Log "`n[STEP 3/$serverSteps] Enabling Firewall Rules for WMI/DCOM, WinRM & Hyper-V Management (LAN & VPN Ready)..." -Level STEP
     # Language-independent rule name patterns + English/Polish display groups
+    # IMPORTANT: Set -RemoteAddress Any and -Profile Any so WireGuard/OpenVPN/IPsec VPN subnets are not blocked by LocalSubnet scope!
     $fwRuleNamePatterns = @("WINRM-*", "WMI-*", "VM-Monitoring-*", "Hyper-V-*")
     $enabledFwCount = 0
 
@@ -1017,13 +1076,14 @@ if ($normalizedRole -eq "Server") {
         $matchingRules = @(Get-NetFirewallRule -Name $pattern -ErrorAction SilentlyContinue)
         if ($matchingRules.Count -gt 0) {
             if ($DryRun) {
-                Write-Log "  [DRY-RUN] Would enable $($matchingRules.Count) firewall rules matching '$pattern'." -Level WARN
+                Write-Log "  [DRY-RUN] Would enable $($matchingRules.Count) firewall rules matching '$pattern' (Profile: Any, RemoteAddress: Any)." -Level WARN
                 $enabledFwCount += $matchingRules.Count
             }
             else {
                 $matchingRules | Enable-NetFirewallRule -ErrorAction SilentlyContinue
+                $matchingRules | Set-NetFirewallRule -Profile Any -RemoteAddress Any -ErrorAction SilentlyContinue
                 $enabledFwCount += $matchingRules.Count
-                Write-Log "  [+] Enabled $($matchingRules.Count) firewall rule(s) matching Name '$pattern'." -Level SUCCESS
+                Write-Log "  [+] Enabled & opened $($matchingRules.Count) firewall rule(s) matching Name '$pattern' (Profile: Any, RemoteAddress: Any)." -Level SUCCESS
             }
         }
     }
@@ -1041,11 +1101,12 @@ if ($normalizedRole -eq "Server") {
         $grpRules = @(Get-NetFirewallRule -DisplayGroup $grp -ErrorAction SilentlyContinue)
         if ($grpRules.Count -gt 0) {
             if ($DryRun) {
-                Write-Log "  [DRY-RUN] Would enable DisplayGroup '$grp' ($($grpRules.Count) rules)." -Level WARN
+                Write-Log "  [DRY-RUN] Would enable DisplayGroup '$grp' ($($grpRules.Count) rules, RemoteAddress: Any)." -Level WARN
             }
             else {
                 $grpRules | Enable-NetFirewallRule -ErrorAction SilentlyContinue
-                Write-Log "  [+] Enabled Firewall DisplayGroup '$grp' ($($grpRules.Count) rules)." -Level SUCCESS
+                $grpRules | Set-NetFirewallRule -Profile Any -RemoteAddress Any -ErrorAction SilentlyContinue
+                Write-Log "  [+] Enabled Firewall DisplayGroup '$grp' ($($grpRules.Count) rules, RemoteAddress: Any)." -Level SUCCESS
             }
         }
     }
@@ -1068,6 +1129,8 @@ $initialState = Get-HyperVRemoteManagementState -TargetServerName $ServerName
 $stepResults = [ordered]@{
     NetworkProfileAction   = "Unchanged"
     ManagementToolsAction  = "Unchanged"
+    DiscoveredNetBiosName  = $null
+    EffectiveServerName    = $ServerName
     HostsFileAction        = "Skipped (No -ServerIP specified)"
     HostsBackupPath        = $null
     NameResolutionVerified = $false
@@ -1160,13 +1223,48 @@ else {
 }
 
 # ------------------------------------------------------------------------------
-# STEP 2: NAME RESOLUTION (HOSTS FILE) & CONNECTIVITY VERIFICATION
+# STEP 2: NAME RESOLUTION (HOSTS FILE), NETBIOS DISCOVERY & CONNECTIVITY CHECK
 # ------------------------------------------------------------------------------
-Write-Log "`n[STEP 2/$totalSteps] Configuring Name Resolution (hosts file) & Testing Connectivity..." -Level STEP
+Write-Log "`n[STEP 2/$totalSteps] Configuring Name Resolution (hosts file), Probing NetBIOS Name & Testing Connectivity..." -Level STEP
 Write-Log "  [i] Workgroup Requirement: Hyper-V Manager requires a resolvable hostname ('$ServerName') and cannot connect via raw IP." -Level DETAIL
 
+# Probe actual remote NetBIOS ComputerName over TCP 135 (RPC Endpoint Mapper NTLMSSP)
+$probeTarget = if (-not [string]::IsNullOrWhiteSpace($ServerIP)) { $ServerIP } else { $ServerName }
+$discoveredNetBios = $null
+if (-not [string]::IsNullOrWhiteSpace($probeTarget)) {
+    Write-Log "  [*] Probing remote RPC Endpoint Mapper (TCP 135) on '$probeTarget' to detect actual NetBIOS ComputerName..." -Level DETAIL
+    $discoveredNetBios = Get-RemoteNetBiosHostName -TargetHostOrIP $probeTarget
+    if (-not [string]::IsNullOrWhiteSpace($discoveredNetBios)) {
+        $stepResults.DiscoveredNetBiosName = $discoveredNetBios
+        if (-not $discoveredNetBios.Equals($ServerName, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $stepResults.EffectiveServerName = $discoveredNetBios
+            Write-Log "  [!] IMPORTANT DISCOVERY: Remote host '$probeTarget' reported its real NetBIOS ComputerName as '$discoveredNetBios' (you passed '$ServerName')." -Level WARN
+            Write-Log "      -> Automatically registering BOTH '$discoveredNetBios' (real server hostname) and '$ServerName' (alias) in hosts, TrustedHosts, CredSSP & Group Policy!" -Level SUCCESS
+        }
+        else {
+            Write-Log "  [+] Remote NetBIOS ComputerName confirmed via RPC (TCP 135): '$discoveredNetBios'." -Level SUCCESS
+        }
+    }
+}
+
+$hostNamesToMap = [System.Collections.Generic.List[string]]::new()
+if (-not [string]::IsNullOrWhiteSpace($discoveredNetBios)) {
+    $hostNamesToMap.Add($discoveredNetBios)
+}
+$alreadyInMap = $false
+foreach ($existingMapName in $hostNamesToMap) {
+    if ($existingMapName.Equals($ServerName, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $alreadyInMap = $true
+        break
+    }
+}
+if (-not $alreadyInMap) {
+    $hostNamesToMap.Add($ServerName)
+}
+$desiredHostsNamesString = ($hostNamesToMap -join " ")
+
 if (-not [string]::IsNullOrWhiteSpace($ServerIP)) {
-    Write-Log "  [*] Target Mapping: $ServerIP  ->  $ServerName (File: $HOSTS_FILE_PATH)" -Level INFO
+    Write-Log "  [*] Target Mapping: $ServerIP  ->  $desiredHostsNamesString (File: $HOSTS_FILE_PATH)" -Level INFO
 
     if (-not (Test-Path -LiteralPath $HOSTS_FILE_PATH -PathType Leaf)) {
         throw "System Error: Hosts file was not found at '$HOSTS_FILE_PATH'."
@@ -1176,7 +1274,6 @@ if (-not [string]::IsNullOrWhiteSpace($ServerIP)) {
     $exactMatchFound = $false
     $updatedExistingLine = $false
     $newHostsLines = [System.Collections.Generic.List[string]]::new()
-    $escapedHostRegex = "(?i)(^|\s)$([regex]::Escape($ServerName))(\s|$|#)"
 
     foreach ($line in $rawHostsLines) {
         $trimmed = $line.Trim()
@@ -1189,33 +1286,68 @@ if (-not [string]::IsNullOrWhiteSpace($ServerIP)) {
         $tokens = $codePart -split '\s+'
         if ($tokens.Count -ge 2) {
             $lineIp = $tokens[0]
-            $lineHosts = $tokens[1..($tokens.Count - 1)]
-            $containsTargetHost = $false
-            foreach ($h in $lineHosts) {
-                if ($h.Equals($ServerName, [System.StringComparison]::OrdinalIgnoreCase)) {
-                    $containsTargetHost = $true
-                    break
+            $lineHosts = @($tokens[1..($tokens.Count - 1)])
+
+            $matchesAnyTarget = ($lineIp -eq $ServerIP)
+            if (-not $matchesAnyTarget) {
+                foreach ($h in $lineHosts) {
+                    foreach ($targetH in $hostNamesToMap) {
+                        if ($h.Equals($targetH, [System.StringComparison]::OrdinalIgnoreCase)) {
+                            $matchesAnyTarget = $true
+                            break
+                        }
+                    }
+                    if ($matchesAnyTarget) { break }
                 }
             }
 
-            if ($containsTargetHost) {
-                if ($lineIp -eq $ServerIP -and -not $exactMatchFound) {
+            if ($matchesAnyTarget) {
+                # Merge existing non-conflicting hostnames on this IP with our required hostnames
+                $mergedHosts = [System.Collections.Generic.List[string]]::new()
+                foreach ($reqH in $hostNamesToMap) {
+                    $mergedHosts.Add($reqH)
+                }
+                if ($lineIp -eq $ServerIP) {
+                    foreach ($lh in $lineHosts) {
+                        $present = $false
+                        foreach ($mh in $mergedHosts) {
+                            if ($mh.Equals($lh, [System.StringComparison]::OrdinalIgnoreCase)) {
+                                $present = $true
+                                break
+                            }
+                        }
+                        if (-not $present) {
+                            $mergedHosts.Add($lh)
+                        }
+                    }
+                }
+
+                $allRequiredAlreadyOnLine = ($lineIp -eq $ServerIP)
+                if ($allRequiredAlreadyOnLine) {
+                    foreach ($reqH in $hostNamesToMap) {
+                        $foundReq = $false
+                        foreach ($lh in $lineHosts) {
+                            if ($lh.Equals($reqH, [System.StringComparison]::OrdinalIgnoreCase)) {
+                                $foundReq = $true
+                                break
+                            }
+                        }
+                        if (-not $foundReq) {
+                            $allRequiredAlreadyOnLine = $false
+                            break
+                        }
+                    }
+                }
+
+                if ($allRequiredAlreadyOnLine -and -not $exactMatchFound -and -not $updatedExistingLine) {
                     $exactMatchFound = $true
                     $newHostsLines.Add($line)
                 }
-                elseif ($lineIp -ne $ServerIP -and -not $updatedExistingLine -and -not $exactMatchFound) {
-                    # Replace or update mapping for this hostname
-                    if ($lineHosts.Count -eq 1) {
-                        $updatedLine = "{0,-15} {1} # Updated by enable-hyper-v-remote-management ({2})" -f $ServerIP, $ServerName, (Get-Date -Format "yyyy-MM-dd")
-                        $newHostsLines.Add($updatedLine)
-                        $updatedExistingLine = $true
-                        Write-Log "      [*] Updating existing hosts entry for '$ServerName' ($lineIp -> $ServerIP)..." -Level INFO
-                    }
-                    else {
-                        # Keep other hostnames on old IP line and add separate line for ServerName
-                        $remainingHosts = @($lineHosts | Where-Object { -not $_.Equals($ServerName, [System.StringComparison]::OrdinalIgnoreCase) })
-                        $newHostsLines.Add(("{0,-15} {1}" -f $lineIp, ($remainingHosts -join " ")))
-                    }
+                elseif (-not $updatedExistingLine -and -not $exactMatchFound) {
+                    $updatedLine = "{0,-15} {1} # Updated by enable-hyper-v-remote-management ({2})" -f $ServerIP, ($mergedHosts -join " "), (Get-Date -Format "yyyy-MM-dd")
+                    $newHostsLines.Add($updatedLine)
+                    $updatedExistingLine = $true
+                    Write-Log "      [*] Updating existing hosts entry for '$ServerIP' -> '$($mergedHosts -join ' ')'..." -Level INFO
                 }
                 continue
             }
@@ -1225,18 +1357,18 @@ if (-not [string]::IsNullOrWhiteSpace($ServerIP)) {
     }
 
     if ($exactMatchFound) {
-        Write-Log "  [+] Hosts file already contains exact mapping: '$ServerIP    $ServerName' (No modification needed)." -Level SUCCESS
-        $stepResults.HostsFileAction = "Already Present ($ServerIP -> $ServerName)"
+        Write-Log "  [+] Hosts file already contains mapping: '$ServerIP    $desiredHostsNamesString' (No modification needed)." -Level SUCCESS
+        $stepResults.HostsFileAction = "Already Present ($ServerIP -> $desiredHostsNamesString)"
     }
     else {
         if (-not $updatedExistingLine) {
-            $newEntryLine = "{0,-15} {1} # Added by enable-hyper-v-remote-management ({2})" -f $ServerIP, $ServerName, (Get-Date -Format "yyyy-MM-dd")
+            $newEntryLine = "{0,-15} {1} # Added by enable-hyper-v-remote-management ({2})" -f $ServerIP, $desiredHostsNamesString, (Get-Date -Format "yyyy-MM-dd")
             $newHostsLines.Add($newEntryLine)
         }
 
         if ($DryRun) {
-            Write-Log "  [DRY-RUN] Would back up '$HOSTS_FILE_PATH' and write mapping: '$ServerIP    $ServerName'." -Level WARN
-            $stepResults.HostsFileAction = "Simulated Add/Update ($ServerIP -> $ServerName)"
+            Write-Log "  [DRY-RUN] Would back up '$HOSTS_FILE_PATH' and write mapping: '$ServerIP    $desiredHostsNamesString'." -Level WARN
+            $stepResults.HostsFileAction = "Simulated Add/Update ($ServerIP -> $desiredHostsNamesString)"
         }
         else {
             # Create backup of hosts file in C:\Logs (or temp) before editing
@@ -1252,8 +1384,8 @@ if (-not [string]::IsNullOrWhiteSpace($ServerIP)) {
             [System.IO.File]::WriteAllLines($HOSTS_FILE_PATH, $newHostsLines.ToArray(), $utf8NoBom)
 
             $actionVerb = if ($updatedExistingLine) { "Updated" } else { "Added" }
-            Write-Log "  [+] $actionVerb hosts entry: '$ServerIP    $ServerName' in '$HOSTS_FILE_PATH'." -Level SUCCESS
-            $stepResults.HostsFileAction = "$actionVerb Mapping ($ServerIP -> $ServerName)"
+            Write-Log "  [+] $actionVerb hosts entry: '$ServerIP    $desiredHostsNamesString' in '$HOSTS_FILE_PATH'." -Level SUCCESS
+            $stepResults.HostsFileAction = "$actionVerb Mapping ($ServerIP -> $desiredHostsNamesString)"
 
             # Flush DNS client cache so resolution is immediate
             try {
@@ -1269,14 +1401,14 @@ else {
 }
 
 # Verify Name Resolution & Network Reachability (Test-Connection)
-Write-Log "  [*] Verifying hostname resolution & network reachability for '$ServerName'..." -Level INFO
+Write-Log "  [*] Verifying hostname resolution & network reachability for '$($hostNamesToMap -join ', ')'..." -Level INFO
 try {
     $resolvedAddresses = @([System.Net.Dns]::GetHostAddresses($ServerName) | Where-Object { $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork })
     if ($resolvedAddresses.Count -gt 0) {
         $resolvedIpStr = ($resolvedAddresses | ForEach-Object { $_.IPAddressToString }) -join ", "
         $stepResults.NameResolutionVerified = $true
         $stepResults.ResolvedIPAddress = $resolvedIpStr
-        Write-Log "  [+] Name Resolution Verified: '$ServerName' resolves to IPv4 [$resolvedIpStr]." -Level SUCCESS
+        Write-Log "  [+] Name Resolution Verified: '$($hostNamesToMap -join ' / ')' resolves to IPv4 [$resolvedIpStr]." -Level SUCCESS
     }
     elseif ($DryRun -and -not [string]::IsNullOrWhiteSpace($ServerIP)) {
         $stepResults.NameResolutionVerified = $true
@@ -1308,7 +1440,7 @@ if (-not [string]::IsNullOrWhiteSpace($targetTestHost)) {
             Write-Log "  [+] ICMP Ping to '$targetTestHost' : REACHABLE" -Level SUCCESS
         }
         else {
-            Write-Log "  [!] ICMP Ping to '$targetTestHost' : No response (Host may block ICMP or be offline; continuing client setup)." -Level WARN
+            Write-Log "  [!] ICMP Ping to '$targetTestHost' : No response (Host blocks ICMP Echo; checking TCP ports directly...)." -Level WARN
         }
     }
     catch {
@@ -1330,16 +1462,23 @@ if (-not [string]::IsNullOrWhiteSpace($targetTestHost)) {
                 Write-Log "  [+] Remote Port $($portInfo.Label) on '$targetTestHost' : OPEN" -Level SUCCESS
             }
             else {
-                Write-Log "  [i] Remote Port $($portInfo.Label) on '$targetTestHost' : Not reachable yet (Ensure Step 2 server commands are run on '$ServerName')." -Level DETAIL
+                Write-Log "  [!] Remote Port $($portInfo.Label) on '$targetTestHost' : CLOSED / FILTERED BY SERVER FIREWALL" -Level WARN
             }
         }
         catch {
-            Write-Log "  [i] Remote Port $($portInfo.Label) on '$targetTestHost' : Not reachable yet." -Level DETAIL
+            Write-Log "  [!] Remote Port $($portInfo.Label) on '$targetTestHost' : CLOSED / FILTERED" -Level WARN
         }
         finally {
             $tcpClient.Close()
             $tcpClient.Dispose()
         }
+    }
+
+    if ($stepResults.RpcPort135Open -and -not $stepResults.WinRMPort5985Open) {
+        Write-Log "  [!] VPN / FIREWALL DIAGNOSTIC: Port 135 (RPC) is OPEN on '$targetTestHost', but Port 5985 (WinRM) is BLOCKED!" -Level WARN
+        Write-Log "      Cause: On Windows Server, 'WINRM-HTTP-In-TCP-Public' defaults to 'RemoteAddress = LocalSubnet', which blocks WireGuard/VPN subnets." -Level WARN
+        Write-Log "      Fix on Server ('$($stepResults.EffectiveServerName)' / $ServerIP): Run PowerShell as Admin and execute:" -Level INFO
+        Write-Log "      Enable-PSRemoting -Force; Enable-WSManCredSSP -Role Server -Force; Set-NetFirewallRule -Name 'WINRM-*','WMI-*','VM-Monitoring-*','Hyper-V-*' -Profile Any -RemoteAddress Any -Enabled True" -Level SUCCESS
     }
 }
 
@@ -1348,10 +1487,24 @@ if (-not [string]::IsNullOrWhiteSpace($targetTestHost)) {
 # ------------------------------------------------------------------------------
 Write-Log "`n[STEP 3/$totalSteps] Configuring WinRM Service & WSMan TrustedHosts..." -Level STEP
 
+# Always include discovered NetBIOS name (if any), requested ServerName, and ServerIP (when provided)
+# so WinRM never rejects connections whether initiated by hostname, alias, or IP!
 $targetsToTrust = [System.Collections.Generic.List[string]]::new()
-$targetsToTrust.Add($ServerName)
-if ($IncludeIPInTrustedHosts -and -not [string]::IsNullOrWhiteSpace($ServerIP)) {
-    $targetsToTrust.Add($ServerIP)
+foreach ($hn in $hostNamesToMap) {
+    $targetsToTrust.Add($hn)
+}
+$effectiveIpToTrust = if (-not [string]::IsNullOrWhiteSpace($ServerIP)) { $ServerIP } elseif ($IncludeIPInTrustedHosts -and -not [string]::IsNullOrWhiteSpace($stepResults.ResolvedIPAddress)) { ($stepResults.ResolvedIPAddress -split ',')[0].Trim() } else { $null }
+if (-not [string]::IsNullOrWhiteSpace($effectiveIpToTrust)) {
+    $ipAlreadyInTrust = $false
+    foreach ($t in $targetsToTrust) {
+        if ($t.Equals($effectiveIpToTrust, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $ipAlreadyInTrust = $true
+            break
+        }
+    }
+    if (-not $ipAlreadyInTrust) {
+        $targetsToTrust.Add($effectiveIpToTrust)
+    }
 }
 
 if ($DryRun) {
@@ -1394,7 +1547,6 @@ else {
     }
     else {
         $existingThList = @($currentThRaw -split ',' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-        $addedAnyTh = $false
 
         foreach ($trustEntry in $targetsToTrust) {
             $alreadyInTh = $false
@@ -1409,7 +1561,6 @@ else {
                 Write-Log "  [>] Executing: Set-Item WSMan:\localhost\Client\TrustedHosts -Value `"$trustEntry`" -Concatenate -Force" -Level INFO
                 Set-Item -Path "WSMan:\localhost\Client\TrustedHosts" -Value $trustEntry -Concatenate -Force -ErrorAction Stop
                 $existingThList += $trustEntry
-                $addedAnyTh = $true
                 Write-Log "  [+] Added '$trustEntry' to WSMan:\localhost\Client\TrustedHosts." -Level SUCCESS
             }
             else {
@@ -1574,22 +1725,25 @@ if ($clientFwRules.Count -gt 0) {
 }
 
 # 6B. Optional Windows Credential Manager (cmdkey) Registration
-$qualifiedUser = if ($ServerUser -match '\\') { $ServerUser } else { "$ServerName\$ServerUser" }
+$primaryServerHost = $stepResults.EffectiveServerName
+$qualifiedUser = if ($ServerUser -match '\\') { $ServerUser } else { "$primaryServerHost\$ServerUser" }
 if ($StoreCredentials) {
     if ($DryRun) {
-        Write-Log "  [DRY-RUN] Would prompt for password and store credentials in Windows Vault (cmdkey) for '$ServerName' as '$qualifiedUser'." -Level WARN
+        Write-Log "  [DRY-RUN] Would prompt for password and store credentials in Windows Vault (cmdkey) for '$($hostNamesToMap -join ', ')' as '$qualifiedUser'." -Level WARN
         $stepResults.CredentialsStored = $true
     }
     else {
-        Write-Log "  [*] Prompting for password for remote account '$qualifiedUser' on '$ServerName'..." -Level INFO
+        Write-Log "  [*] Prompting for password for remote account '$qualifiedUser' on '$primaryServerHost'..." -Level INFO
         $secPass = Read-Host -Prompt "      Enter password for $qualifiedUser" -AsSecureString
         $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secPass)
         try {
             $plainPass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
             if (-not [string]::IsNullOrEmpty($plainPass)) {
-                & cmdkey.exe "/add:$ServerName" "/user:$qualifiedUser" "/pass:$plainPass" | Out-Null
-                & cmdkey.exe "/add:TERMSRV/$ServerName" "/user:$qualifiedUser" "/pass:$plainPass" | Out-Null
-                Write-Log "  [+] Stored credentials in Windows Credential Manager (cmdkey) for '$ServerName' and 'TERMSRV/$ServerName'." -Level SUCCESS
+                foreach ($targetCredHost in $targetsToTrust) {
+                    & cmdkey.exe "/add:$targetCredHost" "/user:$qualifiedUser" "/pass:$plainPass" | Out-Null
+                    & cmdkey.exe "/add:TERMSRV/$targetCredHost" "/user:$qualifiedUser" "/pass:$plainPass" | Out-Null
+                }
+                Write-Log "  [+] Stored credentials in Windows Credential Manager (cmdkey) for '$($targetsToTrust -join ', ')'." -Level SUCCESS
                 $stepResults.CredentialsStored = $true
             }
             else {
@@ -1633,12 +1787,15 @@ Write-Log "  HYPER-V REMOTE MANAGEMENT CLIENT CONFIGURATION SUMMARY" -Level HEAD
 Write-Log "================================================================================" -Level HEADER
 Write-Log "  Script & Version          : $($SCRIPT_INFO.FileName) v$($SCRIPT_INFO.Version)" -Level INFO
 Write-Log "  Execution Mode            : $(if ($DryRun) { 'DRY-RUN (Simulation Only)' } else { 'LIVE CONFIGURATION (Client Mode)' })" -Level INFO
-Write-Log "  Target Hyper-V Server     : $ServerName $(if (-not [string]::IsNullOrWhiteSpace($ServerIP)) { "($ServerIP)" } elseif ($stepResults.ResolvedIPAddress) { "($($stepResults.ResolvedIPAddress))" } else { '' })" -Level SUCCESS
+Write-Log "  Target Hyper-V Server     : $($hostNamesToMap -join ' / ') $(if (-not [string]::IsNullOrWhiteSpace($ServerIP)) { "($ServerIP)" } elseif ($stepResults.ResolvedIPAddress) { "($($stepResults.ResolvedIPAddress))" } else { '' })" -Level SUCCESS
+if (-not [string]::IsNullOrWhiteSpace($stepResults.DiscoveredNetBiosName)) {
+    Write-Log "  Real NetBIOS ComputerName : $($stepResults.DiscoveredNetBiosName) (Auto-Discovered via RPC TCP 135)" -Level SUCCESS
+}
 Write-Log "  1. Hosts File Mapping     : $($stepResults.HostsFileAction)" -Level $(if ($stepResults.HostsFileAction -match 'Added|Updated|Already Present') { 'SUCCESS' } else { 'INFO' })
 if ($stepResults.HostsBackupPath) {
     Write-Log "     Hosts Backup File      : $($stepResults.HostsBackupPath)" -Level DETAIL
 }
-Write-Log "  2. Name Resolution & Ping : Resolved=$(if ($stepResults.NameResolutionVerified) { "Yes ($($stepResults.ResolvedIPAddress))" } else { 'No' }) | Ping=$(if ($stepResults.PingReachable) { 'Reachable' } else { 'No Response' }) | WinRM(5985)=$(if ($stepResults.WinRMPort5985Open) { 'Open' } else { 'Closed/Filtered' })" -Level INFO
+Write-Log "  2. Name Resolution & Ports: Resolved=$(if ($stepResults.NameResolutionVerified) { "Yes ($($stepResults.ResolvedIPAddress))" } else { 'No' }) | RPC(135)=$(if ($stepResults.RpcPort135Open) { 'Open' } else { 'Closed' }) | WinRM(5985)=$(if ($stepResults.WinRMPort5985Open) { 'Open' } else { 'CLOSED/FILTERED' })" -Level $(if ($stepResults.WinRMPort5985Open) { 'SUCCESS' } else { 'WARN' })
 Write-Log "  3. WinRM & TrustedHosts   : Service=$($stepResults.WinRMServiceAction) | TrustedHosts='$($stepResults.TrustedHostsAfter)'" -Level SUCCESS
 Write-Log "  4. CredSSP Client Role    : $($stepResults.CredSSPClientAction)" -Level SUCCESS
 Write-Log "  5. Group Policy (NTLM)    : $($stepResults.GpoRegistryAction) | GPUpdate: $($stepResults.GpUpdateStatus)" -Level SUCCESS
@@ -1657,20 +1814,23 @@ if (-not $NoLog -and $script:ActiveLogFile) {
 Write-Log "`n--------------------------------------------------------------------------------" -Level HEADER
 Write-Log "  QUICK USER INSTRUCTIONS: HOW TO CONNECT IN HYPER-V MANAGER" -Level STEP
 Write-Log "--------------------------------------------------------------------------------" -Level HEADER
-Write-Log "  STEP A - Verify Prerequisites on the Remote Hyper-V Server ($ServerName):" -Level INFO
-Write-Log "     Ensure the following commands have been run as Administrator on '$ServerName':" -Level DETAIL
+Write-Log "  STEP A - Run These Commands on the Remote Hyper-V Server ($primaryServerHost / $ServerIP):" -Level INFO
+Write-Log "     Ensure the following commands are run as Administrator on '$primaryServerHost' (especially over VPN):" -Level DETAIL
 Write-Log "       Enable-PSRemoting -Force" -Level WARN
 Write-Log "       Enable-WSManCredSSP -Role Server -Force" -Level WARN
 Write-Log "       Configure-SMRemoting.exe -Enable" -Level WARN
-Write-Log "       Enable-NetFirewallRule -Name 'WINRM-*','WMI-*','VM-Monitoring-*','Hyper-V-*'" -Level WARN
+Write-Log "       Set-NetFirewallRule -Name 'WINRM-*','WMI-*','VM-Monitoring-*','Hyper-V-*' -Profile Any -RemoteAddress Any -Enabled True" -Level WARN
 Write-Log "     (Or simply run on the server: .\enable-hyper-v-remote-management.ps1 -Role Server)" -Level DETAIL
 Write-Log "" -Level DETAIL
 Write-Log "  STEP B - Connect from This Client PC in Hyper-V Manager (virtmgmt.msc):" -Level INFO
 Write-Log "     1. Open 'Hyper-V Manager' (Menadzer funkcji Hyper-V) or run: virtmgmt.msc" -Level DETAIL
 Write-Log "     2. In the right/left pane, click 'Connect to Server...' (Polacz z serwerem...)." -Level DETAIL
-Write-Log "     3. Select 'Another computer:' (Inny komputer:) and enter the HOSTNAME:" -Level DETAIL
-Write-Log "          $ServerName" -Level SUCCESS
-Write-Log "        (IMPORTANT: Do NOT enter the raw IP address '$($ServerIP)'; always use '$ServerName')." -Level WARN
+Write-Log "     3. Select 'Another computer:' (Inny komputer:) and enter the REAL HOSTNAME:" -Level DETAIL
+Write-Log "          $primaryServerHost" -Level SUCCESS
+if ($primaryServerHost -ne $ServerName) {
+    Write-Log "        (Note: '$ServerName' is also mapped as an alias, but '$primaryServerHost' is the server's actual NetBIOS name)." -Level DETAIL
+}
+Write-Log "        (IMPORTANT: Do NOT enter the raw IP address '$($ServerIP)'; always enter '$primaryServerHost')." -Level WARN
 Write-Log "     4. Check the box 'Connect as another user' (Polacz jako inny uzytkownik)" -Level DETAIL
 Write-Log "        and click 'Set User...' (Ustaw uzytkownika...)." -Level DETAIL
 Write-Log "     5. Enter the remote server's local Administrator credentials in the format:" -Level DETAIL
@@ -1688,6 +1848,8 @@ if ($PassThru) {
         Role                   = $normalizedRole
         DryRun                 = [bool]$DryRun
         ServerName             = $ServerName
+        DiscoveredNetBiosName  = $stepResults.DiscoveredNetBiosName
+        EffectiveServerName    = $stepResults.EffectiveServerName
         ServerIP               = $ServerIP
         ResolvedIPAddress      = $stepResults.ResolvedIPAddress
         NameResolutionVerified = $stepResults.NameResolutionVerified
