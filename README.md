@@ -50,3 +50,22 @@ These tools are built to help IT Administrators and power users streamline daily
   # Deploy network printer using system driver (e.g., Konica Minolta C224e at 10.10.1.71)
   .\Add-NetworkPrinter\Add-NetworkPrinter.ps1 -PrinterIP "10.10.1.71" -PrinterName "Konica Minolta C224e"
   ```
+
+---
+
+### [Manage-WindowsOptionalFeatures](Manage-WindowsOptionalFeatures/README.md)
+* **Script:** [`Manage-WindowsOptionalFeatures.ps1`](Manage-WindowsOptionalFeatures/Manage-WindowsOptionalFeatures.ps1)
+* **Author:** Roman Pindela (`roman.pindela@gmail.com`)
+* **Description:** Enterprise-grade PowerShell tool for inspecting, listing details, enabling, and disabling Windows Optional Features (DISM / `Win32_OptionalFeature`) in Windows 10 and Windows 11.
+  * **Complete Feature Details:** Combines DISM (`Get-WindowsOptionalFeature`) and CIM (`Win32_OptionalFeature`) to list `FeatureName`, localized `DisplayName`, `State`, `RestartRequired`, `Description`, and `CustomProperties` for every option.
+  * **Enable & Disable Operations:** Supports enabling or disabling single or multiple features via `-Action Enable|Disable` or `-Enable` / `-Disable` switches, with automatic parent dependency resolution (`-All`), `-DryRun` simulation, and CSV/JSON export (`-ExportPath`).
+  * **Standards Compliant:** Zero-parameter interactive help (`-h`), language-independent UAC auto-elevation via SID (`S-1-5-32-544`), input sanitization, and detailed logging to `C:\Logs`.
+* **Quick Example:**
+  ```powershell
+  # List all Windows Optional Features with details
+  .\Manage-WindowsOptionalFeatures\Manage-WindowsOptionalFeatures.ps1 -List
+
+  # Enable Telnet Client and Windows Sandbox
+  .\Manage-WindowsOptionalFeatures\Manage-WindowsOptionalFeatures.ps1 -Action Enable -FeatureName "TelnetClient", "Containers-DisposableClientVM"
+  ```
+
