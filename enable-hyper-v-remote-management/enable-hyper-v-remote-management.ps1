@@ -728,7 +728,7 @@ Write-Log "=====================================================================
 function Get-HostsFileEntries {
     $entries = [System.Collections.Generic.List[PSCustomObject]]::new()
     if (-not (Test-Path -LiteralPath $HOSTS_FILE_PATH -PathType Leaf)) {
-        return $entries
+        return $entries.ToArray()
     }
 
     $lines = Get-Content -LiteralPath $HOSTS_FILE_PATH -Encoding UTF8 -ErrorAction SilentlyContinue
@@ -752,7 +752,7 @@ function Get-HostsFileEntries {
             })
         }
     }
-    return $entries
+    return $entries.ToArray()
 }
 
 function Get-GpoDelegationList {
@@ -763,7 +763,7 @@ function Get-GpoDelegationList {
 
     $delegatedServers = [System.Collections.Generic.List[string]]::new()
     if (-not (Test-Path -LiteralPath $SubKeyPath)) {
-        return $delegatedServers
+        return $delegatedServers.ToArray()
     }
 
     try {
@@ -780,7 +780,7 @@ function Get-GpoDelegationList {
         }
     }
     catch {}
-    return $delegatedServers
+    return $delegatedServers.ToArray()
 }
 
 function Get-HyperVRemoteManagementState {
@@ -842,8 +842,8 @@ function Get-HyperVRemoteManagementState {
             }
         }
     }
-    $ntlmDelegatedList = Get-GpoDelegationList -SubKeyPath $GPO_NTLM_SUBKEY_PATH
-    $freshDelegatedList = Get-GpoDelegationList -SubKeyPath $GPO_FRESH_SUBKEY_PATH
+    $ntlmDelegatedList = @(Get-GpoDelegationList -SubKeyPath $GPO_NTLM_SUBKEY_PATH)
+    $freshDelegatedList = @(Get-GpoDelegationList -SubKeyPath $GPO_FRESH_SUBKEY_PATH)
 
     # 5. Hyper-V Management Optional Features
     $guiFeatureState = "Unknown"
@@ -876,7 +876,7 @@ function Get-HyperVRemoteManagementState {
     catch {}
 
     # 7. Hosts Entries
-    $allHosts = Get-HostsFileEntries
+    $allHosts = @(Get-HostsFileEntries)
     $matchingHosts = if (-not [string]::IsNullOrWhiteSpace($TargetServerName)) {
         @($allHosts | Where-Object { $_.HostNames -match "(?i)\b$([regex]::Escape($TargetServerName))\b" })
     }
@@ -1491,7 +1491,13 @@ else {
             New-Item -Path $subKeyPath -Force -ErrorAction Stop | Out-Null
         }
 
-        $existingSpns = Get-GpoDelegationList -SubKeyPath $subKeyPath
+        $existingSpns = [System.Collections.Generic.List[string]]::new()
+        foreach ($item in @(Get-GpoDelegationList -SubKeyPath $subKeyPath)) {
+            if (-not [string]::IsNullOrWhiteSpace($item)) {
+                $existingSpns.Add([string]$item)
+            }
+        }
+
         $nextIndex = 1
         $propsObj = Get-ItemProperty -LiteralPath $subKeyPath -ErrorAction SilentlyContinue
         if ($null -ne $propsObj) {
@@ -1526,7 +1532,7 @@ else {
         }
     }
 
-    $verifiedNtlmSpns = Get-GpoDelegationList -SubKeyPath $GPO_NTLM_SUBKEY_PATH
+    $verifiedNtlmSpns = @(Get-GpoDelegationList -SubKeyPath $GPO_NTLM_SUBKEY_PATH)
     $stepResults.GpoRegistryAction = "Configured ($($verifiedNtlmSpns -join ', '))"
 
     # Run gpupdate /target:computer /force so Group Policy refreshes immediately
