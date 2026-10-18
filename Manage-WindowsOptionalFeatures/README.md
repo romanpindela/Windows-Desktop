@@ -51,6 +51,11 @@ Managing Windows Optional Features (such as **Hyper-V**, **Windows Sandbox**, **
 
 ```shell
 Manage-WindowsOptionalFeatures/
+├── assets/
+│   ├── Enabling_hyper-v_feature.jpg     # Screenshot of enabling Hyper-V feature with before/after details
+│   ├── Listing_hyper-v_features.jpg     # Screenshot of detailed inspection of Hyper-V features
+│   ├── Listing_windows_features.jpg     # Screenshot of colorized Windows Optional Features catalog table
+│   └── Standard_run.jpg                 # Screenshot of zero-parameter run / interactive help menu
 ├── Manage-WindowsOptionalFeatures.ps1   # Main PowerShell script
 └── README.md                            # Technical documentation and usage guide
 ```
@@ -204,6 +209,22 @@ Generates a complete audit report of all Windows 10/11 optional features:
 ```powershell
 .\Manage-WindowsOptionalFeatures.ps1 -List -ExportPath "C:\Logs\WindowsOptionalFeatures_Audit.csv"
 ```
+
+---
+
+## 📸 Screenshots & Visual Verification
+
+### 1. Standard Run & Interactive Help Menu (`.\Manage-WindowsOptionalFeatures.ps1`)
+![Standard Run & Interactive Help Menu](assets/Standard_run.jpg)
+
+### 2. Listing Windows Optional Features Catalog (`.\Manage-WindowsOptionalFeatures.ps1 -List`)
+![Listing Windows Optional Features Catalog](assets/Listing_windows_features.jpg)
+
+### 3. Inspecting Hyper-V Optional Features Details (`-FeatureName "*Hyper-V*"`)
+![Listing Hyper-V Optional Features Details](assets/Listing_hyper-v_features.jpg)
+
+### 4. Enabling Hyper-V Optional Feature with Before/After Details (`-Action Enable`)
+![Enabling Hyper-V Optional Feature](assets/Enabling_hyper-v_feature.jpg)
 
 ---
 
