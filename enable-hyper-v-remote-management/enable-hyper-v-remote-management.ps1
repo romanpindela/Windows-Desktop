@@ -1111,6 +1111,17 @@ if ($normalizedRole -eq "Server") {
         }
     }
 
+    # Ensure explicit inbound rule for WinRM (5985/5986), RPC (135), SMB (445), and VMConnect (2179) across all interfaces/VPNs
+    $customRuleName = "HyperV-RemoteManagement-VPN-Allow"
+    if ($DryRun) {
+        Write-Log "  [DRY-RUN] Would create/update explicit firewall rule '$customRuleName' for TCP 5985,5986,135,445,2179 (Profile: Any, RemoteAddress: Any)." -Level WARN
+    }
+    else {
+        Remove-NetFirewallRule -Name $customRuleName -ErrorAction SilentlyContinue
+        New-NetFirewallRule -Name $customRuleName -DisplayName "Hyper-V & WinRM Remote Management (LAN/VPN)" -Direction Inbound -Protocol TCP -LocalPort 5985,5986,135,445,2179 -Action Allow -Profile Any -RemoteAddress Any -ErrorAction SilentlyContinue | Out-Null
+        Write-Log "  [+] Created explicit inbound firewall rule '$customRuleName' for TCP ports 5985, 5986, 135, 445, 2179 (Profile: Any, RemoteAddress: Any)." -Level SUCCESS
+    }
+
     Write-Log "`n[STEP 4/$serverSteps] Auditing Final Server State..." -Level STEP
     $finalServerState = Get-HyperVRemoteManagementState -TargetServerName $ServerName
     Show-StateReport -StateObject $finalServerState -Title "HYPER-V SERVER REMOTE MANAGEMENT SUMMARY"
