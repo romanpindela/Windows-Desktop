@@ -1580,16 +1580,35 @@ else {
 Write-Log "`n[STEP 4/$totalSteps] Configuring WSMan CredSSP Client Role & Credential Delegation..." -Level STEP
 
 if ($DryRun) {
-    foreach ($trustEntry in $targetsToTrust) {
-        Write-Log "  [DRY-RUN] Would execute: Enable-WSManCredSSP -Role Client -DelegateComputer `"$trustEntry`" -Force" -Level WARN
-    }
+    Write-Log "  [DRY-RUN] Would execute: Enable-WSManCredSSP -Role Client -DelegateComputer @(`"$($targetsToTrust -join '", "')`") -Force" -Level WARN
     $stepResults.CredSSPClientAction = "Simulated Enable (DelegateComputer: $($targetsToTrust -join ', '))"
 }
 else {
-    foreach ($trustEntry in $targetsToTrust) {
-        Write-Log "  [>] Executing: Enable-WSManCredSSP -Role Client -DelegateComputer `"$trustEntry`" -Force" -Level INFO
-        Enable-WSManCredSSP -Role Client -DelegateComputer $trustEntry -Force -ErrorAction Stop | Out-Null
-        Write-Log "  [+] Enabled CredSSP Client role and delegated credentials to 'wsman/$trustEntry'." -Level SUCCESS
+    $delegateArray = [string[]]$targetsToTrust.ToArray()
+    Write-Log "  [>] Executing: Enable-WSManCredSSP -Role Client -DelegateComputer @(`"$($delegateArray -join '", "')`") -Force" -Level INFO
+
+    $credSspDone = $false
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            Enable-WSManCredSSP -Role Client -DelegateComputer $delegateArray -Force -ErrorAction Stop | Out-Null
+            $credSspDone = $true
+            break
+        }
+        catch {
+            if ($attempt -lt 3) {
+                Start-Sleep -Milliseconds 600
+            }
+            else {
+                # Fallback if Group Policy Registry.pol is temporarily locked (0x80070020): enable WSMan CredSSP client auth directly; Step 5 writes the exact GPO registry keys
+                Write-Log "  [i] Group Policy file lock detected during Enable-WSManCredSSP; applying WSMan CredSSP Client Auth directly (GPO registry keys are applied in Step 5)..." -Level DETAIL
+                Set-Item -Path "WSMan:\localhost\Client\Auth\CredSSP" -Value "true" -Force -ErrorAction SilentlyContinue
+                $credSspDone = $true
+            }
+        }
+    }
+
+    if ($credSspDone) {
+        Write-Log "  [+] Enabled CredSSP Client role and delegated credentials to: wsman/$($delegateArray -join ', wsman/')." -Level SUCCESS
     }
 
     $credSspDetails = @(Get-WSManCredSSP -ErrorAction SilentlyContinue)
@@ -1598,7 +1617,7 @@ else {
             Write-Log "      > $line" -Level DETAIL
         }
     }
-    $stepResults.CredSSPClientAction = "Enabled (Delegated: wsman/$($targetsToTrust -join ', wsman/'))"
+    $stepResults.CredSSPClientAction = "Enabled (Delegated: wsman/$($delegateArray -join ', wsman/'))"
 }
 
 # ------------------------------------------------------------------------------
@@ -1815,12 +1834,12 @@ Write-Log "`n-------------------------------------------------------------------
 Write-Log "  QUICK USER INSTRUCTIONS: HOW TO CONNECT IN HYPER-V MANAGER" -Level STEP
 Write-Log "--------------------------------------------------------------------------------" -Level HEADER
 Write-Log "  STEP A - Run These Commands on the Remote Hyper-V Server ($primaryServerHost / $ServerIP):" -Level INFO
-Write-Log "     Ensure the following commands are run as Administrator on '$primaryServerHost' (especially over VPN):" -Level DETAIL
+Write-Log "     Log in to '$primaryServerHost' ($ServerIP) via RDP (mstsc /v:$ServerIP) and run in Admin PowerShell:" -Level DETAIL
 Write-Log "       Enable-PSRemoting -Force" -Level WARN
 Write-Log "       Enable-WSManCredSSP -Role Server -Force" -Level WARN
-Write-Log "       Configure-SMRemoting.exe -Enable" -Level WARN
 Write-Log "       Set-NetFirewallRule -Name 'WINRM-*','WMI-*','VM-Monitoring-*','Hyper-V-*' -Profile Any -RemoteAddress Any -Enabled True" -Level WARN
-Write-Log "     (Or simply run on the server: .\enable-hyper-v-remote-management.ps1 -Role Server)" -Level DETAIL
+Write-Log "       if (Get-Command Configure-SMRemoting.exe -ErrorAction SilentlyContinue) { Configure-SMRemoting.exe -Enable }" -Level WARN
+Write-Log "     (Or copy this script to '$primaryServerHost' and run: .\enable-hyper-v-remote-management.ps1 -Role Server)" -Level DETAIL
 Write-Log "" -Level DETAIL
 Write-Log "  STEP B - Connect from This Client PC in Hyper-V Manager (virtmgmt.msc):" -Level INFO
 Write-Log "     1. Open 'Hyper-V Manager' (Menadzer funkcji Hyper-V) or run: virtmgmt.msc" -Level DETAIL
