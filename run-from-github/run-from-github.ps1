@@ -6,7 +6,7 @@
     It downloads a target script from a predefined URL, unblocks it, and executes it.
     The script handles its own UAC elevation to ensure it has the necessary permissions.
 .NOTES
-    Version: 1.0.0
+    Version: 1.1.0
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
     GitHub: https://github.com/romanpindela
@@ -63,8 +63,11 @@ try {
         $rawUrl = $UrlToDownload
     }
 
-    # Define a temporary download location.
-    $destinationPath = "C:\Temp"
+    # Ensure execution policy allows script execution for this process/session.
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+
+    # Define download location (defaults to C:\PowerShell).
+    $destinationPath = "C:\PowerShell"
     if (-not (Test-Path -Path $destinationPath)) {
         Write-Host "Creating directory: $destinationPath..." -ForegroundColor Yellow
         New-Item -Path $destinationPath -ItemType Directory -Force | Out-Null
