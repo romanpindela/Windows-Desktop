@@ -7,98 +7,98 @@
 [![Privileges](https://img.shields.io/badge/Privileges-Administrator-red.svg)](https://docs.microsoft.com/en-us/windows/security/identity-protection/user-account-control/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Niezawodny launcher PowerShell typu **Copy-Paste** zaprojektowany do automatycznego pobierania i uruchamiania dowolnego skryptu bezpośrednio z repozytorium GitHub po wklejeniu bloku poleceń do konsoli PowerShell uruchomionej jako **Administrator**.
+A reliable, **Copy-Paste** PowerShell launcher designed to automatically download, unblock, and execute any PowerShell script directly from a GitHub repository by simply pasting a single command block into an elevated (**Administrator**) PowerShell console.
 
-Obsługuje opcjonalne przekazywanie parametrów (np. `-AutoDiscover`, `-All`, `-SiteName`) do pobieranego skryptu.
-
----
-
-## 📋 Spis treści
-
-- [Opis działania](#-opis-działania)
-- [Porównanie 3 wariantów polityki wykonywania (ExecutionPolicy)](#-porównanie-3-wariantów-polityki-wykonywania-executionpolicy)
-- [🚀 Gotowe bloki do skopiowania](#-gotowe-bloki-do-skopiowania)
-  - [⚡ Przykład z parametrami: Synchronizacja SharePoint (Sync-SharePointLibrary.ps1 -AutoDiscover)](#-przykład-z-parametrami-synchronizacja-sharepoint-sync-sharepointlibraryps1--autodiscover)
-  - [Wariant 1: Dla danej maszyny (LocalMachine)](#wariant-1-dla-danej-maszyny-localmachine)
-  - [Wariant 2: Dla danego użytkownika (CurrentUser)](#wariant-2-dla-danego-użytkownika-currentuser)
-  - [Wariant 3: Dla danej sesji (Process)](#wariant-3-dla-danej-sesji-process)
-- [⚙️ Jak przekazywać parametry do pobieranego skryptu?](#️-jak-przekazywać-parametry-do-pobieranego-skryptu)
-- [🔧 Co robi każda część bloku kodu?](#-co-robi-każda-część-bloku-kodu)
-- [💻 Wymagania techniczne](#-wymagania-techniczne)
-- [👤 Autor](#-autor)
+Supports passing optional arguments and switch parameters (e.g., `-AutoDiscover`, `-All`, `-SiteName`) directly to the target script.
 
 ---
 
-## 🔍 Opis działania
+## 📋 Table of Contents
 
-Głównym celem tego rozwiązania jest umożliwienie natychmiastowego uruchomienia skryptu z GitHuba na nowej maszynie lub podczas sesji serwisowej bez konieczności ręcznego tworzenia plików czy pobierania repozytorium przez przeglądarkę.
-
-Każdy z poniższych bloków poleceń realizuje pełny cykl operacyjny w ramach jednego wklejenia do konsoli:
-1. **Weryfikacja uprawnień Administratora:** Sprawdza, czy konsola została uruchomiona z podwyższonymi uprawnieniami (językowo niezależny mechanizm SID).
-2. **Odblokowanie PowerShell (`Set-ExecutionPolicy`):** Odblokowuje możliwość uruchamiania skryptów w wybranym zakresie (`LocalMachine`, `CurrentUser` lub `Process`).
-3. **Przygotowanie katalogu docelowego (`C:\PowerShell`):** Sprawdza obecność folderu i tworzy go automatycznie, jeśli nie istnieje.
-4. **Konfiguracja TLS 1.2 i obsługa linku GitHub:** Wymusza protokół TLS 1.2 oraz automatycznie przekształca standardowe adresy URL widoku GitHuba (`/blob/`) na bezpośrednie łącza do czystej zawartości (`raw.githubusercontent.com`).
-5. **Pobranie skryptu:** Pobiera plik docelowy za pomocą `Invoke-WebRequest`.
-6. **Odblokowanie pliku (`Unblock-File`):** Usuwa zabezpieczenie Windows Mark of the Web (MotW / `Zone.Identifier`).
-7. **Uruchomienie skryptu z parametrami:** Wykonuje pobrany skrypt w bieżącym oknie z przekazaniem skonfigurowanych parametrów (zmienna `$ScriptArgs`) i prezentuje wyniki.
+- [How It Works](#-how-it-works)
+- [Comparison of 3 ExecutionPolicy Scopes](#-comparison-of-3-executionpolicy-scopes)
+- [🚀 Ready-to-Copy Code Blocks](#-ready-to-copy-code-blocks)
+  - [⚡ Example with Parameters: SharePoint Sync (Sync-SharePointLibrary.ps1 -AutoDiscover)](#-example-with-parameters-sharepoint-sync-sync-sharepointlibraryps1--autodiscover)
+  - [Option 1: Machine-Wide (LocalMachine)](#option-1-machine-wide-localmachine)
+  - [Option 2: Current User (CurrentUser)](#option-2-current-user-currentuser)
+  - [Option 3: Current Session Only (Process)](#option-3-current-session-only-process)
+- [⚙️ How to Pass Parameters to the Target Script](#️-how-to-pass-parameters-to-the-target-script)
+- [🔧 Code Breakdown & Architecture](#-code-breakdown--architecture)
+- [💻 Technical Requirements](#-technical-requirements)
+- [👤 Author](#-author)
 
 ---
 
-## 📊 Porównanie 3 wariantów polityki wykonywania (ExecutionPolicy)
+## 🔍 How It Works
 
-| Wariant | Zakres (`-Scope`) | Poziom rejestru | Trwałość | Kiedy stosować? |
+The main purpose of this launcher is to allow immediate execution of a GitHub-hosted PowerShell script on a fresh machine or during an IT support / troubleshooting session without having to manually create files, clone repositories, or download archives through a web browser.
+
+Each code block performs a complete operational lifecycle in a single paste:
+1. **Administrator Privileges Check:** Verifies elevated permissions using a language-independent Well-Known SID (`S-1-5-32-544`).
+2. **Unlock PowerShell (`Set-ExecutionPolicy`):** Adjusts script execution policy to the desired scope (`LocalMachine`, `CurrentUser`, or `Process`).
+3. **Prepare Destination Folder (`C:\PowerShell`):** Verifies and creates the target directory automatically if it does not already exist.
+4. **Enforce TLS 1.2 & GitHub URL Handling:** Forces TLS 1.2 protocol for secure downloading and automatically transforms standard GitHub web URLs (`/blob/`) into direct raw content endpoints (`raw.githubusercontent.com`).
+5. **Download Script:** Fetches the target script via `Invoke-WebRequest`.
+6. **Unblock File (`Unblock-File`):** Strips the Windows Mark of the Web (MotW / `Zone.Identifier` NTFS alternate data stream).
+7. **Execute Script with Arguments:** Invokes the downloaded script in the current console context, passing configured arguments (via the `$ScriptArgs` variable), and outputs the results.
+
+---
+
+## 📊 Comparison of 3 ExecutionPolicy Scopes
+
+| Option | Scope (`-Scope`) | Registry Level | Persistence | When to Use? |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. Maszyna** | `LocalMachine` | `HKLM:\SOFTWARE\Microsoft\PowerShell...` | **Trwała** (dla całego systemu) | Stacje robocze, serwery administratorskie, instalacje bazowe, gdy każdy użytkownik komputera ma mieć odblokowany PowerShell. |
-| **2. Użytkownik** | `CurrentUser` | `HKCU:\SOFTWARE\Microsoft\PowerShell...` | **Trwała** (dla profilu użytkownika) | Maszyny współdzielone, gdy chcesz odblokować wykonywanie skryptów tylko dla konta administratora/użytkownika bez zmiany ustawień innych profili. |
-| **3. Sesja** | `Process` | Brak (tylko pamięć procesu) | **Tymczasowa** (znika po zamknięciu okna) | Jednorazowe wdrożenia, diagnostyka, audyty bezpieczeństwa i środowiska o zaostrzonych regułach, gdzie nie wolno modyfikować rejestru na stałe. |
+| **1. Machine** | `LocalMachine` | `HKLM:\SOFTWARE\Microsoft\PowerShell...` | **Permanent** (system-wide) | Workstations, admin servers, baseline image provisioning, when all users on the device need script execution enabled. |
+| **2. User** | `CurrentUser` | `HKCU:\SOFTWARE\Microsoft\PowerShell...` | **Permanent** (user profile) | Shared computers, when enabling script execution only for the current administrator/user account without altering system-wide or other user settings. |
+| **3. Session** | `Process` | None (process memory only) | **Temporary** (resets on window close) | One-time deployments, diagnostic runs, security audits, and hardened environments where permanent registry changes are prohibited. |
 
 ---
 
-## 🚀 Gotowe bloki do skopiowania
+## 🚀 Ready-to-Copy Code Blocks
 
 > [!IMPORTANT]
-> Przed wklejeniem kodu upewnij się, że otworzyłeś konsolę **PowerShell jako Administrator** (`Uruchom jako administrator` / `Run as Administrator`).
-> Zmienne `$UrlToDownload` oraz `$ScriptArgs` możesz dostosować do dowolnego skryptu i parametrów.
+> Make sure to open **PowerShell as Administrator** (`Run as Administrator`) before pasting any of the blocks below.
+> You can easily adjust `$UrlToDownload` and `$ScriptArgs` to fit any GitHub-hosted script and arguments.
 
 ---
 
-### ⚡ Przykład z parametrami: Synchronizacja SharePoint (Sync-SharePointLibrary.ps1 -AutoDiscover)
+### ⚡ Example with Parameters: SharePoint Sync (Sync-SharePointLibrary.ps1 -AutoDiscover)
 
-Poniższy blok pobiera zaawansowane narzędzie do synchronizacji bibliotek SharePoint Online z repozytorium [Microsoft-365](https://github.com/romanpindela/Microsoft-365) i uruchamia je z flagą `-AutoDiscover` (automatyczne wykrycie i interaktywny wybór witryn, do których zalogowany użytkownik ma dostęp w Microsoft 365).
+The following block downloads the enterprise-grade SharePoint Online document library sync utility from the [Microsoft-365](https://github.com/romanpindela/Microsoft-365) repository and runs it with the `-AutoDiscover` switch (automatically searches for and interactively lists all SharePoint sites accessible to the signed-in user in Microsoft 365).
 
-Używa bezpiecznego zakresu `Process` (ExecutionPolicy Bypass tylko dla bieżącej sesji), dzięki czemu nie modyfikuje rejestru Windows na stałe.
+It uses the safe `Process` scope (temporary `Bypass` execution policy), leaving no permanent changes in the Windows registry.
 
-#### Pełny blok skryptu (gotowy do wklejenia):
+#### Full Script Block (clean and ready to paste):
 
 ```powershell
 # ==============================================================================
-# SYNC-SHAREPOINTLIBRARY Z PARAMETREM -AUTODISCOVER (Scope: Process)
+# SYNC-SHAREPOINTLIBRARY WITH -AUTODISCOVER PARAMETER (Scope: Process)
 # ==============================================================================
-# 1. Konfiguracja adresu skryptu, parametrów i katalogu docelowego
+# 1. Configure script URL, arguments, and destination folder
 $UrlToDownload   = "https://github.com/romanpindela/Microsoft-365/blob/main/SharePoint/Sync-SharePointLibrary/Sync-SharePointLibrary.ps1"
 $ScriptArgs      = "-AutoDiscover"
 $DestinationPath = "C:\PowerShell"
 
-# 2. Weryfikacja uprawnień Administratora (językowo niezależny test SID)
+# 2. Verify Administrator privileges (language-independent SID check)
 $identity  = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($identity)
 $adminSid  = New-Object Security.Principal.SecurityIdentifier([Security.Principal.WellKnownSidType]::BuiltInAdministratorsSid, $null)
 if (-not $principal.IsInRole($adminSid)) {
-    Write-Error "Wymagane są uprawnienia Administratora! Uruchom konsolę PowerShell jako Administrator."
+    Write-Error "Administrator privileges required! Please run PowerShell as Administrator."
     return
 }
 
-# 3. Odblokowanie wykonywania skryptów tylko na czas bieżącej sesji / procesu
-Write-Host "Ustawianie ExecutionPolicy na Bypass dla bieżącej sesji (Process)..." -ForegroundColor Cyan
+# 3. Temporarily set execution policy to Bypass for the current session only
+Write-Host "Setting ExecutionPolicy to Bypass for current process..." -ForegroundColor Cyan
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
-# 4. Sprawdzenie i utworzenie folderu docelowego
+# 4. Check and create destination directory
 if (-not (Test-Path -LiteralPath $DestinationPath)) {
-    Write-Host "Tworzenie katalogu: $DestinationPath..." -ForegroundColor Yellow
+    Write-Host "Creating directory: $DestinationPath..." -ForegroundColor Yellow
     New-Item -Path $DestinationPath -ItemType Directory -Force | Out-Null
 }
 
-# 5. Konfiguracja TLS 1.2 i konwersja adresu GitHub na Raw URL
+# 5. Enforce TLS 1.2 and convert standard GitHub URL to Raw URL
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 if ($UrlToDownload -like "*github.com/*/blob/*") {
     $rawUrl = $UrlToDownload -replace "github.com", "raw.githubusercontent.com" -replace "/blob/", "/"
@@ -109,78 +109,78 @@ if ($UrlToDownload -like "*github.com/*/blob/*") {
 $fileName        = Split-Path -Path $rawUrl.Split('?')[0] -Leaf
 $destinationFile = Join-Path -Path $DestinationPath -ChildPath $fileName
 
-# 6. Pobranie skryptu z GitHuba
-Write-Host "Pobieranie '$fileName' do '$DestinationPath'..." -ForegroundColor Cyan
+# 6. Download script from GitHub
+Write-Host "Downloading '$fileName' to '$DestinationPath'..." -ForegroundColor Cyan
 Invoke-WebRequest -Uri $rawUrl -OutFile $destinationFile -UseBasicParsing
 
-# 7. Odblokowanie pliku (usunięcie blokady Mark-of-the-Web) i uruchomienie z parametrami
+# 7. Unblock file (remove Mark-of-the-Web) and execute with arguments
 if (Test-Path -LiteralPath $destinationFile) {
     Unblock-File -LiteralPath $destinationFile
-    Write-Host "[OK] Skrypt odblokowany pomyślnie." -ForegroundColor Green
+    Write-Host "[OK] Script unblocked successfully." -ForegroundColor Green
     
     if ([string]::IsNullOrWhiteSpace($ScriptArgs)) {
-        Write-Host "`n--- Uruchamianie pobranego skryptu: $fileName ---`n" -ForegroundColor Yellow
+        Write-Host "`n--- Executing downloaded script: $fileName ---`n" -ForegroundColor Yellow
         & $destinationFile
     } else {
-        Write-Host "`n--- Uruchamianie pobranego skryptu: $fileName $ScriptArgs ---`n" -ForegroundColor Yellow
+        Write-Host "`n--- Executing downloaded script: $fileName $ScriptArgs ---`n" -ForegroundColor Yellow
         Invoke-Expression "& `"$destinationFile`" $ScriptArgs"
     }
     
-    Write-Host "`n--- Zakończono wykonywanie: $fileName ---`n" -ForegroundColor Yellow
+    Write-Host "`n--- Finished executing: $fileName ---`n" -ForegroundColor Yellow
 } else {
-    Write-Error "Błąd: Nie znaleziono pobranego pliku pod ścieżką: $destinationFile"
+    Write-Error "Error: Downloaded file was not found at: $destinationFile"
 }
 ```
 
-#### Wersja jednolinijkowa (One-Liner z -AutoDiscover):
+#### One-Liner (Fast execution with -AutoDiscover):
 
 ```powershell
-& { $u="https://github.com/romanpindela/Microsoft-365/blob/main/SharePoint/Sync-SharePointLibrary/Sync-SharePointLibrary.ps1"; $a="-AutoDiscover"; $p="C:\PowerShell"; if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(544)){throw "Wymagany Administrator!"}; Set-ExecutionPolicy Bypass -Scope Process -Force; if(-not(Test-Path $p)){New-Item -Path $p -ItemType Directory -Force|Out-Null}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $r=if($u -like "*github.com/*/blob/*"){$u -replace "github.com","raw.githubusercontent.com" -replace "/blob/","/"}else{$u}; $f=Join-Path $p (Split-Path $r.Split('?')[0] -Leaf); Invoke-WebRequest -Uri $r -OutFile $f -UseBasicParsing; Unblock-File -LiteralPath $f; if($a){Invoke-Expression "& `"$f`" $a"}else{& $f} }
+& { $u="https://github.com/romanpindela/Microsoft-365/blob/main/SharePoint/Sync-SharePointLibrary/Sync-SharePointLibrary.ps1"; $a="-AutoDiscover"; $p="C:\PowerShell"; if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(544)){throw "Administrator privileges required!"}; Set-ExecutionPolicy Bypass -Scope Process -Force; if(-not(Test-Path $p)){New-Item -Path $p -ItemType Directory -Force|Out-Null}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $r=if($u -like "*github.com/*/blob/*"){$u -replace "github.com","raw.githubusercontent.com" -replace "/blob/","/"}else{$u}; $f=Join-Path $p (Split-Path $r.Split('?')[0] -Leaf); Invoke-WebRequest -Uri $r -OutFile $f -UseBasicParsing; Unblock-File -LiteralPath $f; if($a){Invoke-Expression "& `"$f`" $a"}else{& $f} }
 ```
 
-#### Wersja jednolinijkowa (One-Liner z -AutoDiscover -All do cichej synchronizacji wszystkiego):
+#### One-Liner (Silent synchronization with -AutoDiscover -All):
 
 ```powershell
-& { $u="https://github.com/romanpindela/Microsoft-365/blob/main/SharePoint/Sync-SharePointLibrary/Sync-SharePointLibrary.ps1"; $a="-AutoDiscover -All"; $p="C:\PowerShell"; if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(544)){throw "Wymagany Administrator!"}; Set-ExecutionPolicy Bypass -Scope Process -Force; if(-not(Test-Path $p)){New-Item -Path $p -ItemType Directory -Force|Out-Null}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $r=if($u -like "*github.com/*/blob/*"){$u -replace "github.com","raw.githubusercontent.com" -replace "/blob/","/"}else{$u}; $f=Join-Path $p (Split-Path $r.Split('?')[0] -Leaf); Invoke-WebRequest -Uri $r -OutFile $f -UseBasicParsing; Unblock-File -LiteralPath $f; if($a){Invoke-Expression "& `"$f`" $a"}else{& $f} }
+& { $u="https://github.com/romanpindela/Microsoft-365/blob/main/SharePoint/Sync-SharePointLibrary/Sync-SharePointLibrary.ps1"; $a="-AutoDiscover -All"; $p="C:\PowerShell"; if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(544)){throw "Administrator privileges required!"}; Set-ExecutionPolicy Bypass -Scope Process -Force; if(-not(Test-Path $p)){New-Item -Path $p -ItemType Directory -Force|Out-Null}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $r=if($u -like "*github.com/*/blob/*"){$u -replace "github.com","raw.githubusercontent.com" -replace "/blob/","/"}else{$u}; $f=Join-Path $p (Split-Path $r.Split('?')[0] -Leaf); Invoke-WebRequest -Uri $r -OutFile $f -UseBasicParsing; Unblock-File -LiteralPath $f; if($a){Invoke-Expression "& `"$f`" $a"}else{& $f} }
 ```
 
 ---
 
-### Wariant 1: Dla danej maszyny (LocalMachine)
+### Option 1: Machine-Wide (LocalMachine)
 
-Odblokowuje możliwość wykonywania skryptów globalnie dla całej maszyny (wszystkich użytkowników).
+Unlocks PowerShell script execution globally for all users on the computer.
 
-#### Pełny blok skryptu (czytelny i gotowy do wklejenia):
+#### Full Script Block (clean and ready to paste):
 
 ```powershell
 # ==============================================================================
-# WARIANT 1: DLA DANEJ MASZYNY (Scope: LocalMachine)
+# OPTION 1: MACHINE-WIDE (Scope: LocalMachine)
 # ==============================================================================
-# 1. Konfiguracja adresu skryptu, parametrów i katalogu docelowego
+# 1. Configure script URL, arguments, and destination folder
 $UrlToDownload   = "https://github.com/romanpindela/Windows-Desktop/blob/main/get-wifi-profiles/get-wifi-profiles.ps1"
-$ScriptArgs      = "" # Opcjonalne parametry (np. "-AutoDiscover", "-All", "-Verbose")
+$ScriptArgs      = "" # Optional arguments (e.g. "-AutoDiscover", "-All", "-Verbose")
 $DestinationPath = "C:\PowerShell"
 
-# 2. Weryfikacja uprawnień Administratora (językowo niezależny test SID)
+# 2. Verify Administrator privileges (language-independent SID check)
 $identity  = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($identity)
 $adminSid  = New-Object Security.Principal.SecurityIdentifier([Security.Principal.WellKnownSidType]::BuiltInAdministratorsSid, $null)
 if (-not $principal.IsInRole($adminSid)) {
-    Write-Error "Wymagane są uprawnienia Administratora! Uruchom konsolę PowerShell jako Administrator."
+    Write-Error "Administrator privileges required! Please run PowerShell as Administrator."
     return
 }
 
-# 3. Odblokowanie wykonywania skryptów dla całej maszyny
-Write-Host "Ustawianie ExecutionPolicy na RemoteSigned dla LocalMachine..." -ForegroundColor Cyan
+# 3. Enable script execution machine-wide
+Write-Host "Setting ExecutionPolicy to RemoteSigned for LocalMachine..." -ForegroundColor Cyan
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force
 
-# 4. Sprawdzenie i utworzenie folderu docelowego
+# 4. Check and create destination directory
 if (-not (Test-Path -LiteralPath $DestinationPath)) {
-    Write-Host "Tworzenie katalogu: $DestinationPath..." -ForegroundColor Yellow
+    Write-Host "Creating directory: $DestinationPath..." -ForegroundColor Yellow
     New-Item -Path $DestinationPath -ItemType Directory -Force | Out-Null
 }
 
-# 5. Konfiguracja TLS 1.2 i konwersja adresu GitHub na Raw URL
+# 5. Enforce TLS 1.2 and convert standard GitHub URL to Raw URL
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 if ($UrlToDownload -like "*github.com/*/blob/*") {
     $rawUrl = $UrlToDownload -replace "github.com", "raw.githubusercontent.com" -replace "/blob/", "/"
@@ -191,72 +191,72 @@ if ($UrlToDownload -like "*github.com/*/blob/*") {
 $fileName        = Split-Path -Path $rawUrl.Split('?')[0] -Leaf
 $destinationFile = Join-Path -Path $DestinationPath -ChildPath $fileName
 
-# 6. Pobranie skryptu z GitHuba
-Write-Host "Pobieranie '$fileName' do '$DestinationPath'..." -ForegroundColor Cyan
+# 6. Download script from GitHub
+Write-Host "Downloading '$fileName' to '$DestinationPath'..." -ForegroundColor Cyan
 Invoke-WebRequest -Uri $rawUrl -OutFile $destinationFile -UseBasicParsing
 
-# 7. Odblokowanie pliku (usunięcie blokady Mark-of-the-Web) i uruchomienie z opcjonalnymi parametrami
+# 7. Unblock file (remove Mark-of-the-Web) and execute with optional arguments
 if (Test-Path -LiteralPath $destinationFile) {
     Unblock-File -LiteralPath $destinationFile
-    Write-Host "[OK] Skrypt odblokowany pomyślnie." -ForegroundColor Green
+    Write-Host "[OK] Script unblocked successfully." -ForegroundColor Green
     
     if ([string]::IsNullOrWhiteSpace($ScriptArgs)) {
-        Write-Host "`n--- Uruchamianie pobranego skryptu: $fileName ---`n" -ForegroundColor Yellow
+        Write-Host "`n--- Executing downloaded script: $fileName ---`n" -ForegroundColor Yellow
         & $destinationFile
     } else {
-        Write-Host "`n--- Uruchamianie pobranego skryptu: $fileName $ScriptArgs ---`n" -ForegroundColor Yellow
+        Write-Host "`n--- Executing downloaded script: $fileName $ScriptArgs ---`n" -ForegroundColor Yellow
         Invoke-Expression "& `"$destinationFile`" $ScriptArgs"
     }
     
-    Write-Host "`n--- Zakończono wykonywanie: $fileName ---" -ForegroundColor Yellow
+    Write-Host "`n--- Finished executing: $fileName ---`n" -ForegroundColor Yellow
 } else {
-    Write-Error "Błąd: Nie znaleziono pobranego pliku pod ścieżką: $destinationFile"
+    Write-Error "Error: Downloaded file was not found at: $destinationFile"
 }
 ```
 
-#### Wersja jednolinijkowa (One-Liner do szybkiego uruchomienia):
+#### One-Liner (Fast execution):
 
 ```powershell
-& { $u="https://github.com/romanpindela/Windows-Desktop/blob/main/get-wifi-profiles/get-wifi-profiles.ps1"; $a=""; $p="C:\PowerShell"; if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(544)){throw "Wymagany Administrator!"}; Set-ExecutionPolicy RemoteSigned -Scope LocalMachine -Force; if(-not(Test-Path $p)){New-Item -Path $p -ItemType Directory -Force|Out-Null}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $r=if($u -like "*github.com/*/blob/*"){$u -replace "github.com","raw.githubusercontent.com" -replace "/blob/","/"}else{$u}; $f=Join-Path $p (Split-Path $r.Split('?')[0] -Leaf); Invoke-WebRequest -Uri $r -OutFile $f -UseBasicParsing; Unblock-File -LiteralPath $f; if($a){Invoke-Expression "& `"$f`" $a"}else{& $f} }
+& { $u="https://github.com/romanpindela/Windows-Desktop/blob/main/get-wifi-profiles/get-wifi-profiles.ps1"; $a=""; $p="C:\PowerShell"; if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(544)){throw "Administrator privileges required!"}; Set-ExecutionPolicy RemoteSigned -Scope LocalMachine -Force; if(-not(Test-Path $p)){New-Item -Path $p -ItemType Directory -Force|Out-Null}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $r=if($u -like "*github.com/*/blob/*"){$u -replace "github.com","raw.githubusercontent.com" -replace "/blob/","/"}else{$u}; $f=Join-Path $p (Split-Path $r.Split('?')[0] -Leaf); Invoke-WebRequest -Uri $r -OutFile $f -UseBasicParsing; Unblock-File -LiteralPath $f; if($a){Invoke-Expression "& `"$f`" $a"}else{& $f} }
 ```
 
 ---
 
-### Wariant 2: Dla danego użytkownika (CurrentUser)
+### Option 2: Current User (CurrentUser)
 
-Odblokowuje możliwość wykonywania skryptów tylko dla konta bieżącego użytkownika (konfiguracja trwała w `HKCU`).
+Unlocks script execution only for the current user's profile (persistent setting in `HKCU`).
 
-#### Pełny blok skryptu (czytelny i gotowy do wklejenia):
+#### Full Script Block (clean and ready to paste):
 
 ```powershell
 # ==============================================================================
-# WARIANT 2: DLA DANEGO UŻYTKOWNIKA (Scope: CurrentUser)
+# OPTION 2: CURRENT USER (Scope: CurrentUser)
 # ==============================================================================
-# 1. Konfiguracja adresu skryptu, parametrów i katalogu docelowego
+# 1. Configure script URL, arguments, and destination folder
 $UrlToDownload   = "https://github.com/romanpindela/Windows-Desktop/blob/main/get-wifi-profiles/get-wifi-profiles.ps1"
-$ScriptArgs      = "" # Opcjonalne parametry (np. "-AutoDiscover", "-All", "-Verbose")
+$ScriptArgs      = "" # Optional arguments (e.g. "-AutoDiscover", "-All", "-Verbose")
 $DestinationPath = "C:\PowerShell"
 
-# 2. Weryfikacja uprawnień Administratora (językowo niezależny test SID)
+# 2. Verify Administrator privileges (language-independent SID check)
 $identity  = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($identity)
 $adminSid  = New-Object Security.Principal.SecurityIdentifier([Security.Principal.WellKnownSidType]::BuiltInAdministratorsSid, $null)
 if (-not $principal.IsInRole($adminSid)) {
-    Write-Error "Wymagane są uprawnienia Administratora! Uruchom konsolę PowerShell jako Administrator."
+    Write-Error "Administrator privileges required! Please run PowerShell as Administrator."
     return
 }
 
-# 3. Odblokowanie wykonywania skryptów dla bieżącego użytkownika
-Write-Host "Ustawianie ExecutionPolicy na RemoteSigned dla CurrentUser..." -ForegroundColor Cyan
+# 3. Enable script execution for the current user
+Write-Host "Setting ExecutionPolicy to RemoteSigned for CurrentUser..." -ForegroundColor Cyan
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 
-# 4. Sprawdzenie i utworzenie folderu docelowego
+# 4. Check and create destination directory
 if (-not (Test-Path -LiteralPath $DestinationPath)) {
-    Write-Host "Tworzenie katalogu: $DestinationPath..." -ForegroundColor Yellow
+    Write-Host "Creating directory: $DestinationPath..." -ForegroundColor Yellow
     New-Item -Path $DestinationPath -ItemType Directory -Force | Out-Null
 }
 
-# 5. Konfiguracja TLS 1.2 i konwersja adresu GitHub na Raw URL
+# 5. Enforce TLS 1.2 and convert standard GitHub URL to Raw URL
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 if ($UrlToDownload -like "*github.com/*/blob/*") {
     $rawUrl = $UrlToDownload -replace "github.com", "raw.githubusercontent.com" -replace "/blob/", "/"
@@ -267,72 +267,72 @@ if ($UrlToDownload -like "*github.com/*/blob/*") {
 $fileName        = Split-Path -Path $rawUrl.Split('?')[0] -Leaf
 $destinationFile = Join-Path -Path $DestinationPath -ChildPath $fileName
 
-# 6. Pobranie skryptu z GitHuba
-Write-Host "Pobieranie '$fileName' do '$DestinationPath'..." -ForegroundColor Cyan
+# 6. Download script from GitHub
+Write-Host "Downloading '$fileName' to '$DestinationPath'..." -ForegroundColor Cyan
 Invoke-WebRequest -Uri $rawUrl -OutFile $destinationFile -UseBasicParsing
 
-# 7. Odblokowanie pliku (usunięcie blokady Mark-of-the-Web) i uruchomienie z opcjonalnymi parametrami
+# 7. Unblock file (remove Mark-of-the-Web) and execute with optional arguments
 if (Test-Path -LiteralPath $destinationFile) {
     Unblock-File -LiteralPath $destinationFile
-    Write-Host "[OK] Skrypt odblokowany pomyślnie." -ForegroundColor Green
+    Write-Host "[OK] Script unblocked successfully." -ForegroundColor Green
     
     if ([string]::IsNullOrWhiteSpace($ScriptArgs)) {
-        Write-Host "`n--- Uruchamianie pobranego skryptu: $fileName ---`n" -ForegroundColor Yellow
+        Write-Host "`n--- Executing downloaded script: $fileName ---`n" -ForegroundColor Yellow
         & $destinationFile
     } else {
-        Write-Host "`n--- Uruchamianie pobranego skryptu: $fileName $ScriptArgs ---`n" -ForegroundColor Yellow
+        Write-Host "`n--- Executing downloaded script: $fileName $ScriptArgs ---`n" -ForegroundColor Yellow
         Invoke-Expression "& `"$destinationFile`" $ScriptArgs"
     }
     
-    Write-Host "`n--- Zakończono wykonywanie: $fileName ---" -ForegroundColor Yellow
+    Write-Host "`n--- Finished executing: $fileName ---`n" -ForegroundColor Yellow
 } else {
-    Write-Error "Błąd: Nie znaleziono pobranego pliku pod ścieżką: $destinationFile"
+    Write-Error "Error: Downloaded file was not found at: $destinationFile"
 }
 ```
 
-#### Wersja jednolinijkowa (One-Liner do szybkiego uruchomienia):
+#### One-Liner (Fast execution):
 
 ```powershell
-& { $u="https://github.com/romanpindela/Windows-Desktop/blob/main/get-wifi-profiles/get-wifi-profiles.ps1"; $a=""; $p="C:\PowerShell"; if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(544)){throw "Wymagany Administrator!"}; Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; if(-not(Test-Path $p)){New-Item -Path $p -ItemType Directory -Force|Out-Null}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $r=if($u -like "*github.com/*/blob/*"){$u -replace "github.com","raw.githubusercontent.com" -replace "/blob/","/"}else{$u}; $f=Join-Path $p (Split-Path $r.Split('?')[0] -Leaf); Invoke-WebRequest -Uri $r -OutFile $f -UseBasicParsing; Unblock-File -LiteralPath $f; if($a){Invoke-Expression "& `"$f`" $a"}else{& $f} }
+& { $u="https://github.com/romanpindela/Windows-Desktop/blob/main/get-wifi-profiles/get-wifi-profiles.ps1"; $a=""; $p="C:\PowerShell"; if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(544)){throw "Administrator privileges required!"}; Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; if(-not(Test-Path $p)){New-Item -Path $p -ItemType Directory -Force|Out-Null}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $r=if($u -like "*github.com/*/blob/*"){$u -replace "github.com","raw.githubusercontent.com" -replace "/blob/","/"}else{$u}; $f=Join-Path $p (Split-Path $r.Split('?')[0] -Leaf); Invoke-WebRequest -Uri $r -OutFile $f -UseBasicParsing; Unblock-File -LiteralPath $f; if($a){Invoke-Expression "& `"$f`" $a"}else{& $f} }
 ```
 
 ---
 
-### Wariant 3: Dla danej sesji (Process)
+### Option 3: Current Session Only (Process)
 
-Odblokowuje możliwość wykonywania poleceń **wyłącznie w otwartym procesie PowerShell**. Nie modyfikuje rejestru Windows i automatycznie wygasa po zamknięciu okna konsoli.
+Unlocks script execution **only within the current PowerShell process**. Does not write to or alter the Windows registry and automatically expires when the console window is closed.
 
-#### Pełny blok skryptu (czytelny i gotowy do wklejenia):
+#### Full Script Block (clean and ready to paste):
 
 ```powershell
 # ==============================================================================
-# WARIANT 3: DLA DANEJ SESJI (Scope: Process)
+# OPTION 3: CURRENT SESSION ONLY (Scope: Process)
 # ==============================================================================
-# 1. Konfiguracja adresu skryptu, parametrów i katalogu docelowego
+# 1. Configure script URL, arguments, and destination folder
 $UrlToDownload   = "https://github.com/romanpindela/Windows-Desktop/blob/main/get-wifi-profiles/get-wifi-profiles.ps1"
-$ScriptArgs      = "" # Opcjonalne parametry (np. "-AutoDiscover", "-All", "-Verbose")
+$ScriptArgs      = "" # Optional arguments (e.g. "-AutoDiscover", "-All", "-Verbose")
 $DestinationPath = "C:\PowerShell"
 
-# 2. Weryfikacja uprawnień Administratora (językowo niezależny test SID)
+# 2. Verify Administrator privileges (language-independent SID check)
 $identity  = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($identity)
 $adminSid  = New-Object Security.Principal.SecurityIdentifier([Security.Principal.WellKnownSidType]::BuiltInAdministratorsSid, $null)
 if (-not $principal.IsInRole($adminSid)) {
-    Write-Error "Wymagane są uprawnienia Administratora! Uruchom konsolę PowerShell jako Administrator."
+    Write-Error "Administrator privileges required! Please run PowerShell as Administrator."
     return
 }
 
-# 3. Odblokowanie wykonywania skryptów tylko na czas bieżącej sesji / procesu
-Write-Host "Ustawianie ExecutionPolicy na Bypass dla bieżącej sesji (Process)..." -ForegroundColor Cyan
+# 3. Set execution policy to Bypass for this session only
+Write-Host "Setting ExecutionPolicy to Bypass for current session (Process)..." -ForegroundColor Cyan
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
-# 4. Sprawdzenie i utworzenie folderu docelowego
+# 4. Check and create destination directory
 if (-not (Test-Path -LiteralPath $DestinationPath)) {
-    Write-Host "Tworzenie katalogu: $DestinationPath..." -ForegroundColor Yellow
+    Write-Host "Creating directory: $DestinationPath..." -ForegroundColor Yellow
     New-Item -Path $DestinationPath -ItemType Directory -Force | Out-Null
 }
 
-# 5. Konfiguracja TLS 1.2 i konwersja adresu GitHub na Raw URL
+# 5. Enforce TLS 1.2 and convert standard GitHub URL to Raw URL
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 if ($UrlToDownload -like "*github.com/*/blob/*") {
     $rawUrl = $UrlToDownload -replace "github.com", "raw.githubusercontent.com" -replace "/blob/", "/"
@@ -343,103 +343,103 @@ if ($UrlToDownload -like "*github.com/*/blob/*") {
 $fileName        = Split-Path -Path $rawUrl.Split('?')[0] -Leaf
 $destinationFile = Join-Path -Path $DestinationPath -ChildPath $fileName
 
-# 6. Pobranie skryptu z GitHuba
-Write-Host "Pobieranie '$fileName' do '$DestinationPath'..." -ForegroundColor Cyan
+# 6. Download script from GitHub
+Write-Host "Downloading '$fileName' to '$DestinationPath'..." -ForegroundColor Cyan
 Invoke-WebRequest -Uri $rawUrl -OutFile $destinationFile -UseBasicParsing
 
-# 7. Odblokowanie pliku (usunięcie blokady Mark-of-the-Web) i uruchomienie z opcjonalnymi parametrami
+# 7. Unblock file (remove Mark-of-the-Web) and execute with optional arguments
 if (Test-Path -LiteralPath $destinationFile) {
     Unblock-File -LiteralPath $destinationFile
-    Write-Host "[OK] Skrypt odblokowany pomyślnie." -ForegroundColor Green
+    Write-Host "[OK] Script unblocked successfully." -ForegroundColor Green
     
     if ([string]::IsNullOrWhiteSpace($ScriptArgs)) {
-        Write-Host "`n--- Uruchamianie pobranego skryptu: $fileName ---`n" -ForegroundColor Yellow
+        Write-Host "`n--- Executing downloaded script: $fileName ---`n" -ForegroundColor Yellow
         & $destinationFile
     } else {
-        Write-Host "`n--- Uruchamianie pobranego skryptu: $fileName $ScriptArgs ---`n" -ForegroundColor Yellow
+        Write-Host "`n--- Executing downloaded script: $fileName $ScriptArgs ---`n" -ForegroundColor Yellow
         Invoke-Expression "& `"$destinationFile`" $ScriptArgs"
     }
     
-    Write-Host "`n--- Zakończono wykonywanie: $fileName ---`n" -ForegroundColor Yellow
+    Write-Host "`n--- Finished executing: $fileName ---`n" -ForegroundColor Yellow
 } else {
-    Write-Error "Błąd: Nie znaleziono pobranego pliku pod ścieżką: $destinationFile"
+    Write-Error "Error: Downloaded file was not found at: $destinationFile"
 }
 ```
 
-#### Wersja jednolinijkowa (One-Liner do szybkiego uruchomienia):
+#### One-Liner (Fast execution):
 
 ```powershell
-& { $u="https://github.com/romanpindela/Windows-Desktop/blob/main/get-wifi-profiles/get-wifi-profiles.ps1"; $a=""; $p="C:\PowerShell"; if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(544)){throw "Wymagany Administrator!"}; Set-ExecutionPolicy Bypass -Scope Process -Force; if(-not(Test-Path $p)){New-Item -Path $p -ItemType Directory -Force|Out-Null}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $r=if($u -like "*github.com/*/blob/*"){$u -replace "github.com","raw.githubusercontent.com" -replace "/blob/","/"}else{$u}; $f=Join-Path $p (Split-Path $r.Split('?')[0] -Leaf); Invoke-WebRequest -Uri $r -OutFile $f -UseBasicParsing; Unblock-File -LiteralPath $f; if($a){Invoke-Expression "& `"$f`" $a"}else{& $f} }
+& { $u="https://github.com/romanpindela/Windows-Desktop/blob/main/get-wifi-profiles/get-wifi-profiles.ps1"; $a=""; $p="C:\PowerShell"; if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(544)){throw "Administrator privileges required!"}; Set-ExecutionPolicy Bypass -Scope Process -Force; if(-not(Test-Path $p)){New-Item -Path $p -ItemType Directory -Force|Out-Null}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $r=if($u -like "*github.com/*/blob/*"){$u -replace "github.com","raw.githubusercontent.com" -replace "/blob/","/"}else{$u}; $f=Join-Path $p (Split-Path $r.Split('?')[0] -Leaf); Invoke-WebRequest -Uri $r -OutFile $f -UseBasicParsing; Unblock-File -LiteralPath $f; if($a){Invoke-Expression "& `"$f`" $a"}else{& $f} }
 ```
 
 ---
 
-## ⚙️ Jak przekazywać parametry do pobieranego skryptu?
+## ⚙️ How to Pass Parameters to the Target Script
 
-Parametry definiuje się w zmiennej `$ScriptArgs` (w pełnym bloku) lub w zmiennej `$a` (w wersji jednolinijkowej).
+Parameters are defined in the `$ScriptArgs` variable (in the readable script block) or `$a` (in the one-liner command).
 
-Poniższa tabela przedstawia przykłady dla skryptu [`Sync-SharePointLibrary.ps1`](https://github.com/romanpindela/Microsoft-365/blob/main/SharePoint/Sync-SharePointLibrary/Sync-SharePointLibrary.ps1):
+The following table demonstrates common argument scenarios using [`Sync-SharePointLibrary.ps1`](https://github.com/romanpindela/Microsoft-365/blob/main/SharePoint/Sync-SharePointLibrary/Sync-SharePointLibrary.ps1):
 
-| Scenariusz użycia | Wartość zmiennej `$ScriptArgs` | Opis działania |
+| Scenario | `$ScriptArgs` Value | Description |
 | :--- | :--- | :--- |
-| **Brak parametrów** | `""` | Standardowe uruchomienie skryptu bez dodatkowych flag. |
-| **Wykrywanie witryn (AutoDiscover)** | `"-AutoDiscover"` | Wyszukuje witryny SharePoint użytkownika i wyświetla interaktywne menu wyboru. |
-| **Cicha synchronizacja wszystkiego** | `"-AutoDiscover -All"` | Automatycznie wykrywa i natychmiast synchronizuje wszystkie dostępne witryny. |
-| **Konkretna witryna** | `"-SiteName 'automatyka'"` | Synchronizuje domyślną bibliotekę ("Dokumenty") ze wskazanej witryny. |
-| **Konkretna witryna i biblioteka** | `"-SiteName 'zarzad' -DocumentLibraryTitle 'Poufne'"` | Synchronizuje wybraną bibliotekę dokumentów ze wskazanej witryny. |
-| **Wymuszenie ponownej synchronizacji** | `"-AutoDiscover -Force"` | Wymusza ponowne zmapowanie nawet jeśli biblioteka jest już zsynchronizowana lokalnie. |
+| **No parameters** | `""` | Standard script execution without additional flags. |
+| **Site discovery (AutoDiscover)** | `"-AutoDiscover"` | Discovers accessible SharePoint sites and presents an interactive numbered menu. |
+| **Silent tenant-wide sync** | `"-AutoDiscover -All"` | Discovers and immediately synchronizes all accessible sites without prompting. |
+| **Specific site collection** | `"-SiteName 'automatyka'"` | Synchronizes the default document library ("Documents" / "Dokumenty") from the specified site. |
+| **Specific site and library title** | `"-SiteName 'management' -DocumentLibraryTitle 'Confidential'"` | Synchronizes a specific document library display title from the target site. |
+| **Force re-registration** | `"-AutoDiscover -Force"` | Forces re-sync registration even if the library is already detected locally. |
 
 ---
 
-## 🔧 Co robi każda część bloku kodu?
+## 🔧 Code Breakdown & Architecture
 
-1. **Weryfikacja konta Administratora:**
+1. **Administrator Privileges Verification:**
    ```powershell
    $identity  = [Security.Principal.WindowsIdentity]::GetCurrent()
    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
    $adminSid  = New-Object Security.Principal.SecurityIdentifier([Security.Principal.WellKnownSidType]::BuiltInAdministratorsSid, $null)
    $principal.IsInRole($adminSid)
    ```
-   *Dlaczego tak:* Użycie dobrze znanego identyfikatora SID `S-1-5-32-544` gwarantuje 100% niezawodności na polskich (`Administratorzy`) i angielskich (`Administrators`) wersjach systemu Windows.
+   *Why this approach:* Using the Well-Known SID `S-1-5-32-544` ensures 100% reliability across all Windows localized editions (e.g., Polish `Administratorzy`, English `Administrators`, German `Administratoren`).
 
-2. **Odblokowanie polityki wykonywania:**
+2. **Unlocking Execution Policy:**
    ```powershell
    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force
    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
    ```
-   *Dlaczego tak:* Domyślna polityka w Windows to często `Restricted`. Odblokowanie odpowiedniego zakresu pozwala na uruchomienie skryptu bez konieczności interaktywnego potwierdzania monitów (`-Force`).
+   *Why this approach:* The default Windows PowerShell execution policy is often `Restricted`. Adjusting the appropriate scope allows the script to run cleanly without interactive confirmation prompts (`-Force`).
 
-3. **Utworzenie folderu docelowego (`C:\PowerShell`):**
+3. **Destination Directory Creation (`C:\PowerShell`):**
    ```powershell
    if (-not (Test-Path -LiteralPath $DestinationPath)) {
        New-Item -Path $DestinationPath -ItemType Directory -Force | Out-Null
    }
    ```
-   *Dlaczego tak:* Bezpieczna lokalizacja `C:\PowerShell` zapobiega zaśmiecaniu profilu użytkownika lub katalogów tymczasowych, a parametr `-Force` gwarantuje brak błędów w przypadku, gdy folder już istnieje.
+   *Why this approach:* Storing scripts in `C:\PowerShell` avoids cluttering user profiles or temporary directories, and `-Force` prevents errors if the folder already exists.
 
-4. **Konwersja adresu URL i TLS 1.2:**
+4. **URL Conversion & TLS 1.2 Enforcement:**
    ```powershell
    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
    if ($UrlToDownload -like "*github.com/*/blob/*") {
        $rawUrl = $UrlToDownload -replace "github.com", "raw.githubusercontent.com" -replace "/blob/", "/"
    }
    ```
-   *Dlaczego tak:* Windows PowerShell 5.1 domyślnie używa starszych protokołów SSL3/TLS 1.0, z którymi GitHub odmawia połączenia. Wymuszenie TLS 1.2 jest niezbędne. Zamiana adresu pozwala wkleić dowolny zwykły link z przeglądarki GitHub bez szukania przycisku "Raw".
+   *Why this approach:* Windows PowerShell 5.1 defaults to legacy SSL3/TLS 1.0 protocols, which GitHub rejects. Forcing TLS 1.2 is mandatory. Automatic URL conversion lets you paste regular browser GitHub URLs directly without needing to locate the "Raw" link manually.
 
-5. **Pobranie pliku:**
+5. **File Download:**
    ```powershell
    Invoke-WebRequest -Uri $rawUrl -OutFile $destinationFile -UseBasicParsing
    ```
-   *Dlaczego tak:* Flaga `-UseBasicParsing` zapobiega problemom w środowiskach Server Core oraz tam, gdzie silnik Internet Explorer nie był wstępnie konfigurowany.
+   *Why this approach:* The `-UseBasicParsing` parameter prevents errors on Windows Server Core and systems where Internet Explorer first-launch configuration was never completed.
 
-6. **Odblokowanie pliku (`Unblock-File`):**
+6. **Unblocking File (`Unblock-File`):**
    ```powershell
    Unblock-File -LiteralPath $destinationFile
    ```
-   *Dlaczego tak:* Pliki pobrane z sieci są oznaczane strumieniem NTFS `Zone.Identifier` (Mark of the Web), co może blokować ich uruchomienie nawet przy `RemoteSigned`. Polecenie natychmiast usuwa to ograniczenie.
+   *Why this approach:* Files downloaded from the Internet are flagged with the NTFS `Zone.Identifier` stream (Mark of the Web), which can block execution even under `RemoteSigned`. This command immediately clears the restriction.
 
-7. **Uruchomienie skryptu (z opcjonalnymi parametrami):**
+7. **Script Execution (with Optional Parameters):**
    ```powershell
    if ([string]::IsNullOrWhiteSpace($ScriptArgs)) {
        & $destinationFile
@@ -447,24 +447,24 @@ Poniższa tabela przedstawia przykłady dla skryptu [`Sync-SharePointLibrary.ps1
        Invoke-Expression "& `"$destinationFile`" $ScriptArgs"
    }
    ```
-   *Dlaczego tak:* Gdy `$ScriptArgs` jest pusty, skrypt wywoływany jest bezpośrednio operatorem `&`. W przypadku przekazania parametrów (takich jak przełączniki `-AutoDiscover` czy argumenty z wartościami tekstowymi), `Invoke-Expression` gwarantuje dynamiczne i poprawne powiązanie parametrów w środowisku PowerShell.
+   *Why this approach:* When `$ScriptArgs` is empty, the script is directly executed via the call operator `&`. When parameters are passed (such as switches `-AutoDiscover` or string arguments), `Invoke-Expression` dynamically binds arguments in PowerShell exactly as if typed into the console.
 
 ---
 
-## 💻 Wymagania techniczne
+## 💻 Technical Requirements
 
-* **System operacyjny:** Windows 10, Windows 11, Windows Server 2016 / 2019 / 2022 / 2025+
-* **Wersja PowerShell:** Windows PowerShell 5.1 lub PowerShell 7+
-* **Uprawnienia:** Konsola uruchomiona jako Administrator (**Run as Administrator**)
-* **Połączenie sieciowe:** Dostęp do `github.com` oraz `raw.githubusercontent.com` (HTTPS / port 443)
+* **Operating System:** Windows 10, Windows 11, Windows Server 2016 / 2019 / 2022 / 2025+
+* **PowerShell Version:** Windows PowerShell 5.1 or PowerShell 7+
+* **Privileges:** Elevated console session (**Run as Administrator**)
+* **Network Connectivity:** HTTPS access to `github.com` and `raw.githubusercontent.com` (port 443)
 
 ---
 
-## 👤 Autor
+## 👤 Author
 
 * **Roman Pindela**
-* **E-mail:** `roman.pindela@gmail.com`
+* **Email:** `roman.pindela@gmail.com`
 * **GitHub:** [https://github.com/romanpindela](https://github.com/romanpindela)
-* **Repozytoria powiązane:**
+* **Related Repositories:**
   - [Windows-Desktop](https://github.com/romanpindela/Windows-Desktop)
   - [Microsoft-365](https://github.com/romanpindela/Microsoft-365)
