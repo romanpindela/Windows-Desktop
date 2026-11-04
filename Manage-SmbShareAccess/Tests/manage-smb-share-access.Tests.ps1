@@ -1,10 +1,10 @@
 # ==============================================================================
-# PESTER TEST SUITE: Set-SmbShareAccessRule.Tests.ps1
+# PESTER TEST SUITE: manage-smb-share-access.Tests.ps1
 # ==============================================================================
 $scriptRoot = Split-Path -Parent $PSScriptRoot
-$scriptPath = Join-Path -Path $scriptRoot -ChildPath 'Set-SmbShareAccessRule.ps1'
+$scriptPath = Join-Path -Path $scriptRoot -ChildPath 'manage-smb-share-access.ps1'
 
-Describe 'Set-SmbShareAccessRule - Script Integrity & Syntax' {
+Describe 'manage-smb-share-access - Script Integrity & Syntax' {
     It 'Script file exists in the project root' {
         (Test-Path -Path $scriptPath) | Should Be $true
     }
@@ -27,33 +27,44 @@ Describe 'Set-SmbShareAccessRule - Script Integrity & Syntax' {
     }
 }
 
-Describe 'Set-SmbShareAccessRule - Parameter Validation' {
+Describe 'manage-smb-share-access - Parameter Sets & Attribute Validation' {
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$null)
     $params = $ast.ParamBlock.Parameters
 
-    It 'Defines all required parameters' {
+    It 'Defines all required parameters for comprehensive management' {
         $paramNames = @($params.Name.VariablePath.UserPath)
-        ($paramNames -contains 'ShareName') | Should Be $true
-        ($paramNames -contains 'AccountName') | Should Be $true
         ($paramNames -contains 'Action') | Should Be $true
+        ($paramNames -contains 'ShareName') | Should Be $true
+        ($paramNames -contains 'Path') | Should Be $true
+        ($paramNames -contains 'AccountName') | Should Be $true
         ($paramNames -contains 'AccessRight') | Should Be $true
         ($paramNames -contains 'ApplyToNtfs') | Should Be $true
+        ($paramNames -contains 'Description') | Should Be $true
+        ($paramNames -contains 'EnableABE') | Should Be $true
+        ($paramNames -contains 'EncryptData') | Should Be $true
+        ($paramNames -contains 'CachingMode') | Should Be $true
+        ($paramNames -contains 'ConcurrentUserLimit') | Should Be $true
+        ($paramNames -contains 'IncludeHidden') | Should Be $true
         ($paramNames -contains 'LogPath') | Should Be $true
         ($paramNames -contains 'Help') | Should Be $true
     }
 
-    It 'Restricts Action parameter with ValidateSet (Grant, Revoke, Deny)' {
+    It 'Restricts Action parameter to full lifecycle actions (List, Show, Create, Remove, Grant, Revoke, Deny)' {
         $actionParam = $params | Where-Object { $_.Name.VariablePath.UserPath -eq 'Action' }
         $validateSet = $actionParam.Attributes | Where-Object { $_.TypeName.Name -eq 'ValidateSet' }
 
         $validateSet | Should Not Be $null
         $validValues = @($validateSet.PositionalArguments | ForEach-Object { $_.Value })
+        ($validValues -contains 'List') | Should Be $true
+        ($validValues -contains 'Show') | Should Be $true
+        ($validValues -contains 'Create') | Should Be $true
+        ($validValues -contains 'Remove') | Should Be $true
         ($validValues -contains 'Grant') | Should Be $true
         ($validValues -contains 'Revoke') | Should Be $true
         ($validValues -contains 'Deny') | Should Be $true
     }
 
-    It 'Restricts AccessRight parameter with ValidateSet (Read, Change, FullControl)' {
+    It 'Restricts AccessRight parameter to Read, Change, FullControl' {
         $rightParam = $params | Where-Object { $_.Name.VariablePath.UserPath -eq 'AccessRight' }
         $validateSet = $rightParam.Attributes | Where-Object { $_.TypeName.Name -eq 'ValidateSet' }
 
@@ -64,31 +75,59 @@ Describe 'Set-SmbShareAccessRule - Parameter Validation' {
         ($validValues -contains 'FullControl') | Should Be $true
     }
 
+    It 'Restricts CachingMode parameter to standard SMB caching policies' {
+        $cacheParam = $params | Where-Object { $_.Name.VariablePath.UserPath -eq 'CachingMode' }
+        $validateSet = $cacheParam.Attributes | Where-Object { $_.TypeName.Name -eq 'ValidateSet' }
+
+        $validateSet | Should Not Be $null
+        $validValues = @($validateSet.PositionalArguments | ForEach-Object { $_.Value })
+        ($validValues -contains 'None') | Should Be $true
+        ($validValues -contains 'Manual') | Should Be $true
+        ($validValues -contains 'Programs') | Should Be $true
+        ($validValues -contains 'Documents') | Should Be $true
+        ($validValues -contains 'BranchCache') | Should Be $true
+    }
+
     It 'Defaults ApplyToNtfs to $true' {
         $ntfsParam = $params | Where-Object { $_.Name.VariablePath.UserPath -eq 'ApplyToNtfs' }
         $ntfsParam.DefaultValue.Extent.Text | Should Be '$true'
     }
 }
 
-Describe 'Set-SmbShareAccessRule - Help and Safe Execution' {
+Describe 'manage-smb-share-access - Help and Safe Default Invocation' {
     It 'Displays help without errors when run with -Help' {
         $output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath -Help
-        ($output | Out-String) -match 'MANAGE SMB SHARE AND NTFS ACCESS' | Should Be $true
+        ($output | Out-String) -match 'MANAGE SMB SHARE AND NTFS ACCESS UTILITY' | Should Be $true
     }
 
     It 'Displays help without errors when run with -h' {
         $output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath -h
-        ($output | Out-String) -match 'MANAGE SMB SHARE AND NTFS ACCESS' | Should Be $true
+        ($output | Out-String) -match 'MANAGE SMB SHARE AND NTFS ACCESS UTILITY' | Should Be $true
     }
 
     It 'Displays help without errors when invoked with no arguments' {
         $output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath
-        ($output | Out-String) -match 'MANAGE SMB SHARE AND NTFS ACCESS' | Should Be $true
+        ($output | Out-String) -match 'MANAGE SMB SHARE AND NTFS ACCESS UTILITY' | Should Be $true
     }
 }
 
-Describe 'Set-SmbShareAccessRule - Permission Mapping Logic' {
-    It 'Maps AccessRight to correct SMB permissions' {
+Describe 'manage-smb-share-access - Input Validation & Security' {
+    It 'Disallows command injection characters in AccountName' {
+        $validateAccount = {
+            param ($Account)
+            if ($Account -match '[`$;&|<>]') {
+                throw "Disallowed characters"
+            }
+        }
+
+        { & $validateAccount 'DOMAIN\valid.user' } | Should Not Throw
+        { & $validateAccount 'DOMENA\user;calc.exe' } | Should Throw
+        { & $validateAccount 'DOMENA\user|whoami' } | Should Throw
+    }
+}
+
+Describe 'manage-smb-share-access - Permission Mapping Logic' {
+    It 'Maps AccessRight to correct SMB share rights' {
         $mapSmb = {
             param ($right)
             switch ($right) {
@@ -138,11 +177,11 @@ Describe 'Set-SmbShareAccessRule - Permission Mapping Logic' {
     }
 }
 
-Describe 'Set-SmbShareAccessRule - Consistency Analysis Logic' {
+Describe 'manage-smb-share-access - Consistency Analysis Logic' {
     $testConsistency = {
         param ([string]$SmbRight, [string]$NtfsRight)
         function Get-AccessRank ([string]$text) {
-            if ($text -match 'Deny') { return -1 }
+            if ($text -match 'Deny|Block') { return -1 }
             if ($text -match 'Full') { return 3 }
             if ($text -match 'Modify|Change') { return 2 }
             if ($text -match 'Read') { return 1 }
