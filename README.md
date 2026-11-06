@@ -69,3 +69,20 @@ These tools are built to help IT Administrators and power users streamline daily
   .\Manage-WindowsOptionalFeatures\Manage-WindowsOptionalFeatures.ps1 -Action Enable -FeatureName "TelnetClient", "Containers-DisposableClientVM"
   ```
 
+
+
+---
+
+### [Replace-TextInFiles](Replace-TextInFiles/README.md)
+* **Script:** [`Replace-TextInFiles.ps1`](Replace-TextInFiles/Replace-TextInFiles.ps1)
+* **Author:** Roman Pindela (`roman.pindela@gmail.com`)
+* **Description:** Safe, atomic search-and-replace utility across files and directory trees.
+  * **Safe & Non-Destructive:** Loads content in memory (`-Raw`), performs changes, writes to temporary files before atomic replacement to prevent data corruption.
+  * **Dual Compatibility:** Works seamlessly across Windows PowerShell 5.1 and PowerShell 7+.
+  * **Regex & Literal:** Supports case-sensitive/insensitive string replacements and regular expressions (`-UseRegex`).
+  * **WhatIf & Backups:** Native `-WhatIf` preview, optional `.bak` file backups (`-CreateBackup`), and audit logging (`-EnableLogging`).
+* **Quick Example:**
+  ```powershell
+  # Safe search and replace in Markdown files
+  .\Replace-TextInFiles\Replace-TextInFiles.ps1 -Path ".\Docs" -Filter "*.md" -FindText "old-domain.com" -ReplaceWith "new-domain.com" -CreateBackup
+  ```
