@@ -3,7 +3,7 @@
     Searches and replaces text or regular expressions across multiple files safely.
 
 .DESCRIPTION
-    Replace-TextInFiles performs mass search-and-replace operations in text files
+    replace-text-in-files performs mass search-and-replace operations in text files
     within a specified directory tree.
 
     Key Features:
@@ -54,7 +54,7 @@
     Creates a backup copy with the '.bak' extension before saving modifications.
 
 .PARAMETER EnableLogging
-    Enables execution logging to C:\Logs\<YYYYMMDD-HHmmss>-Replace-TextInFiles-<HostName>-<UserName>.log.
+    Enables execution logging to C:\Logs\<YYYYMMDD-HHmmss>-replace-text-in-files-<HostName>-<UserName>.log.
 
 .PARAMETER Help
     Displays the interactive help guide and examples.
@@ -70,19 +70,19 @@
     - Mode          : 'Execute' or 'WhatIf'
 
 .EXAMPLE
-    .\Replace-TextInFiles.ps1 -Path ".\Docs" -Filter "*.md" -FindText "#stary-tag" -ReplaceWith "" -Recurse
+    .\replace-text-in-files.ps1 -Path ".\Docs" -Filter "*.md" -FindText "#stary-tag" -ReplaceWith "" -Recurse
     Recursively removes '#stary-tag' from all Markdown files under the '.\Docs' folder.
 
 .EXAMPLE
-    .\Replace-TextInFiles.ps1 -Path "C:\Projekty" -Filter "*.json" -FindText 'v\d+\.\d+\.\d+' -ReplaceWith 'v2.0.0' -UseRegex -WhatIf
+    .\replace-text-in-files.ps1 -Path "C:\Projekty" -Filter "*.json" -FindText 'v\d+\.\d+\.\d+' -ReplaceWith 'v2.0.0' -UseRegex -WhatIf
     Simulates replacing version numbers matching a regular expression across JSON files without modifying disk.
 
 .EXAMPLE
-    .\Replace-TextInFiles.ps1 -Path "D:\Configs" -Filter "*.config" -FindText "Server=old-db" -ReplaceWith "Server=new-db" -CreateBackup -EnableLogging
+    .\replace-text-in-files.ps1 -Path "D:\Configs" -Filter "*.config" -FindText "Server=old-db" -ReplaceWith "Server=new-db" -CreateBackup -EnableLogging
     Updates database connection strings in config files, creating '.bak' backups and logging all operations to C:\Logs.
 
 .NOTES
-    Script Name : Replace-TextInFiles.ps1
+    Script Name : replace-text-in-files.ps1
     Author      : Roman Pindela
     Contact     : roman.pindela@gmail.com
     GitHub      : https://github.com/romanpindela
@@ -136,7 +136,7 @@ param (
 
 # --- SCRIPT CONSTANTS & METADATA ---
 $SCRIPT_INFO = @{
-    Name        = "Replace-TextInFiles"
+    Name        = "replace-text-in-files"
     Version     = "1.0.0"
     Author      = "Roman Pindela"
     Contact     = "roman.pindela@gmail.com"
@@ -260,13 +260,13 @@ PARAMETERS:
 
 PRACTICAL EXAMPLES:
   1. Remove old tag from Markdown files:
-     .\Replace-TextInFiles.ps1 -Path ".\Docs" -Filter "*.md" -FindText "#old-tag" -ReplaceWith "" -Recurse
+     .\replace-text-in-files.ps1 -Path ".\Docs" -Filter "*.md" -FindText "#old-tag" -ReplaceWith "" -Recurse
 
   2. Simulate Regex replacement in JSON files (-WhatIf):
-     .\Replace-TextInFiles.ps1 -Path "C:\Projekty" -Filter "*.json" -FindText 'v\d+\.\d+\.\d+' -ReplaceWith 'v2.0.0' -UseRegex -WhatIf
+     .\replace-text-in-files.ps1 -Path "C:\Projekty" -Filter "*.json" -FindText 'v\d+\.\d+\.\d+' -ReplaceWith 'v2.0.0' -UseRegex -WhatIf
 
   3. Safe config update with backups and logging:
-     .\Replace-TextInFiles.ps1 -Path "D:\Configs" -Filter "*.config" -FindText "Server=old-db" -ReplaceWith "Server=new-db" -CreateBackup -EnableLogging
+     .\replace-text-in-files.ps1 -Path "D:\Configs" -Filter "*.config" -FindText "Server=old-db" -ReplaceWith "Server=new-db" -CreateBackup -EnableLogging
 ================================================================================
 "@ -ForegroundColor Yellow
 }
@@ -300,7 +300,7 @@ if (-not (Test-Path -LiteralPath $Path -PathType Container)) {
 }
 
 $resolvedPath = (Resolve-Path -LiteralPath $Path).ProviderPath
-Write-AppLog "Starting Replace-TextInFiles in '$resolvedPath'" -Level INFO
+Write-AppLog "Starting replace-text-in-files in '$resolvedPath'" -Level INFO
 Write-AppLog "Search pattern: '$FindText' | Replacement: '$ReplaceWith' | UseRegex: $UseRegex | CaseSensitive: $CaseSensitive" -Level INFO
 
 # 4. Encoding Configuration
@@ -407,7 +407,7 @@ $currentIndex = 0
 foreach ($file in $eligibleFiles) {
     $currentIndex++
     $percent = if ($totalScanned -gt 0) { [math]::Min(100, [int](($currentIndex / $totalScanned) * 100)) } else { 100 }
-    Write-Progress -Activity "Replace-TextInFiles" -Status "Processing file $currentIndex of ${totalScanned} - $($file.Name)" -PercentComplete $percent
+    Write-Progress -Activity "replace-text-in-files" -Status "Processing file $currentIndex of ${totalScanned} - $($file.Name)" -PercentComplete $percent
 
     $tempFilePath = $null
     try {
@@ -492,14 +492,14 @@ foreach ($file in $eligibleFiles) {
     }
 }
 
-Write-Progress -Activity "Replace-TextInFiles" -Completed
+Write-Progress -Activity "replace-text-in-files" -Completed
 
 $stopwatch.Stop()
 $mode = if ($WhatIfPreference) { "WhatIf" } else { "Execute" }
 
 # Summary Output
 Write-Host "`n================================================================================" -ForegroundColor Cyan
-Write-Host " Replace-TextInFiles - Operation Summary ($mode)" -ForegroundColor Cyan
+Write-Host " replace-text-in-files - Operation Summary ($mode)" -ForegroundColor Cyan
 Write-Host "================================================================================" -ForegroundColor Cyan
 Write-Host " Path               : $resolvedPath" -ForegroundColor White
 Write-Host " Files Scanned      : $totalScanned" -ForegroundColor White

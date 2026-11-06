@@ -1,4 +1,4 @@
-# Replace-TextInFiles Utility
+﻿# replace-text-in-files Utility
 
 A high-performance, robust, and production-ready PowerShell utility for bulk search-and-replace operations in text files across directories and projects.
 
@@ -52,31 +52,31 @@ A high-performance, robust, and production-ready PowerShell utility for bulk sea
 
 ### 1. Interactive Help Menu
 ```powershell
-.\Replace-TextInFiles.ps1 -Help
+.\replace-text-in-files.ps1 -Help
 # or
-.\Replace-TextInFiles.ps1 -h
+.\replace-text-in-files.ps1 -h
 ```
 
 ### 2. Remove Tag from Markdown Files (Recursive)
 ```powershell
-.\Replace-TextInFiles.ps1 -Path ".\Docs" -Filter "*.md" -FindText "#stary-tag" -ReplaceWith "" -Recurse
+.\replace-text-in-files.ps1 -Path ".\Docs" -Filter "*.md" -FindText "#stary-tag" -ReplaceWith "" -Recurse
 ```
 
 ### 3. Dry-Run Simulation with Regular Expressions (`-WhatIf`)
 ```powershell
-.\Replace-TextInFiles.ps1 -Path "C:\Projekty" -Filter "*.json" -FindText 'v\d+\.\d+\.\d+' -ReplaceWith 'v2.0.0' -UseRegex -WhatIf
+.\replace-text-in-files.ps1 -Path "C:\Projekty" -Filter "*.json" -FindText 'v\d+\.\d+\.\d+' -ReplaceWith 'v2.0.0' -UseRegex -WhatIf
 ```
 
 ### 4. Safe Production Update with Backups and Logging
 ```powershell
-.\Replace-TextInFiles.ps1 -Path "D:\Configs" -Filter "*.config" -FindText "Server=old-db" -ReplaceWith "Server=new-db" -CreateBackup -EnableLogging
+.\replace-text-in-files.ps1 -Path "D:\Configs" -Filter "*.config" -FindText "Server=old-db" -ReplaceWith "Server=new-db" -CreateBackup -EnableLogging
 ```
 
 ---
 
 ## 📸 Screenshots & Visual Verification
 
-### 1. Standard Run & Interactive Help Menu (`.\Replace-TextInFiles.ps1 -Help`)
+### 1. Standard Run & Interactive Help Menu (`.\replace-text-in-files.ps1 -Help`)
 ![Standard Run & Interactive Help Menu](assets/Standard_run.jpg)
 
 ### 2. Search & Replace Execution Results

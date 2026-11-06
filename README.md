@@ -1,4 +1,4 @@
-# Windows-Desktop Automation & Management
+﻿# Windows-Desktop Automation & Management
 
 A collection of professional PowerShell scripts designed to automate routine tasks, optimize system performance, and facilitate efficient remote management across **Windows 10** and **Windows 11** Desktop environments.
 
@@ -73,8 +73,8 @@ These tools are built to help IT Administrators and power users streamline daily
 
 ---
 
-### [Replace-TextInFiles](Replace-TextInFiles/README.md)
-* **Script:** [`Replace-TextInFiles.ps1`](Replace-TextInFiles/Replace-TextInFiles.ps1)
+### [replace-text-in-files](replace-text-in-files/README.md)
+* **Script:** [`replace-text-in-files.ps1`](replace-text-in-files/replace-text-in-files.ps1)
 * **Author:** Roman Pindela (`roman.pindela@gmail.com`)
 * **Description:** Safe, atomic search-and-replace utility across files and directory trees.
   * **Safe & Non-Destructive:** Loads content in memory (`-Raw`), performs changes, writes to temporary files before atomic replacement to prevent data corruption.
@@ -84,5 +84,5 @@ These tools are built to help IT Administrators and power users streamline daily
 * **Quick Example:**
   ```powershell
   # Safe search and replace in Markdown files
-  .\Replace-TextInFiles\Replace-TextInFiles.ps1 -Path ".\Docs" -Filter "*.md" -FindText "old-domain.com" -ReplaceWith "new-domain.com" -CreateBackup
+  .\replace-text-in-files\replace-text-in-files.ps1 -Path ".\Docs" -Filter "*.md" -FindText "old-domain.com" -ReplaceWith "new-domain.com" -CreateBackup
   ```
