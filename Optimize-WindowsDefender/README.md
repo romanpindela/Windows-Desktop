@@ -1,11 +1,11 @@
 # Optimize Windows Defender (`Optimize-WindowsDefender`)
 
-**Version:** 1.1.0  
+**Version:** 2.0.0  
 **Release Date:** 2026-11-07  
 **Author:** Roman Pindela  
 **License:** MIT  
 
-An enterprise-grade PowerShell optimization and maintenance utility for **Microsoft Defender Antivirus** (`WinDefend` / `MsMpEng.exe`) across **Windows 10**, **Windows 11**, and **Windows Server** (x64 / ARM64).
+An enterprise-grade performance tuning, diagnostics, and maintenance suite for **Microsoft Defender Antivirus** (`WinDefend` / `MsMpEng.exe`) across **Windows 10**, **Windows 11**, and **Windows Server** (x64 / ARM64).
 
 ---
 
@@ -19,7 +19,7 @@ An enterprise-grade PowerShell optimization and maintenance utility for **Micros
 | **Email** | [roman.pindela@gmail.com](mailto:roman.pindela@gmail.com) |
 | **GitHub** | [https://github.com/romanpindela](https://github.com/romanpindela) |
 | **Repository** | [Windows-Desktop](https://github.com/romanpindela/Windows-Desktop) |
-| **Version** | 1.1.0 |
+| **Version** | 2.0.0 |
 | **Release Date** | 2026-11-07 |
 | **License** | MIT |
 
@@ -27,29 +27,47 @@ An enterprise-grade PowerShell optimization and maintenance utility for **Micros
 
 ## 🚀 Overview
 
-Workstations and developer machines frequently suffer from high CPU utilization, memory bloat, and disk I/O bottlenecks caused by Microsoft Defender Antivirus (`MsMpEng.exe`). Common root causes include:
-* **Scanning Feedback Loops:** Defender scanning its own temporary engine caches, logs, and signature databases in `%ProgramData%\Microsoft\Windows Defender`.
+Workstations, developer systems, and server nodes frequently experience runaway CPU spikes, prolonged disk I/O latency, and background thread contention caused by Microsoft Defender Antivirus (`MsMpEng.exe`). Common bottlenecks include:
+* **Scanning Feedback Loops:** Defender scanning its own temporary engine caches, definition catalogs, and transaction logs in `%ProgramData%\Microsoft\Windows Defender`.
+* **Developer Tool I/O Thrashing:** Real-time mini-filter interception (`WdFilter.sys`) on thousands of file operations during `npm install`, `nuget restore`, `cargo build`, `pip install`, or large `git` commits.
+* **Compiler & Binary Interception:** Process creation latency overhead on developer tools (`git.exe`, `node.exe`, `dotnet.exe`, `cargo.exe`, `cl.exe`, `msbuild.exe`).
+* **Archive Decompression Spikes:** Deep inspection of multi-gigabyte `.zip`, `.cab`, and `.iso` files locking CPU cores.
 * **Corrupted Definition Caches:** Incomplete or fragmented antimalware signature updates causing the engine to repeatedly recompile databases in the background.
-* **Archive Decompression Spikes:** Full deep inspection of multi-gigabyte `.zip`, `.cab`, and `.iso` containers freezing CPU cores.
-* **Developer I/O Bottlenecks:** Real-time scanning of active Git repositories, node_modules, build artifacts, and compiler temporary files.
+* **Intrusive Scheduled Scans:** Background scans kicking in during active interactive work, high-load rendering, or while running on laptop battery power.
 * **Ghost GUI Notifications:** Locked or stale detection logs in `DetectionHistory` triggering recurrent false-positive notifications even after threats are cleaned.
 
-`Optimize-WindowsDefender.ps1` resolves these issues safely while respecting Windows Security architecture (**Protected Process Light - PPL** and **Tamper Protection**). It does not attempt to terminate protected system services directly; instead, it uses official Microsoft platform CLI interfaces (`MpCmdRun.exe`) and native PowerShell CIM/WMI cmdlets (`Set-MpPreference`).
+`Optimize-WindowsDefender.ps1` resolves these issues cleanly while respecting Windows Security architecture (**Protected Process Light - PPL** and **Tamper Protection**). It interacts strictly through Microsoft's sanctioned platform CLI interfaces (`MpCmdRun.exe`), CIM/WMI cmdlets (`Set-MpPreference`), and kernel ETW tracing.
 
 ---
 
 ## 🌟 Key Features
 
-* **Safe Cache & Signature Hygiene (`-ResetSignatures`):** Safely purges dynamic antimalware signature caches via `MpCmdRun.exe -RemoveDefinitions -All` and pulls clean definitions directly using `-SignatureUpdate`.
-* **Tamper-Safe Platform Reload (`-RestartEngine`):** Triggers a non-disruptive platform reload via `MpCmdRun.exe -RestartPlatform` without violating service protection barriers.
-* **Adaptive CPU Throttling (`-CpuLimit`):** Regulates maximum average CPU consumption factor allocated to Defender background and on-demand scans (default: 20%, configurable 5–100%).
-* **Archive Scanning Bypass (`-DisableArchiveScanning`):** Disables deep scanning of large archive files during routine scans, preventing severe system-wide CPU freezes.
-* **Scanning Feedback Loop Shield (`-ApplySelfExclusion`):** Idempotently excludes `MsMpEng.exe` and `%ProgramData%\Microsoft\Windows Defender` from recursive scanning loops.
-* **Developer Workspace Exclusions (`-CustomExclusionPaths`):** Batch configures exclusions for high-throughput repositories, build directories, and package caches with pre-validation and fast cached set lookups.
-* **Detection History Purge (`-CleanDetectionHistory`):** Cleans stale and unlocked entries from the `DetectionHistory` directory to clear persistent GUI notification warnings.
-* **Language-Agnostic UAC Auto-Elevation:** Verifies administrative privileges using well-known SIDs (`WellKnownSidType::BuiltInAdministratorsSid`), ensuring 100% compatibility across English (`Administrators`) and Polish (`Administratorzy`) Windows systems. Seamlessly relaunches with all CLI parameters preserved.
+* **Complete Optimization Workflow (`-All`):** One-shot execution of automatic configuration backup, signature refresh, platform reload, 20% CPU limit, archive scan bypass, idle-only scanning, battery guards, self-exclusions, developer tool cache exclusions, developer process exclusions, Dev Drive acceleration, and history cleanup.
+* **Live ETW Performance Profiler (`-Analyze` / `-TopOffenders`):** Captures high-precision Event Tracing for Windows (ETW) logs using `New-MpPerformanceRecording` and generates reports identifying the **Top 10 Files, Processes, and Extensions** generating Defender scan latency.
+* **Health Check & Audit Mode (`-Audit` / `-HealthCheck`):** Non-destructive read-only assessment of real-time protection, signature age, active exclusions, scan load limits, recent operational event logs, and color-coded health rating (`OPTIMAL`, `GOOD`, `ATTENTION NEEDED`).
+* **Predefined Developer Exclusion Profiles (`-ApplyDeveloperExclusions`):** Automatically detects and excludes high-I/O developer tool caches across active profiles (`Node`, `DotNet`, `Rust`, `Python`, `Java`, `Go`, `IDE`):
+  * **Node.js:** `%AppData%\npm-cache`, `%LocalAppData%\pnpm`, `%LocalAppData%\Yarn\Cache`
+  * **.NET:** `%UserProfile%\.nuget\packages`
+  * **Rust:** `%UserProfile%\.cargo`, `%UserProfile%\.rustup`
+  * **Python:** `%LocalAppData%\pip\cache`, `%UserProfile%\.virtualenvs`
+  * **Java:** `%UserProfile%\.gradle\caches`, `%UserProfile%\.gradle\wrapper`, `%UserProfile%\.m2\repository`
+  * **Go:** `%UserProfile%\go\pkg`
+  * **IDE & Editors:** `%LocalAppData%\JetBrains`, `%UserProfile%\.vscode\extensions`
+* **Developer Process Exclusions (`-ExcludeDevProcesses`):** Idempotently excludes high-throughput developer binaries (`git.exe`, `node.exe`, `cargo.exe`, `rustc.exe`, `dotnet.exe`, `python.exe`, `msbuild.exe`, `cl.exe`, `tsc.exe`, `go.exe`, `java.exe`, `code.exe`).
+* **Dev Drive (ReFS) Performance Mode (`-OptimizeDevDrive`):** Identifies ReFS volumes and activates Defender's asynchronous Dev Drive protection mode for maximum build throughput.
+* **Intelligent Scan Scheduling & Battery Safeguards (`-OptimizeScheduledTasks`):**
+  * Enables `ScanOnlyIfIdleEnabled` so scans pause immediately upon user activity.
+  * Enables `EnableLowCpuPriority` to prevent background scans from competing with foreground applications.
+  * Configures Task Scheduler to disallow scheduled scans on battery power (`DisallowStartIfOnBatteries`, `StopIfGoingOnBatteries`).
+  * Disables catchup quick/full scans to eliminate aggressive CPU thrashing upon system boot or wakeup.
+* **Configuration Snapshot Backup & Restore (`-BackupConfig` / `-RestoreConfig` / `-ResetToDefaults`):**
+  * Exports all active preferences, limits, and exclusions to a timestamped JSON file.
+  * Restores configuration snapshots seamlessly.
+  * Reverts settings to Microsoft factory defaults when needed (`-ResetToDefaults`).
+* **Safe Cache & Signature Hygiene (`-ResetSignatures`):** Purges corrupted signature caches via `MpCmdRun.exe -RemoveDefinitions -All` and pulls clean definitions directly via `-SignatureUpdate`.
+* **Tamper-Safe Platform Reload (`-RestartEngine`):** Signals service restart via `MpCmdRun.exe -RestartPlatform` without violating PPL boundaries.
+* **Language-Agnostic UAC Auto-Elevation:** Verifies administrative privileges using well-known SIDs (`WellKnownSidType::BuiltInAdministratorsSid`), ensuring 100% compatibility across English (`Administrators`) and Polish (`Administratorzy`) Windows systems with argument preservation.
 * **Standard PowerShell Impact Mitigation:** Full native support for `-WhatIf` and `-Confirm` preview modes.
-* **Enterprise Audit Logging & Pipeline Support:** Writes timestamped logs to `C:\Logs` (or `-LogPath`) and returns structured objects with execution metrics when invoked with `-PassThru`.
 
 ---
 
@@ -60,7 +78,7 @@ Optimize-WindowsDefender/
 ├── assets/
 │   ├── Optimization.jpg            # Screenshot of complete optimization workflow execution
 │   └── Standard_run.jpg            # Screenshot of zero-parameter run / architecture & maintenance guide
-├── Optimize-WindowsDefender.ps1    # Main optimization and maintenance script
+├── Optimize-WindowsDefender.ps1    # Main optimization, diagnostics, and tuning script
 └── README.md                       # Comprehensive technical documentation
 ```
 
@@ -70,7 +88,7 @@ Optimize-WindowsDefender/
 
 * **Operating System:** Windows 10, Windows 11, Windows Server 2016 / 2019 / 2022 / 2025.
 * **PowerShell Version:** Windows PowerShell 5.1 or PowerShell 7+.
-* **Privileges:** Administrator privileges required to adjust Defender preferences and platform state. The script automatically requests elevation via UAC when launched in a non-elevated console.
+* **Privileges:** Administrator privileges required for write and configuration tasks. Viewing help (`-h`) and running audit (`-Audit`) execute under standard user rights.
 * **Security Compatibility:** Fully compatible with Microsoft Defender Tamper Protection and Protected Process Light (PPL).
 
 ---
@@ -97,18 +115,30 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 | Parameter | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `-All` | `[switch]` | `False` | Executes the complete optimization sequence: signature refresh, platform reload, 20% CPU limit, archive scan bypass, self-exclusions, and history cleanup. |
-| `-ResetSignatures` | `[switch]` | `False` | Purges definition caches (`-RemoveDefinitions -All`) and downloads fresh antimalware/NIS updates (`-SignatureUpdate`). |
-| `-RestartEngine` | `[switch]` | `False` | Safely reloads the Defender platform services via `MpCmdRun.exe -RestartPlatform`. |
+| `-All` | `[switch]` | `False` | Executes full optimization: backup, signatures, reload, 20% CPU limit, archive bypass, idle-only scans, battery guards, self/dev exclusions, and history cleanup. |
+| `-Audit` | `[switch]` | `False` | Read-only diagnostic assessment of Defender state, signature age, exclusions, event logs, and health rating. Alias: `-HealthCheck`. |
+| `-Analyze` | `[switch]` | `False` | Records a live ETW performance trace and displays the top 10 files, processes, and extensions causing scan latency. Alias: `-TopOffenders`. |
+| `-AnalyzeDurationSeconds` | `[int]` | `15` | Duration in seconds for ETW performance recording (range: `5` to `120`). |
+| `-ResetSignatures` | `[switch]` | `False` | Purges definition caches (`-RemoveDefinitions -All`) and downloads fresh definitions (`-SignatureUpdate`). |
+| `-RestartEngine` | `[switch]` | `False` | Safely reloads Defender platform services via `MpCmdRun.exe -RestartPlatform`. |
 | `-CpuLimit` | `[int]` | `20` | Sets average scan CPU utilization cap (allowed range: `5` to `100`). |
-| `-DisableArchiveScanning` | `[switch]` | `False` | Disables unpacking and scanning of large compressed archives during scans. (Automatically enabled with `-All`). |
+| `-DisableArchiveScanning` | `[switch]` | `False` | Disables unpacking and scanning of large compressed archives during scans. (Included in `-All`). |
+| `-OptimizeScheduledTasks` | `[switch]` | `False` | Enables idle-only scanning, low CPU priority, disables catchup scans, and enforces battery guards. |
+| `-OptimizeDevDrive` | `[switch]` | `False` | Detects ReFS Dev Drive volumes and enables asynchronous Performance Mode. |
 | `-ApplySelfExclusion` | `[switch]` | `False` | Adds idempotent exclusions for `MsMpEng.exe` and `%ProgramData%\Microsoft\Windows Defender`. |
-| `-CustomExclusionPaths` | `[string[]]` | `$null` | Array of directory paths to add to the Defender real-time exclusion list. |
+| `-ApplyDeveloperExclusions` | `[switch]` | `False` | Auto-detects and excludes developer package caches (npm, nuget, cargo, pip, gradle, go, etc.). |
+| `-DevProfiles` | `[string[]]` | `'All'` | Target developer profiles: `All`, `Node`, `DotNet`, `Rust`, `Python`, `Java`, `Go`, `IDE`. |
+| `-ExcludeDevProcesses` | `[switch]` | `False` | Excludes common developer binaries (`git.exe`, `node.exe`, `cargo.exe`, `dotnet.exe`, `python.exe`, etc.). |
+| `-CustomExclusionProcesses` | `[string[]]` | `$null` | Array of additional custom process executable names to exclude. |
+| `-CustomExclusionPaths` | `[string[]]` | `$null` | Array of folder directory paths to add to the Defender exclusion list. |
 | `-CleanDetectionHistory` | `[switch]` | `False` | Purges stale detection records from the service `DetectionHistory` directory. |
+| `-BackupConfig` | `[switch]` | `False` | Exports current Defender preferences to a timestamped JSON file in `C:\Logs\`. |
+| `-RestoreConfig` | `[string]` | `$null` | Restores Defender preferences and exclusions from a specified JSON snapshot file. |
+| `-ResetToDefaults` | `[switch]` | `False` | Reverts settings back to Microsoft factory defaults (50% CPU, archive scan enabled, etc.). |
 | `-LogPath` | `[string]` | `C:\Logs\...` | Custom target path for the UTF-8 execution log file. |
-| `-SkipAdminCheck` | `[switch]` | `False` | Bypasses automatic UAC elevation check (ideal for unattended CI/CD or automation runners). |
-| `-PassThru` | `[switch]` | `False` | Returns a structured `PSCustomObject` containing pre/post configuration metrics to the pipeline. |
-| `-Help` / `-h` | `[switch]` | `False` | Displays the interactive console help guide and exits immediately without triggering elevation. |
+| `-SkipAdminCheck` | `[switch]` | `False` | Bypasses automatic UAC elevation check (for unattended automation runners). |
+| `-PassThru` | `[switch]` | `False` | Returns structured `PSCustomObject` containing pre/post metrics to the pipeline. |
+| `-Help` / `-h` | `[switch]` | `False` | Displays the interactive console help guide and exits immediately. |
 
 ---
 
@@ -116,43 +146,54 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ### 1. Complete System Optimization (`-All`)
 
-Runs the full maintenance lifecycle: refreshes signatures, restarts the platform, restricts scan CPU load factor to 20%, excludes Defender's internal directories, disables archive decompression, and clears stale detection logs:
+Runs the full maintenance lifecycle: creates config backup, refreshes signatures, restarts platform, restricts scan CPU load factor to 20%, excludes Defender's internal directories, configures developer caches & binaries, activates battery guards, and clears stale detection logs:
 
 ```powershell
 .\Optimize-WindowsDefender.ps1 -All
 ```
 
-### 2. Signature Reset & Engine Platform Reload
+### 2. Read-Only Health Check & Status Audit (`-Audit`)
 
-Fixes corrupted signature databases, stuck update downloads, or engine synchronization issues:
-
-```powershell
-.\Optimize-WindowsDefender.ps1 -ResetSignatures -RestartEngine
-```
-
-### 3. Developer Workspace Optimization with Custom CPU Limit
-
-Limits background scan CPU utilization to 15% and excludes high-I/O developer repositories:
+Evaluates Defender health without administrative elevation and outputs a comprehensive dashboard with event logs and recommendations:
 
 ```powershell
-.\Optimize-WindowsDefender.ps1 -CpuLimit 15 -CustomExclusionPaths "C:\GitHub", "D:\BuildCaches", "C:\Users\Roman\.cargo"
+.\Optimize-WindowsDefender.ps1 -Audit
 ```
 
-### 4. Non-Destructive Simulation (`-WhatIf`)
+### 3. Live Performance Profiler & Top Offenders Report (`-Analyze`)
+
+Profiles live Defender I/O for 20 seconds while performing builds or git operations to see what files and processes are slowing down the machine:
+
+```powershell
+.\Optimize-WindowsDefender.ps1 -Analyze -AnalyzeDurationSeconds 20
+```
+
+### 4. Developer Tuning (Package Caches + Dev Processes + 15% CPU Limit)
+
+Optimizes a workstation for software development without disabling core protection:
+
+```powershell
+.\Optimize-WindowsDefender.ps1 -ApplyDeveloperExclusions -DevProfiles Node,DotNet,Rust -ExcludeDevProcesses -CpuLimit 15 -CustomExclusionPaths "C:\GitHub", "D:\Workspaces"
+```
+
+### 5. Configuration Backup & Restore
+
+Safely snapshots settings before changes, and restores them later:
+
+```powershell
+# Backup configuration
+.\Optimize-WindowsDefender.ps1 -BackupConfig
+
+# Restore configuration
+.\Optimize-WindowsDefender.ps1 -RestoreConfig "C:\Logs\20261107-DefenderConfig-Backup-ROMAN-PC-E590.json"
+```
+
+### 6. Non-Destructive Simulation (`-WhatIf`)
 
 Previews all changes that would be performed without modifying system configuration:
 
 ```powershell
-.\Optimize-WindowsDefender.ps1 -All -CustomExclusionPaths "C:\GitHub" -WhatIf
-```
-
-### 5. Automated Pipeline Execution with `-PassThru`
-
-Collects post-optimization status in an automated script or monitoring probe:
-
-```powershell
-$status = .\Optimize-WindowsDefender.ps1 -CpuLimit 25 -DisableArchiveScanning -PassThru -SkipAdminCheck
-$status | Format-Table ComputerName, ScanAvgCPULoadFactor, AntivirusSignatureVer, ExecutionTimeSeconds
+.\Optimize-WindowsDefender.ps1 -All -WhatIf
 ```
 
 ---
