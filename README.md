@@ -1,4 +1,4 @@
-﻿# Windows-Desktop Automation & Management
+# Windows-Desktop Automation & Management
 
 A collection of professional PowerShell scripts designed to automate routine tasks, optimize system performance, and facilitate efficient remote management across **Windows 10** and **Windows 11** Desktop environments.
 
@@ -85,4 +85,25 @@ These tools are built to help IT Administrators and power users streamline daily
   ```powershell
   # Safe search and replace in Markdown files
   .\replace-text-in-files\replace-text-in-files.ps1 -Path ".\Docs" -Filter "*.md" -FindText "old-domain.com" -ReplaceWith "new-domain.com" -CreateBackup
+  ```
+
+---
+
+### [Optimize-WindowsDefender](Optimize-WindowsDefender/README.md)
+* **Script:** [`Optimize-WindowsDefender.ps1`](Optimize-WindowsDefender/Optimize-WindowsDefender.ps1)
+* **Author:** Roman Pindela (`roman.pindela@gmail.com`)
+* **Description:** High-performance optimization and maintenance utility for Microsoft Defender Antivirus (`WinDefend` / `MsMpEng.exe`).
+  * **Resource Regulation & Scan Limits:** Sets maximum scan CPU load factor (`-CpuLimit`, default: 20%) and disables deep archive scanning (`-DisableArchiveScanning`) to prevent system lockups.
+  * **Definition Cache Hygiene:** Flushes stale or corrupted signature definition databases and pulls clean updates directly using official `MpCmdRun.exe` CLI.
+  * **Safe Platform Reload:** Safely signals platform reload (`-RestartPlatform`) in compliance with Protected Process Light (PPL) and Tamper Protection.
+  * **Idempotent Exclusions:** Manages self-exclusions (`MsMpEng.exe` and `%ProgramData%\Microsoft\Windows Defender`) to eliminate recursive scanning feedback loops, and adds high-I/O developer workspace folders with $O(1)$ cached lookups.
+  * **Detection History Purge:** Clears stale and unlocked detection logs to resolve persistent false-positive GUI notification loops.
+  * **Standards Compliant:** Zero-parameter interactive help (`-h`), language-independent UAC auto-elevation via SID (`S-1-5-32-544`), `-WhatIf` / `-Confirm` preview modes, and structured audit logging to `C:\Logs`.
+* **Quick Example:**
+  ```powershell
+  # Full optimization run (signatures, reload, CPU limit 20%, self-exclusions, and history cleanup)
+  .\Optimize-WindowsDefender\Optimize-WindowsDefender.ps1 -All
+
+  # Throttle scan CPU to 15% and exclude high-I/O developer directories
+  .\Optimize-WindowsDefender\Optimize-WindowsDefender.ps1 -CpuLimit 15 -CustomExclusionPaths "C:\GitHub", "D:\BuildCaches" -WhatIf
   ```
