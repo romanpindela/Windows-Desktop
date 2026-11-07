@@ -69,8 +69,6 @@ These tools are built to help IT Administrators and power users streamline daily
   .\Manage-WindowsOptionalFeatures\Manage-WindowsOptionalFeatures.ps1 -Action Enable -FeatureName "TelnetClient", "Containers-DisposableClientVM"
   ```
 
-
-
 ---
 
 ### [replace-text-in-files](replace-text-in-files/README.md)
@@ -79,12 +77,14 @@ These tools are built to help IT Administrators and power users streamline daily
 * **Description:** Safe, atomic search-and-replace utility across files and directory trees.
   * **Safe & Non-Destructive:** Loads content in memory (`-Raw`), performs changes, writes to temporary files before atomic replacement to prevent data corruption.
   * **Dual Compatibility:** Works seamlessly across Windows PowerShell 5.1 and PowerShell 7+.
-  * **Regex & Literal:** Supports case-sensitive/insensitive string replacements and regular expressions (`-UseRegex`).
-  * **WhatIf & Backups:** Native `-WhatIf` preview, optional `.bak` file backups (`-CreateBackup`), and audit logging (`-EnableLogging`).
+  * **Advanced Regex & Evaluators:** Supports literal string matching, full regular expressions (`-UseRegex`), multiline/singleline block modes (`-RegexSingleline`, `-RegexMultiline`), and dynamic PowerShell ScriptBlock evaluators (`-MatchEvaluator`).
+  * **Binary Protection & Size Guard:** Auto-detects and skips binary files to prevent corruption, with configurable file size limits (`-MaxFileSizeMB`).
+  * **Visual Diff & Auditing:** Colorized line-by-line diff preview (`-ShowDiff`), in-place or isolated backup directory trees (`-BackupDirectory`), and audit exports to JSON/CSV (`-ExportReportPath`).
+  * **WhatIf & Backups:** Native `-WhatIf` simulation, `-Confirm` prompts, optional `.bak` file backups (`-CreateBackup`), and structured logging (`-EnableLogging`).
 * **Quick Example:**
   ```powershell
-  # Safe search and replace in Markdown files
-  .\replace-text-in-files\replace-text-in-files.ps1 -Path ".\Docs" -Filter "*.md" -FindText "old-domain.com" -ReplaceWith "new-domain.com" -CreateBackup
+  # Search and replace in Markdown files with visual diff preview
+  .\replace-text-in-files\replace-text-in-files.ps1 -Path ".\Docs" -Filter "*.md" -FindText "old-domain.com" -ReplaceWith "new-domain.com" -CreateBackup -ShowDiff
   ```
 
 ---
@@ -92,18 +92,23 @@ These tools are built to help IT Administrators and power users streamline daily
 ### [Optimize-WindowsDefender](Optimize-WindowsDefender/README.md)
 * **Script:** [`Optimize-WindowsDefender.ps1`](Optimize-WindowsDefender/Optimize-WindowsDefender.ps1)
 * **Author:** Roman Pindela (`roman.pindela@gmail.com`)
-* **Description:** High-performance optimization and maintenance utility for Microsoft Defender Antivirus (`WinDefend` / `MsMpEng.exe`).
-  * **Resource Regulation & Scan Limits:** Sets maximum scan CPU load factor (`-CpuLimit`, default: 20%) and disables deep archive scanning (`-DisableArchiveScanning`) to prevent system lockups.
-  * **Definition Cache Hygiene:** Flushes stale or corrupted signature definition databases and pulls clean updates directly using official `MpCmdRun.exe` CLI.
-  * **Safe Platform Reload:** Safely signals platform reload (`-RestartPlatform`) in compliance with Protected Process Light (PPL) and Tamper Protection.
-  * **Idempotent Exclusions:** Manages self-exclusions (`MsMpEng.exe` and `%ProgramData%\Microsoft\Windows Defender`) to eliminate recursive scanning feedback loops, and adds high-I/O developer workspace folders with $O(1)$ cached lookups.
-  * **Detection History Purge:** Clears stale and unlocked detection logs to resolve persistent false-positive GUI notification loops.
+* **Description:** Comprehensive performance tuning, diagnostics, and maintenance suite for Microsoft Defender Antivirus (`WinDefend` / `MsMpEng.exe`).
+  * **Resource Regulation & Scan Limits:** Sets maximum scan CPU load factor (`-CpuLimit`, default: 20%), disables deep archive scanning (`-DisableArchiveScanning`), and enforces low CPU/IO priority.
+  * **Developer Acceleration:** Auto-detects and excludes package caches across profiles (`Node`, `DotNet`, `Rust`, `Python`, `Java`, `Go`, `IDE`), excludes dev binaries (`git.exe`, `node.exe`, `cargo.exe`, `dotnet.exe`), and enables Dev Drive (ReFS) Performance Mode.
+  * **Live Performance Profiler:** Records ETW traces (`-Analyze` / `-TopOffenders`) to identify the top 10 files, processes, and extensions causing real-time scan latency.
+  * **Health Check & Audit:** Non-destructive assessment (`-Audit`) evaluating signature health, exclusion coverage, recent operational event logs, and posture ratings.
+  * **Intelligent Scheduling & Battery Guards:** Pauses scans when user is active (`ScanOnlyIfIdleEnabled`), disables battery-draining full scans, and prevents startup catchup scan spikes.
+  * **Snapshot Backup & Restore:** Exports configuration state to timestamped JSON (`-BackupConfig`), restores snapshots (`-RestoreConfig`), and supports factory reset (`-ResetToDefaults`).
+  * **Safe Platform Operations:** Performs cache hygiene via `MpCmdRun.exe`, signals PPL-compliant platform reloads, and purges stale `DetectionHistory` containers.
   * **Standards Compliant:** Zero-parameter interactive help (`-h`), language-independent UAC auto-elevation via SID (`S-1-5-32-544`), `-WhatIf` / `-Confirm` preview modes, and structured audit logging to `C:\Logs`.
 * **Quick Example:**
   ```powershell
-  # Full optimization run (signatures, reload, CPU limit 20%, self-exclusions, and history cleanup)
+  # Full optimization run (backup, signatures, reload, CPU limit 20%, self/dev exclusions, battery guards)
   .\Optimize-WindowsDefender\Optimize-WindowsDefender.ps1 -All
 
-  # Throttle scan CPU to 15% and exclude high-I/O developer directories
-  .\Optimize-WindowsDefender\Optimize-WindowsDefender.ps1 -CpuLimit 15 -CustomExclusionPaths "C:\GitHub", "D:\BuildCaches" -WhatIf
+  # Non-destructive health check and audit dashboard
+  .\Optimize-WindowsDefender\Optimize-WindowsDefender.ps1 -Audit
+
+  # Profile live Defender scan latency for 20 seconds
+  .\Optimize-WindowsDefender\Optimize-WindowsDefender.ps1 -Analyze -AnalyzeDurationSeconds 20
   ```
