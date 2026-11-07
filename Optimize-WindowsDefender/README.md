@@ -57,6 +57,9 @@ Workstations and developer machines frequently suffer from high CPU utilization,
 
 ```shell
 Optimize-WindowsDefender/
+├── assets/
+│   ├── Optimization.jpg            # Screenshot of complete optimization workflow execution
+│   └── Standard_run.jpg            # Screenshot of zero-parameter run / architecture & maintenance guide
 ├── Optimize-WindowsDefender.ps1    # Main optimization and maintenance script
 └── README.md                       # Comprehensive technical documentation
 ```
@@ -151,6 +154,16 @@ Collects post-optimization status in an automated script or monitoring probe:
 $status = .\Optimize-WindowsDefender.ps1 -CpuLimit 25 -DisableArchiveScanning -PassThru -SkipAdminCheck
 $status | Format-Table ComputerName, ScanAvgCPULoadFactor, AntivirusSignatureVer, ExecutionTimeSeconds
 ```
+
+---
+
+## 📸 Screenshots & Visual Verification
+
+### 1. Interactive Help Menu & Syntax Guide (`.\Optimize-WindowsDefender.ps1`)
+![Standard Run & Interactive Help Menu](assets/Standard_run.jpg)
+
+### 2. Complete Maintenance & Optimization Execution (`.\Optimize-WindowsDefender.ps1 -All`)
+![Optimization Execution Summary](assets/Optimization.jpg)
 
 ---
 
