@@ -112,3 +112,33 @@ These tools are built to help IT Administrators and power users streamline daily
   # Profile live Defender scan latency for 20 seconds
   .\Optimize-WindowsDefender\Optimize-WindowsDefender.ps1 -Analyze -AnalyzeDurationSeconds 20
   ```
+
+---
+
+### [Audit-LocalAdministrators](Audit-LocalAdministrators/README.md)
+* **Script:** [`Audit-LocalAdministrators.ps1`](Audit-LocalAdministrators/Audit-LocalAdministrators.ps1)
+* **Author:** Roman Pindela (`roman.pindela@gmail.com`)
+* **Description:** Enterprise PowerShell security suite for local Administrators group auditing, hybrid/cloud SID classification, orphaned identity detection, and standalone HTML reporting.
+  * **Language-Independent Resolution:** Resolves the local Administrators group via Well-Known SID (`S-1-5-32-544`), avoiding failures on non-English locales (e.g., Polish, German, French).
+  * **Hybrid & Cloud Classification:** Deep inspection distinguishes built-in Administrator (RID 500), elevated standard local users, Active Directory domain accounts, and Microsoft Entra ID (Azure AD) identities (`S-1-12-1-*`).
+  * **Advanced Anomaly Engine:** Flags lingering orphaned SIDs, unmanaged RID 500 accounts lacking Windows LAPS, credential sprawl, dormant accounts, and stale passwords.
+  * **Offline Standalone HTML Report:** Emits a dependency-free, Apple-inspired responsive dark/light mode HTML dashboard with real-time text filtering and column sorting.
+  * **Standards Compliant:** Zero-parameter interactive help (`-h`), language-independent UAC auto-elevation, structured microsecond logging to `C:\Logs`, and CSV export.
+* **Quick Example:**
+  ```powershell
+  # Perform security audit and generate standalone responsive HTML report
+  .\Audit-LocalAdministrators\Audit-LocalAdministrators.ps1 -GenerateHtmlReport
+
+  # Full audit with console summary, CSV export, and HTML report
+  .\Audit-LocalAdministrators\Audit-LocalAdministrators.ps1 -Audit -GenerateHtmlReport -ExportCsv
+  ```
+
+---
+
+## 🛡️ Desktop Auditing & Security
+
+| Tool | Description | Compatibility |
+| :--- | :--- | :--- |
+| [Audit-LocalAdministrators](./Audit-LocalAdministrators) | Audits members of the local Administrators group (SID S-1-5-32-544), detects orphaned SIDs, logs to C:\Logs, and generates standalone HTML reports. | PowerShell 5.1 / 7+ |
+| [Optimize-WindowsDefender](./Optimize-WindowsDefender) | Performance tuning, diagnostics, and maintenance suite for Microsoft Defender Antivirus (`WinDefend` / `MsMpEng.exe`). | PowerShell 5.1 / 7+ |
+
