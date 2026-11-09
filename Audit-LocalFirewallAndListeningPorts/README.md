@@ -194,8 +194,11 @@ Windows-Desktop/
 
 ## 📸 Screenshots & Visual Verification
 
-### Security Audit Execution & Console Summary (`.\Audit-LocalFirewallAndListeningPorts.ps1`)
+### 1. Security Audit Execution & Console Summary (`.\Audit-LocalFirewallAndListeningPorts.ps1`)
 ![Security Audit Execution & Console Summary](assets/Raport.jpg)
+
+### 2. Standalone Responsive HTML Audit Report (`.\Audit-LocalFirewallAndListeningPorts.ps1 -ShowReportInBrowser`)
+![Standalone Responsive HTML Audit Report](assets/Firewall-Listening-Ports-Security-Audit-ROMAN-PC-E590-11-09-2026_12_45_PM.png)
 
 ---
 
