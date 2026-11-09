@@ -185,6 +185,9 @@ The generated HTML audit report is self-contained with no external CDN or web fo
 ```text
 Windows-Desktop/
 └── Audit-LocalFirewallAndListeningPorts/
+    ├── assets/
+    │   ├── Firewall-Listening-Ports-Security-Audit-ROMAN-PC-E590-11-09-2026_12_45_PM.png
+    │   └── Raport.jpg
     ├── Audit-LocalFirewallAndListeningPorts.ps1
     ├── README.md
     └── SPECIFICATION-Audit-LocalFirewallAndListeningPorts.md
