@@ -192,6 +192,13 @@ Windows-Desktop/
 
 ---
 
+## 📸 Screenshots & Visual Verification
+
+### Security Audit Execution & Console Summary (`.\Audit-LocalFirewallAndListeningPorts.ps1`)
+![Security Audit Execution & Console Summary](assets/Raport.jpg)
+
+---
+
 ## 👤 Author & Support
 
 * **Author:** Roman Pindela
