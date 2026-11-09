@@ -211,12 +211,24 @@ Remove-Item -Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\<S
 
 ---
 
+## 📸 Screenshots & Visual Verification
+
+### 1. Console Execution & Live ASEP Audit (`.\Audit-EndpointPersistence.ps1`)
+![Console Execution and Live ASEP Audit](assets/Running.jpg)
+
+### 2. Standalone Responsive HTML Audit Dashboard (`.\Audit-EndpointPersistence.ps1 -OpenReport`)
+![Standalone Responsive HTML Audit Dashboard](assets/Endpoint-Persistence-Audit-ROMAN-PC-E590-11-09-2026_12_38_PM.png)
+
+---
+
 ## 📁 Repository Structure
 
 ```
 c:\Dane\rpindela\GitHub\Windows-Desktop\Audit-EndpointPersistence\
+├── assets/
+│   ├── Endpoint-Persistence-Audit-ROMAN-PC-E590-11-09-2026_12_38_PM.png
+│   └── Running.jpg
 ├── Audit-EndpointPersistence.ps1              # Production persistence auditing tool
-├── SPECIFICATION-Audit-EndpointPersistence.md # Engineering specification & requirements
 └── README.md                                  # Architectural documentation & operational guide
 ```
 
