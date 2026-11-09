@@ -169,7 +169,7 @@ begin {
     # --------------------------------------------------------------------------
     $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     if (-not $isAdmin -and -not $SkipAdminCheck) {
-        throw "Skrypt wymaga uprawnien administratora (UAC Elevation). Uruchom konsole PowerShell jako Administrator lub uzyj parametru -SkipAdminCheck do testow."
+        throw "This script requires administrator privileges (UAC Elevation). Please launch PowerShell as an Administrator or use the -SkipAdminCheck parameter for testing."
     }
 
     if ([string]::IsNullOrWhiteSpace($PathHtmlReport)) {
@@ -220,7 +220,7 @@ process {
     # --------------------------------------------------------------------------
     # Step 1: Hardware Root of Trust (TPM & UEFI Secure Boot)
     # --------------------------------------------------------------------------
-    Write-Progress -Activity "Audyt bezpieczenstwa stacji roboczej" -Status "Krok 1/4: Sprawdzanie stanu TPM i UEFI..." -PercentComplete 25
+    Write-Progress -Activity "Workstation Cryptographic & Hardware Security Audit" -Status "Step 1/4: Checking TPM and UEFI Secure Boot status..." -PercentComplete 25
     Write-LogEntry "Checking Hardware Root of Trust: TPM module and UEFI Secure Boot..." -Level 'INFO'
 
     $tpmInfo = [PSCustomObject]@{
@@ -315,7 +315,7 @@ process {
         $tpmInfo.TpmType = "Hardware TPM ($($tpmInfo.ManufacturerIdTxt))"
     }
     else {
-        $tpmInfo.TpmType = 'Brak modulu TPM'
+        $tpmInfo.TpmType = 'No TPM Device Found'
     }
 
     # Evaluate TPM Status
@@ -326,23 +326,23 @@ process {
 
     if (-not $tpmInfo.Present) {
         $tpmInfo.Status = 'FAIL'
-        $tpmInfo.StatusDetails = 'Brak fizycznego lub programowego modulu TPM.'
+        $tpmInfo.StatusDetails = 'Physical or firmware TPM module is missing.'
     }
     elseif (-not $tpmInfo.Ready) {
         $tpmInfo.Status = 'FAIL'
-        $tpmInfo.StatusDetails = 'Modul TPM jest obecny, lecz nie jest w stanie gotowosci (Not Ready).'
+        $tpmInfo.StatusDetails = 'TPM module is present but not ready (Not Ready).'
     }
     elseif ($specVerNum -lt 2.0) {
         $tpmInfo.Status = 'WARN'
-        $tpmInfo.StatusDetails = "Wersja specyfikacji TPM ($($tpmInfo.SpecVersion)) jest ponizej standardu TPM 2.0 wymaganego przez NIS2."
+        $tpmInfo.StatusDetails = "TPM specification version ($($tpmInfo.SpecVersion)) is below the TPM 2.0 baseline required for NIS2 compliance."
     }
     elseif (-not $tpmInfo.Enabled -or -not $tpmInfo.Activated) {
         $tpmInfo.Status = 'WARN'
-        $tpmInfo.StatusDetails = 'TPM 2.0 jest gotowy, lecz nie jest w pelni wlaczony lub aktywowany w BIOS/UEFI.'
+        $tpmInfo.StatusDetails = 'TPM 2.0 is ready, but not fully enabled or activated in BIOS/UEFI.'
     }
     else {
         $tpmInfo.Status = 'PASS'
-        $tpmInfo.StatusDetails = "TPM 2.0 aktywny i gotowy ($($tpmInfo.TpmType), Firmware: $($tpmInfo.ManufacturerVersion))."
+        $tpmInfo.StatusDetails = "TPM 2.0 active and ready ($($tpmInfo.TpmType), Firmware: $($tpmInfo.ManufacturerVersion))."
     }
 
     Write-LogEntry "TPM Assessment: [$($tpmInfo.Status)] - $($tpmInfo.StatusDetails)" -Level $(if ($tpmInfo.Status -eq 'PASS') { 'SUCCESS' } elseif ($tpmInfo.Status -eq 'WARN') { 'WARN' } else { 'ERROR' })
@@ -406,33 +406,33 @@ process {
         # Evaluate Secure Boot Posture
         if ($secureBootInfo.FirmwareType -eq 'BIOS' -or $secureBootInfo.SecureBootStatus -eq 'NotSupported') {
             $secureBootInfo.Status = 'FAIL'
-            $secureBootInfo.StatusDetails = 'System uruchomiony w trybie Legacy BIOS. Secure Boot nie jest obslugiwany (niezgodnosc z NIS2).'
+            $secureBootInfo.StatusDetails = 'System booted in Legacy BIOS mode. Secure Boot is not supported (NIS2 non-compliant).'
         }
         elseif ($secureBootInfo.SecureBootStatus -eq 'Disabled') {
             $secureBootInfo.Status = 'WARN'
-            $secureBootInfo.StatusDetails = 'Tryb UEFI aktywny, lecz Bezpieczny Rozruch (Secure Boot) jest wylaczony.'
+            $secureBootInfo.StatusDetails = 'UEFI mode is active, but Secure Boot is disabled.'
         }
         elseif ($secureBootInfo.SecureBootStatus -eq 'Enabled') {
             $secureBootInfo.Status = 'PASS'
-            $secureBootInfo.StatusDetails = 'Bezpieczny Rozruch (Secure Boot) jest wlaczony i aktywny w trybie UEFI.'
+            $secureBootInfo.StatusDetails = 'UEFI Secure Boot is enabled and active.'
         }
         else {
             $secureBootInfo.Status = 'WARN'
-            $secureBootInfo.StatusDetails = "Nie mozna jednoznacznie zweryfikowac Secure Boot ($($secureBootInfo.SecureBootStatus))."
+            $secureBootInfo.StatusDetails = "Unable to conclusively verify Secure Boot status ($($secureBootInfo.SecureBootStatus))."
         }
 
         Write-LogEntry "Secure Boot Assessment: [$($secureBootInfo.Status)] - $($secureBootInfo.StatusDetails)" -Level $(if ($secureBootInfo.Status -eq 'PASS') { 'SUCCESS' } elseif ($secureBootInfo.Status -eq 'WARN') { 'WARN' } else { 'ERROR' })
     }
     catch {
         $secureBootInfo.Status = 'FAIL'
-        $secureBootInfo.StatusDetails = "Blad audytu Secure Boot: $($_.Exception.Message)"
+        $secureBootInfo.StatusDetails = "Secure Boot audit error: $($_.Exception.Message)"
         Write-LogEntry "Secure Boot audit error: $($_.Exception.ToString())" -Level 'ERROR'
     }
 
     # --------------------------------------------------------------------------
     # Step 2: Station Identity & Directory Join Classification
     # --------------------------------------------------------------------------
-    Write-Progress -Activity "Audyt bezpieczenstwa stacji roboczej" -Status "Krok 2/4: Weryfikacja typu dolaczenia stacji..." -PercentComplete 45
+    Write-Progress -Activity "Workstation Cryptographic & Hardware Security Audit" -Status "Step 2/4: Verifying device directory join status..." -PercentComplete 45
     Write-LogEntry "Checking device directory join state (dsregcmd /status)..." -Level 'INFO'
 
     $joinInfo = [PSCustomObject]@{
@@ -479,7 +479,7 @@ process {
     # --------------------------------------------------------------------------
     # Step 3: Event Log Escrow Verification (Cloud / AD Backup)
     # --------------------------------------------------------------------------
-    Write-Progress -Activity "Audyt bezpieczenstwa stacji roboczej" -Status "Krok 3/4: Weryfikacja historii zdarzen escrow kluczy..." -PercentComplete 65
+    Write-Progress -Activity "Workstation Cryptographic & Hardware Security Audit" -Status "Step 3/4: Inspecting key escrow event history (Cloud/AD)..." -PercentComplete 65
     Write-LogEntry "Inspecting Event Log 'Microsoft-Windows-BitLocker/BitLocker Management' for Escrow events (845 / 846)..." -Level 'INFO'
 
     $escrowEventRecords = @()
@@ -508,7 +508,7 @@ process {
             return [PSCustomObject]@{
                 EscrowStatus  = 'STANDALONE_NOT_APPLICABLE'
                 LastTimestamp = $null
-                Details       = 'Stacja autonomiczna (Workgroup) - brak podlaczenia do AD / Entra ID.'
+                Details       = 'Standalone machine (Workgroup) - AD / Entra ID escrow not applicable.'
                 BadgeClass    = 'badge-info'
                 ConsoleTag    = 'PASS'
             }
@@ -535,7 +535,7 @@ process {
                 return [PSCustomObject]@{
                     EscrowStatus  = $statusName
                     LastTimestamp = $latestEvent.TimeCreated
-                    Details       = "Klucz odzyskiwania pomyslnie zarchiwizowany w katalogu ($statusName) dnia $($latestEvent.TimeCreated.ToString('yyyy-MM-dd HH:mm'))."
+                    Details       = "Recovery key successfully backed up to directory ($statusName) on $($latestEvent.TimeCreated.ToString('yyyy-MM-dd HH:mm'))."
                     BadgeClass    = 'badge-pass'
                     ConsoleTag    = 'PASS'
                 }
@@ -544,7 +544,7 @@ process {
                 return [PSCustomObject]@{
                     EscrowStatus  = 'FAILED_NO_ESCROW'
                     LastTimestamp = $latestEvent.TimeCreated
-                    Details       = "Blad wysylania klucza do katalogu (EventID 846) dnia $($latestEvent.TimeCreated.ToString('yyyy-MM-dd HH:mm'))."
+                    Details       = "Failed to backup recovery key to directory (EventID 846) on $($latestEvent.TimeCreated.ToString('yyyy-MM-dd HH:mm'))."
                     BadgeClass    = 'badge-fail'
                     ConsoleTag    = 'FAIL'
                 }
@@ -554,7 +554,7 @@ process {
         return [PSCustomObject]@{
             EscrowStatus  = 'FAILED_NO_ESCROW'
             LastTimestamp = $null
-            Details       = 'Stacja dolaczona do AD/Entra, lecz w dzienniku zdarzen brak potwierdzenia escrow (EventID 845).'
+            Details       = 'Device is joined to AD/Entra, but no successful escrow confirmation found in event log (EventID 845).'
             BadgeClass    = 'badge-fail'
             ConsoleTag    = 'FAIL'
         }
@@ -563,7 +563,7 @@ process {
     # --------------------------------------------------------------------------
     # Step 4: BitLocker Volumes & Key Protectors Analysis
     # --------------------------------------------------------------------------
-    Write-Progress -Activity "Audyt bezpieczenstwa stacji roboczej" -Status "Krok 4/4: Audyt wolumenow BitLocker i generowanie raportu..." -PercentComplete 85
+    Write-Progress -Activity "Workstation Cryptographic & Hardware Security Audit" -Status "Step 4/4: Auditing BitLocker volumes and generating report..." -PercentComplete 85
     Write-LogEntry "Auditing BitLocker Volumes and Key Protectors..." -Level 'INFO'
 
     $volumeResults = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -649,10 +649,10 @@ process {
         if ($protStatus -ne 'On' -or $volStatus -ne 'FullyEncrypted' -or $encPercent -lt 100) {
             if ($volType -eq 'OperatingSystem' -or $mountPoint -eq 'C:') {
                 $volComplianceStatus = 'FAIL'
-                $complianceReasons.Add("Dysk systemowy nie jest w pelni zaszyfrowany ($encPercent%, Status: $volStatus, Ochrona: $protStatus).")
+                $complianceReasons.Add("Operating system drive is not fully encrypted ($encPercent%, Status: $volStatus, Protection: $protStatus).")
             } else {
                 if ($volComplianceStatus -ne 'FAIL') { $volComplianceStatus = 'WARN' }
-                $complianceReasons.Add("Wolumen danych nie jest w pelni zaszyfrowany ($encPercent%, Status: $volStatus).")
+                $complianceReasons.Add("Data volume is not fully encrypted ($encPercent%, Status: $volStatus).")
             }
         }
 
@@ -663,16 +663,16 @@ process {
         elseif ($EnforceAes256) {
             if ($encMethod -notin @('XtsAes256', 'Aes256')) {
                 $volComplianceStatus = 'FAIL'
-                $complianceReasons.Add("Wymuszona polityka AES-256: Wykryto metode $encMethod (wymagane XTS-AES 256).")
+                $complianceReasons.Add("Enforced AES-256 policy: Detected $encMethod method (XTS-AES 256 required).")
             }
         }
         else {
             if ($encMethod -notin @('XtsAes256', 'XtsAes128', 'Aes256', 'Aes128')) {
                 if ($volComplianceStatus -ne 'FAIL') { $volComplianceStatus = 'WARN' }
-                $complianceReasons.Add("Wykryto niestandardowy algorytm szyfrowania: $encMethod.")
+                $complianceReasons.Add("Non-standard encryption algorithm detected: $encMethod.")
             }
             elseif ($encMethod -in @('XtsAes128', 'Aes128')) {
-                $complianceReasons.Add("Standardowa metoda szyfrowania ($encMethod). Rekomendacja: XTS-AES 256.")
+                $complianceReasons.Add("Standard encryption method ($encMethod). Recommendation: XTS-AES 256.")
             }
         }
 
@@ -681,11 +681,11 @@ process {
             if ($volType -eq 'OperatingSystem' -or $mountPoint -eq 'C:') {
                 if (-not $hasTpmProtector) {
                     if ($volComplianceStatus -ne 'FAIL') { $volComplianceStatus = 'WARN' }
-                    $complianceReasons.Add('Brak sprzetowego protektora TPM na wolumenie systemowym.')
+                    $complianceReasons.Add('Missing hardware TPM key protector on OS volume.')
                 }
                 if (-not $hasRecoveryPassword) {
                     if ($volComplianceStatus -ne 'FAIL') { $volComplianceStatus = 'WARN' }
-                    $complianceReasons.Add('Brak klucza odzyskiwania (Recovery Password / Numerical Password).')
+                    $complianceReasons.Add('Missing recovery key (Recovery Password / Numerical Password).')
                 }
             }
         }
@@ -693,18 +693,18 @@ process {
         # Check 4: Escrow status
         if ($escrowResult.EscrowStatus -eq 'FAILED_NO_ESCROW') {
             if ($volComplianceStatus -ne 'FAIL') { $volComplianceStatus = 'WARN' }
-            $complianceReasons.Add('Brak potwierdzenia kopii zapasowej klucza odzyskiwania w chmurze Entra ID / AD.')
+            $complianceReasons.Add('No confirmation of recovery key backup in Entra ID / Active Directory escrow.')
         }
 
         if ($volComplianceStatus -eq 'PASS' -and $complianceReasons.Count -eq 0) {
-            $complianceReasons.Add('Wolumen w pelni zaszyfrowany (100%), protektory aktywne, pelna zgodnosc.')
+            $complianceReasons.Add('Volume fully encrypted (100%), key protectors active, fully compliant.')
         }
 
         if ($volComplianceStatus -eq 'FAIL') {
             $allVolumesCompliant = $false
         }
 
-        $protectorSummary = if ($protectorList.Count -gt 0) { ($protectorList | ForEach-Object { $_.Type }) -join ', ' } else { 'Brak' }
+        $protectorSummary = if ($protectorList.Count -gt 0) { ($protectorList | ForEach-Object { $_.Type }) -join ', ' } else { 'None' }
 
         $volObj = [PSCustomObject]@{
             MountPoint           = $mountPoint
@@ -741,65 +741,65 @@ process {
 
     # Hardware Root of Trust Checks
     if ($tpmInfo.Status -eq 'PASS') {
-        $passFindings.Add("Sprzetowy modul zaufania TPM 2.0 aktywny i gotowy ($($tpmInfo.TpmType)).")
+        $passFindings.Add("Hardware Root of Trust TPM 2.0 active and ready ($($tpmInfo.TpmType)).")
     } elseif ($tpmInfo.Status -eq 'WARN') {
-        $warningFindings.Add("Modul TPM wymaga uwagi: $($tpmInfo.StatusDetails)")
+        $warningFindings.Add("TPM module requires attention: $($tpmInfo.StatusDetails)")
     } else {
         $globalCompliant = $false
-        $criticalFindings.Add("Krytyczny brak modulu TPM 2.0: $($tpmInfo.StatusDetails)")
+        $criticalFindings.Add("Critical lack of TPM 2.0 module: $($tpmInfo.StatusDetails)")
     }
 
     if ($secureBootInfo.Status -eq 'PASS') {
-        $passFindings.Add('Bezpieczny Rozruch UEFI (Secure Boot) jest wlaczony.')
+        $passFindings.Add('UEFI Secure Boot is enabled and active.')
     } elseif ($secureBootInfo.Status -eq 'WARN') {
-        $warningFindings.Add("Secure Boot wylaczony lub ograniczony: $($secureBootInfo.StatusDetails)")
+        $warningFindings.Add("Secure Boot disabled or restricted: $($secureBootInfo.StatusDetails)")
     } else {
         $globalCompliant = $false
-        $criticalFindings.Add("Krytyczny brak Secure Boot: $($secureBootInfo.StatusDetails)")
+        $criticalFindings.Add("Critical lack of Secure Boot: $($secureBootInfo.StatusDetails)")
     }
 
     # Volumes & Encryption Checks
     $osVolume = $volumeResults | Where-Object { $_.VolumeType -eq 'OperatingSystem' -or $_.MountPoint -eq 'C:' } | Select-Object -First 1
     if ($osVolume) {
         if ($osVolume.ComplianceStatus -eq 'PASS') {
-            $passFindings.Add("Dysk systemowy ($($osVolume.MountPoint)) jest w pelni zaszyfrowany ($($osVolume.EncryptionMethod), 100%).")
+            $passFindings.Add("Operating system drive ($($osVolume.MountPoint)) is fully encrypted ($($osVolume.EncryptionMethod), 100%).")
         } elseif ($osVolume.ComplianceStatus -eq 'WARN') {
-            $warningFindings.Add("Dysk systemowy ($($osVolume.MountPoint)): $($osVolume.ComplianceDetails)")
+            $warningFindings.Add("Operating system drive ($($osVolume.MountPoint)): $($osVolume.ComplianceDetails)")
         } else {
             $globalCompliant = $false
-            $criticalFindings.Add("Krytyczny stan dysku systemowego ($($osVolume.MountPoint)): $($osVolume.ComplianceDetails)")
+            $criticalFindings.Add("Critical status on OS drive ($($osVolume.MountPoint)): $($osVolume.ComplianceDetails)")
         }
 
         if ($osVolume.EscrowStatus -in @('SUCCESS_ENTRA', 'SUCCESS_AD')) {
-            $passFindings.Add("Klucz odzyskiwania BitLocker zostal pomyslnie zarchiwizowany w chmurze/AD ($($osVolume.EscrowStatus)).")
+            $passFindings.Add("BitLocker recovery key successfully backed up to Cloud/AD ($($osVolume.EscrowStatus)).")
         } elseif ($osVolume.EscrowStatus -eq 'STANDALONE_NOT_APPLICABLE') {
-            $passFindings.Add('Stacja autonomiczna (Workgroup) - escrow w AD/Entra ID nie dotyczy.')
+            $passFindings.Add('Standalone machine (Workgroup) - Cloud/AD escrow not applicable.')
         } else {
-            $warningFindings.Add("Brak potwierdzenia escrow klucza odzyskiwania w chmurze/AD dla dysku systemowego ($($osVolume.EscrowStatus)).")
+            $warningFindings.Add("Missing recovery key escrow confirmation in Cloud/AD for OS drive ($($osVolume.EscrowStatus)).")
         }
     } else {
         $globalCompliant = $false
-        $criticalFindings.Add('Nie wykryto wolumenu systemowego (C:).')
+        $criticalFindings.Add('Operating system volume (C:) not found.')
     }
 
     # Data volumes check
     $dataVolumes = @($volumeResults | Where-Object { $_ -ne $osVolume })
     foreach ($dv in $dataVolumes) {
         if ($dv.ComplianceStatus -eq 'FAIL') {
-            $criticalFindings.Add("Wolumen danych $($dv.MountPoint) nie jest zabezpieczony: $($dv.ComplianceDetails)")
+            $criticalFindings.Add("Data volume $($dv.MountPoint) is not protected: $($dv.ComplianceDetails)")
         } elseif ($dv.ComplianceStatus -eq 'WARN') {
-            $warningFindings.Add("Wolumen danych $($dv.MountPoint): $($dv.ComplianceDetails)")
+            $warningFindings.Add("Data volume $($dv.MountPoint): $($dv.ComplianceDetails)")
         } else {
-            $passFindings.Add("Wolumen danych $($dv.MountPoint) w pelni zaszyfrowany ($($dv.EncryptionMethod)).")
+            $passFindings.Add("Data volume $($dv.MountPoint) fully encrypted ($($dv.EncryptionMethod)).")
         }
     }
 
     $overallStatus = if ($globalCompliant -and $warningFindings.Count -eq 0) {
-        'NIS2 Ready (Pelna Zgodnosc)'
+        'NIS2 Ready (Fully Compliant)'
     } elseif ($globalCompliant) {
-        'NIS2 Provisionally Compliant (Zastrzezenia)'
+        'NIS2 Provisionally Compliant (Advisories)'
     } else {
-        'Non-Compliant (Niezgodny z NIS2)'
+        'Non-Compliant (NIS2 Deficiencies)'
     }
 
     $overallTag = if (-not $globalCompliant) { 'FAIL' } elseif ($warningFindings.Count -gt 0) { 'WARN' } else { 'PASS' }
@@ -810,18 +810,18 @@ process {
     # Console Summary Rendering
     # --------------------------------------------------------------------------
     Write-Host "`n================================================================================" -ForegroundColor Cyan
-    Write-Host " WYNIKI AUDYTU KRYPTOGRAFICZNEGO I SPRZETOWEGO (NIS2 / ZERO-TRUST)" -ForegroundColor White
-    Write-Host " Hostname: $($env:COMPUTERNAME) | Data: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Gray
+    Write-Host " CRYPTOGRAPHIC & HARDWARE SECURITY AUDIT RESULTS (NIS2 / ZERO-TRUST)" -ForegroundColor White
+    Write-Host " Hostname: $($env:COMPUTERNAME) | Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Gray
     Write-Host "================================================================================" -ForegroundColor Cyan
 
-    Write-Host "`n[1] SPRZETOWA WARSTWA ZAUFANIA (HARDWARE ROOT OF TRUST)" -ForegroundColor Yellow
-    Write-StatusRow -Category "Modul TPM" -Item "Obecnosc i Wersja" -Status $tpmInfo.Status -Details "$($tpmInfo.SpecVersion) ($($tpmInfo.TpmType))"
-    Write-StatusRow -Category "Modul TPM" -Item "Stan Gotowosci" -Status $(if ($tpmInfo.Ready) { 'PASS' } else { 'FAIL' }) -Details "Ready: $($tpmInfo.Ready), Enabled: $($tpmInfo.Enabled), Activated: $($tpmInfo.Activated)"
-    Write-StatusRow -Category "Bezpieczny Rozruch" -Item "Tryb Firmware" -Status $(if ($secureBootInfo.FirmwareType -eq 'UEFI') { 'PASS' } else { 'FAIL' }) -Details "$($secureBootInfo.FirmwareType)"
-    Write-StatusRow -Category "Bezpieczny Rozruch" -Item "Secure Boot UEFI" -Status $secureBootInfo.Status -Details "$($secureBootInfo.SecureBootStatus)"
+    Write-Host "`n[1] HARDWARE ROOT OF TRUST" -ForegroundColor Yellow
+    Write-StatusRow -Category "TPM Module" -Item "Presence & Version" -Status $tpmInfo.Status -Details "$($tpmInfo.SpecVersion) ($($tpmInfo.TpmType))"
+    Write-StatusRow -Category "TPM Module" -Item "Readiness Status" -Status $(if ($tpmInfo.Ready) { 'PASS' } else { 'FAIL' }) -Details "Ready: $($tpmInfo.Ready), Enabled: $($tpmInfo.Enabled), Activated: $($tpmInfo.Activated)"
+    Write-StatusRow -Category "Secure Boot" -Item "Firmware Mode" -Status $(if ($secureBootInfo.FirmwareType -eq 'UEFI') { 'PASS' } else { 'FAIL' }) -Details "$($secureBootInfo.FirmwareType)"
+    Write-StatusRow -Category "Secure Boot" -Item "UEFI Secure Boot" -Status $secureBootInfo.Status -Details "$($secureBootInfo.SecureBootStatus)"
 
-    Write-Host "`n[2] TOZSAMOSC STACJI I ARCHIWIZACJA KLUCZY (ESCROW)" -ForegroundColor Yellow
-    Write-StatusRow -Category "Tozsamosc Maszyny" -Item "Typ Dolaczenia" -Status "PASS" -Details "$($joinInfo.JoinType)"
+    Write-Host "`n[2] DEVICE IDENTITY & KEY ESCROW BACKUP" -ForegroundColor Yellow
+    Write-StatusRow -Category "Machine Identity" -Item "Join Type" -Status "PASS" -Details "$($joinInfo.JoinType)"
     if ($joinInfo.TenantName) {
         Write-StatusRow -Category "Microsoft Entra ID" -Item "Tenant Name" -Status "PASS" -Details "$($joinInfo.TenantName)"
     }
@@ -829,16 +829,16 @@ process {
         Write-StatusRow -Category "Active Directory" -Item "Domain Name" -Status "PASS" -Details "$($joinInfo.DomainName)"
     }
 
-    Write-Host "`n[3] SZYFROWANIE WOLUMENOW BITLOCKER" -ForegroundColor Yellow
+    Write-Host "`n[3] BITLOCKER VOLUME ENCRYPTION" -ForegroundColor Yellow
     foreach ($vr in $volumeResults) {
-        Write-StatusRow -Category "Dysk $($vr.MountPoint)" -Item "Stan Szyfrowania" -Status $vr.ComplianceStatus -Details "$($vr.VolumeStatus) ($($vr.EncryptionPercentage)%, $($vr.EncryptionMethod))"
-        Write-StatusRow -Category "Dysk $($vr.MountPoint)" -Item "Protektory Kluczy" -Status $(if ($vr.HasRecoveryPassword) { 'PASS' } else { 'WARN' }) -Details "$($vr.ProtectorSummary)"
-        Write-StatusRow -Category "Dysk $($vr.MountPoint)" -Item "Status Escrow" -Status $(if ($vr.EscrowStatus -match 'SUCCESS|STANDALONE') { 'PASS' } else { 'FAIL' }) -Details "$($vr.EscrowStatus)"
+        Write-StatusRow -Category "Drive $($vr.MountPoint)" -Item "Encryption State" -Status $vr.ComplianceStatus -Details "$($vr.VolumeStatus) ($($vr.EncryptionPercentage)%, $($vr.EncryptionMethod))"
+        Write-StatusRow -Category "Drive $($vr.MountPoint)" -Item "Key Protectors" -Status $(if ($vr.HasRecoveryPassword) { 'PASS' } else { 'WARN' }) -Details "$($vr.ProtectorSummary)"
+        Write-StatusRow -Category "Drive $($vr.MountPoint)" -Item "Escrow Status" -Status $(if ($vr.EscrowStatus -match 'SUCCESS|STANDALONE') { 'PASS' } else { 'FAIL' }) -Details "$($vr.EscrowStatus)"
     }
 
     Write-Host "`n================================================================================" -ForegroundColor Cyan
     $statusColor = switch ($overallTag) { 'PASS' { 'Green' } 'WARN' { 'Yellow' } default { 'Red' } }
-    Write-Host " PODSUMOWANIE ZGODNOSCI NIS2: " -NoNewline -ForegroundColor White
+    Write-Host " NIS2 COMPLIANCE SUMMARY: " -NoNewline -ForegroundColor White
     Write-Host "[$overallTag] $overallStatus" -ForegroundColor $statusColor
     Write-Host "================================================================================`n" -ForegroundColor Cyan
 
@@ -894,7 +894,7 @@ process {
     # Build Findings HTML
     $findingsHtml = [System.Text.StringBuilder]::new()
     if ($criticalFindings.Count -gt 0) {
-        [void]$findingsHtml.AppendLine("<h4 style='color:var(--color-fail); margin-top:16px;'>Niezgodnosci Krytyczne (Wymagane Dzialanie)</h4><ul class='findings-list fail-list'>")
+        [void]$findingsHtml.AppendLine("<h4 style='color:var(--color-fail); margin-top:16px;'>Critical Non-Compliance (Action Required)</h4><ul class='findings-list fail-list'>")
         foreach ($cf in $criticalFindings) {
             [void]$findingsHtml.AppendLine("<li><strong>[FAIL]</strong> $([System.Net.WebUtility]::HtmlEncode($cf))</li>")
         }
@@ -902,7 +902,7 @@ process {
     }
 
     if ($warningFindings.Count -gt 0) {
-        [void]$findingsHtml.AppendLine("<h4 style='color:var(--color-warn); margin-top:16px;'>Ostrzezenia i Zalecenia Optymalizacyjne</h4><ul class='findings-list warn-list'>")
+        [void]$findingsHtml.AppendLine("<h4 style='color:var(--color-warn); margin-top:16px;'>Security Advisories & Recommendations</h4><ul class='findings-list warn-list'>")
         foreach ($wf in $warningFindings) {
             [void]$findingsHtml.AppendLine("<li><strong>[WARN]</strong> $([System.Net.WebUtility]::HtmlEncode($wf))</li>")
         }
@@ -910,7 +910,7 @@ process {
     }
 
     if ($passFindings.Count -gt 0) {
-        [void]$findingsHtml.AppendLine("<h4 style='color:var(--color-pass); margin-top:16px;'>Pozytywnie Zweryfikowane Mechanizmy Ochrony</h4><ul class='findings-list pass-list'>")
+        [void]$findingsHtml.AppendLine("<h4 style='color:var(--color-pass); margin-top:16px;'>Verified Protective Controls</h4><ul class='findings-list pass-list'>")
         foreach ($pf in $passFindings) {
             [void]$findingsHtml.AppendLine("<li><strong>[PASS]</strong> $([System.Net.WebUtility]::HtmlEncode($pf))</li>")
         }
@@ -919,11 +919,11 @@ process {
 
     $htmlTemplate = @"
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Raport Audytu BitLocker & TPM - $($env:COMPUTERNAME)</title>
+    <title>BitLocker & TPM Security Audit Report - $($env:COMPUTERNAME)</title>
     <style>
         :root {
             --bg-body: #0d1117;
@@ -1235,25 +1235,25 @@ process {
     <div class="container">
         <header>
             <div class="header-title">
-                <h1>🛡️ Audyt BitLocker & TPM</h1>
-                <p>Zgodnosc z Dyrektywa NIS2 i Architektura Zero-Trust &bull; <strong>$([System.Net.WebUtility]::HtmlEncode($env:COMPUTERNAME))</strong> &bull; $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</p>
+                <h1>🛡️ BitLocker & TPM Security Audit</h1>
+                <p>EU NIS2 Directive & Zero-Trust Architecture Compliance &bull; <strong>$([System.Net.WebUtility]::HtmlEncode($env:COMPUTERNAME))</strong> &bull; $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</p>
             </div>
             <div>
-                <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">🌓 Przelacz Motyw</button>
+                <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">🌓 Toggle Theme</button>
             </div>
         </header>
 
         <!-- KPI Metrics Grid -->
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-label">Status Zgodnosci NIS2</div>
+                <div class="metric-label">NIS2 Compliance Posture</div>
                 <div class="metric-value">
                     <span class="badge $htmlGlobalBadge">$overallTag</span>
                     <span style="font-size:0.9rem; font-weight:600;">$overallStatus</span>
                 </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Sprzetowy TPM 2.0</div>
+                <div class="metric-label">Hardware TPM 2.0</div>
                 <div class="metric-value">
                     <span class="badge $htmlTpmBadge">$($tpmInfo.Status)</span>
                     <span style="font-size:0.9rem; font-weight:600;">$($tpmInfo.SpecVersion)</span>
@@ -1267,7 +1267,7 @@ process {
                 </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Typ Dolaczenia Stacji</div>
+                <div class="metric-label">Directory Join State</div>
                 <div class="metric-value">
                     <span class="badge badge-info">$($joinInfo.AzureAdJoined.Trim()) / $($joinInfo.DomainJoined.Trim())</span>
                     <span style="font-size:0.85rem; font-weight:500;">$([System.Net.WebUtility]::HtmlEncode($joinInfo.JoinType))</span>
@@ -1278,31 +1278,31 @@ process {
         <!-- Section 1: System & Machine Profile -->
         <div class="section-card">
             <div class="section-header">
-                <h2>1. Metadane Stacji Roboczej</h2>
+                <h2>1. Workstation & System Profile</h2>
             </div>
             <div class="details-grid">
                 <div class="detail-item">
-                    <div class="key">Nazwa Komputera</div>
+                    <div class="key">Computer Name</div>
                     <div class="val">$([System.Net.WebUtility]::HtmlEncode($env:COMPUTERNAME))</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">System Operacyjny</div>
+                    <div class="key">Operating System</div>
                     <div class="val">$([System.Net.WebUtility]::HtmlEncode($osCaption)) ($osVersion)</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Architektura</div>
+                    <div class="key">Architecture</div>
                     <div class="val">$osArch</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Tozsamosc / Katalog</div>
+                    <div class="key">Directory / Identity</div>
                     <div class="val">$([System.Net.WebUtility]::HtmlEncode($joinInfo.JoinType))</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Polityka AES-256</div>
-                    <div class="val">$(if ($EnforceAes256) { 'Wymuszona (Enforced)' } else { 'Standardowa (XTS-AES 128/256)' })</div>
+                    <div class="key">AES-256 Policy</div>
+                    <div class="val">$(if ($EnforceAes256) { 'Enforced (XTS-AES 256)' } else { 'Standard (XTS-AES 128/256)' })</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Data i Czas Skanowania</div>
+                    <div class="key">Scan Timestamp</div>
                     <div class="val">$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</div>
                 </div>
             </div>
@@ -1311,40 +1311,40 @@ process {
         <!-- Section 2: Hardware Root of Trust -->
         <div class="section-card">
             <div class="section-header">
-                <h2>2. Sprzetowa Warstwa Zaufania (Hardware Root of Trust)</h2>
+                <h2>2. Hardware Root of Trust</h2>
                 <span class="badge $htmlTpmBadge">TPM: $($tpmInfo.Status)</span>
             </div>
             <div class="details-grid">
                 <div class="detail-item">
-                    <div class="key">Obecnosc Modulu TPM</div>
-                    <div class="val">$(if ($tpmInfo.Present) { 'Obecny (True)' } else { 'Brak (False)' })</div>
+                    <div class="key">TPM Module Presence</div>
+                    <div class="val">$(if ($tpmInfo.Present) { 'Present (True)' } else { 'Missing (False)' })</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Stan Gotowosci (Ready)</div>
-                    <div class="val">$(if ($tpmInfo.Ready) { 'Gotowy (Ready)' } else { 'Niegotowy (Not Ready)' })</div>
+                    <div class="key">Readiness Status</div>
+                    <div class="val">$(if ($tpmInfo.Ready) { 'Ready (True)' } else { 'Not Ready (False)' })</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Specyfikacja TPM</div>
+                    <div class="key">TPM Specification</div>
                     <div class="val">$([System.Net.WebUtility]::HtmlEncode($tpmInfo.SpecVersion))</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Typ / Implementacja</div>
+                    <div class="key">Implementation / Type</div>
                     <div class="val">$([System.Net.WebUtility]::HtmlEncode($tpmInfo.TpmType))</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Producent & Wersja Firmware</div>
+                    <div class="key">Vendor & Firmware Version</div>
                     <div class="val">$([System.Net.WebUtility]::HtmlEncode($tpmInfo.ManufacturerIdTxt)) (v$([System.Net.WebUtility]::HtmlEncode($tpmInfo.ManufacturerVersion)))</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Tryb Firmware Plyty</div>
+                    <div class="key">Motherboard Firmware Mode</div>
                     <div class="val">$([System.Net.WebUtility]::HtmlEncode($secureBootInfo.FirmwareType))</div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Bezpieczny Rozruch (Secure Boot)</div>
+                    <div class="key">UEFI Secure Boot</div>
                     <div class="val"><span class="badge $htmlSbBadge">$($secureBootInfo.SecureBootStatus)</span></div>
                 </div>
                 <div class="detail-item">
-                    <div class="key">Ocena Warstwy Sprzetowej</div>
+                    <div class="key">Hardware Assessment</div>
                     <div class="val">$([System.Net.WebUtility]::HtmlEncode($tpmInfo.StatusDetails))</div>
                 </div>
             </div>
@@ -1353,21 +1353,21 @@ process {
         <!-- Section 3: BitLocker Volumes & Protectors -->
         <div class="section-card">
             <div class="section-header">
-                <h2>3. Szyfrowanie Wolumenow BitLocker</h2>
+                <h2>3. BitLocker Volumes & Encryption</h2>
             </div>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th>Punkt Montowania</th>
-                            <th>Typ</th>
-                            <th>Pojemnosc</th>
-                            <th>Stan Szyfrowania</th>
-                            <th>Algorytm</th>
-                            <th>Ochrona</th>
-                            <th>Protektory Klucza</th>
-                            <th>Status Escrow</th>
-                            <th>Ocena Zgodnosci</th>
+                            <th>Mount Point</th>
+                            <th>Volume Type</th>
+                            <th>Capacity</th>
+                            <th>Encryption State</th>
+                            <th>Algorithm</th>
+                            <th>Protection</th>
+                            <th>Key Protectors</th>
+                            <th>Escrow Status</th>
+                            <th>Compliance Assessment</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1380,14 +1380,14 @@ $($volTableRowsHtml.ToString())
         <!-- Section 4: Security Findings & NIS2 Recommendations -->
         <div class="section-card">
             <div class="section-header">
-                <h2>4. Analiza Zgodnosci i Zalecenia Audytora (NIS2 / Zero-Trust)</h2>
+                <h2>4. Security Findings & Auditor Recommendations (NIS2 / Zero-Trust)</h2>
             </div>
 $($findingsHtml.ToString())
         </div>
 
         <footer>
-            <p>Wygenerowano automatycznie przez <strong>Audit-BitLockerAndTpmStatus</strong> v1.0.0 &bull; Autor: Roman Pindela (roman.pindela@gmail.com)</p>
-            <p>Plik dziennika wykonawczego: <code>$([System.Net.WebUtility]::HtmlEncode($script:LogFilePath))</code></p>
+            <p>Generated automatically by <strong>Audit-BitLockerAndTpmStatus</strong> v1.0.0 &bull; Author: Roman Pindela (roman.pindela@gmail.com)</p>
+            <p>Execution log file: <code>$([System.Net.WebUtility]::HtmlEncode($script:LogFilePath))</code></p>
         </footer>
     </div>
 
@@ -1418,9 +1418,9 @@ $($findingsHtml.ToString())
 
     [System.IO.File]::WriteAllText($PathHtmlReport, $htmlTemplate, [System.Text.Encoding]::UTF8)
     Write-LogEntry "HTML report successfully saved to: $PathHtmlReport" -Level 'SUCCESS'
-    Write-Host "  Raport HTML wygenerowany: " -NoNewline -ForegroundColor Gray
+    Write-Host "  HTML report generated: " -NoNewline -ForegroundColor Gray
     Write-Host "$PathHtmlReport" -ForegroundColor White
-    Write-Host "  Dziennik wykonawczy:       $script:LogFilePath`n" -ForegroundColor Gray
+    Write-Host "  Execution log:         $script:LogFilePath`n" -ForegroundColor Gray
 
     # Open HTML report if requested
     if ($OpenReport) {
