@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Displays saved Wi-Fi profiles, passwords and active Wi-Fi configuration.
 
@@ -18,13 +18,21 @@
     - Radio type
     - Channel
 
-.AUTHOR
-    Roman Pindela
+.PARAMETER Help
+    Displays help information and exits.
+.PARAMETER h
+    Short switch to display help information and exit.
+.EXAMPLE
+    .\Get-WifiProfiles.ps1
+    Displays all saved Wi-Fi profiles, passwords, and active connection status.
+.EXAMPLE
+    .\Get-WifiProfiles.ps1 -Help
+    Displays help and usage details.
+.NOTES
+    Author: Roman Pindela
     Email: roman.pindela@gmail.com
     GitHub: https://github.com/romanpindela
-
-.VERSION
-    2.0.0
+    Version: 2.0.0
 #>
 
 [CmdletBinding()]
@@ -38,14 +46,14 @@ $ErrorActionPreference = 'Stop'
 
 function Show-Help {
     Write-Host ""
-    Write-Host "get-wifi-profiles.ps1"
+    Write-Host "Get-WifiProfiles.ps1"
     Write-Host ""
     Write-Host "Displays saved Wi-Fi profiles and active Wi-Fi configuration."
     Write-Host ""
     Write-Host "Usage:"
-    Write-Host "    .\get-wifi-profiles.ps1"
-    Write-Host "    .\get-wifi-profiles.ps1 -Help"
-    Write-Host "    .\get-wifi-profiles.ps1 -h"
+    Write-Host "    .\Get-WifiProfiles.ps1"
+    Write-Host "    .\Get-WifiProfiles.ps1 -Help"
+    Write-Host "    .\Get-WifiProfiles.ps1 -h"
     Write-Host ""
     Write-Host "Author : Roman Pindela"
     Write-Host "Version: 2.0.0"
