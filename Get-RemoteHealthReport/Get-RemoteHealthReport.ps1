@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Advanced Deep System Audit Tool for Enterprise Environments.
 .DESCRIPTION
@@ -11,8 +11,18 @@
     Optional credentials for remote execution.
 .PARAMETER ExportToCsv
     Switch. If specified, exports the audit results to a CSV file.
+.PARAMETER ShowHelp
+    Displays detailed help information and exits (aliases -h, -Help).
+.EXAMPLE
+    .\Get-RemoteHealthReport.ps1
+    Runs a full health audit on the local computer.
+.EXAMPLE
+    .\Get-RemoteHealthReport.ps1 -ComputerName "PC-01" -ExportToCsv
+    Audits a remote computer and exports the findings to CSV.
 .NOTES
     Author: Roman Pindela
+    Email: roman.pindela@gmail.com
+    GitHub: https://github.com/romanpindela
     Version: 6.0.1
 #>
 
