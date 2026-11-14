@@ -1,23 +1,28 @@
+﻿# ================================================================================
+#   Script Name : Enable-Hibernation.ps1
+#   Author      : Roman Pindela
+#   Contact     : roman.pindela@gmail.com
+#   Version     : 1.1.1
+#   Release Date: 2026-10-08
+#   License     : MIT
+#   Repository  : https://github.com/romanpindela/Windows-Desktop
+#
+#   DESCRIPTION:
+#     Enables full management of the Windows hibernation subsystem and controls
+#     the visibility of the Hibernate option in the Start Menu power options (Windows 10/11 x64).
+#     Supports enabling (allocates hiberfil.sys, configures FlyoutMenuSettings registry entry)
+#     and disabling (deletes hiberfil.sys, hides Hibernate in the Start Menu).
+#     Running without parameters displays the help menu with version and author info.
+#
+# ================================================================================
+
 <#
-================================================================================
-  Script Name : enable-hibernation.ps1
-  Author      : Roman Pindela
-  Contact     : roman.pindela@gmail.com
-  Version     : 1.1.1
-  Release Date: 2026-10-08
-  License     : MIT
-  Repository  : https://github.com/roman/enable-hibernation
-
-  DESCRIPTION:
-    Enables full management of the Windows hibernation subsystem and controls
-    the visibility of the Hibernate option in the Start Menu power options (Windows 10/11 x64).
-    Supports enabling (allocates hiberfil.sys, configures FlyoutMenuSettings registry entry)
-    and disabling (deletes hiberfil.sys, hides Hibernate in the Start Menu).
-    Running without parameters displays the help menu with version and author info.
-
-================================================================================
 .SYNOPSIS
     Enables or disables system hibernation and Start menu power visibility.
+.DESCRIPTION
+    Manages the Windows hibernation subsystem via powercfg.exe and toggles
+    the Hibernate power option visibility in the Start menu (ShowHibernateOption)
+    while recording detailed execution logs.
 .PARAMETER EnableHibernation
     Allocates hiberfil.sys and adds Hibernate to Start menu power options.
 .PARAMETER DisableHibernation
@@ -28,16 +33,23 @@
 .PARAMETER Help
     Displays detailed help menu and author info.
 .EXAMPLE
-    .\enable-hibernation.ps1
+    .\Enable-Hibernation.ps1
 .EXAMPLE
-    .\enable-hibernation.ps1 -EnableHibernation
+    .\Enable-Hibernation.ps1 -EnableHibernation
 .EXAMPLE
-    .\enable-hibernation.ps1 -DisableHibernation
+    .\Enable-Hibernation.ps1 -DisableHibernation
 .EXAMPLE
-    .\enable-hibernation.ps1 -EnableHibernation -LogPath "C:\Logs\hibernation.txt"
+    .\Enable-Hibernation.ps1 -EnableHibernation -LogPath "C:\Logs\hibernation.txt"
 .EXAMPLE
-    .\enable-hibernation.ps1 -h
+    .\Enable-Hibernation.ps1 -h
+.NOTES
+    Author: Roman Pindela
+    Email: roman.pindela@gmail.com
+    GitHub: https://github.com/romanpindela
+    Version: 1.1.1
+    License: MIT
 #>
+
 [CmdletBinding(DefaultParameterSetName = "Default")]
 param (
     [Parameter(ParameterSetName = "Enable")]
@@ -102,9 +114,9 @@ DESCRIPTION:
   full hibernation and toggle its visibility in the Start Menu power options.
 
 USAGE:
-  .\enable-hibernation.ps1 -EnableHibernation [-LogPath <path_to_log.txt>]
-  .\enable-hibernation.ps1 -DisableHibernation [-LogPath <path_to_log.txt>]
-  .\enable-hibernation.ps1 -h | -Help
+  .\Enable-Hibernation.ps1 -EnableHibernation [-LogPath <path_to_log.txt>]
+  .\Enable-Hibernation.ps1 -DisableHibernation [-LogPath <path_to_log.txt>]
+  .\Enable-Hibernation.ps1 -h | -Help
 
 PARAMETERS:
   -EnableHibernation, -e  : Enables hibernation in system and Start menu.
@@ -114,11 +126,11 @@ PARAMETERS:
   -Help, -h               : Displays this help menu and author info.
 
 EXAMPLES:
-  .\enable-hibernation.ps1
-  .\enable-hibernation.ps1 -h
-  .\enable-hibernation.ps1 -EnableHibernation
-  .\enable-hibernation.ps1 -DisableHibernation
-  .\enable-hibernation.ps1 -e -LogPath "C:\Deploy\hibernation_setup.txt"
+  .\Enable-Hibernation.ps1
+  .\Enable-Hibernation.ps1 -h
+  .\Enable-Hibernation.ps1 -EnableHibernation
+  .\Enable-Hibernation.ps1 -DisableHibernation
+  .\Enable-Hibernation.ps1 -e -LogPath "C:\Deploy\hibernation_setup.txt"
 ================================================================================
 "@ -ForegroundColor Yellow;
 }

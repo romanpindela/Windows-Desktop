@@ -1,106 +1,68 @@
-# enable-hibernation (Windows Power Management Configuration)
-  
-Technical documentation for the automation script managing the hibernation subsystem and the visibility of the Hibernate option in the Windows Start menu power options.
-  
-## Project Information
-  
-| Parameter | Value |
-| :--- | :--- |
-| **Project Name** | enable-hibernation (Windows Power Management Configuration) |
-| **Author** | Roman Pindela |
-| **Contact** | roman.pindela@gmail.com |
-| **Version** | 1.1.1 |
-| **Release Date** | 2026-10-08 |
-| **License** | MIT |
-| **Repository** | [GitHub - roman/enable-hibernation](https://github.com/roman/enable-hibernation) |
-  
----
-  
-## Key Features
-  
-* **Interactive Help on Launch:** Running the script without parameters or with `-h` / `-Help` immediately displays version information, author metadata, syntax, and usage examples.
-* **Bidirectional State Management:**
-  * `-EnableHibernation`: Allocates `hiberfil.sys`, activates the ACPI mechanism, and adds Hibernate to the Start menu power options.
-  * `-DisableHibernation`: Removes `hiberfil.sys` (freeing gigabytes of system disk space) and hides Hibernate from the Start menu.
-* **Full Idempotence:** The script verifies the existing value of `ShowHibernateOption` in the registry; if the desired state is already set, modifications are safely skipped.
-* **Advanced Text Logging:** Every execution creates a detailed log file with precise timestamps `[YYYY-MM-DD HH:MM:SS]`.
-  * Default path: `C:\Logs\<DateTime>-<Computer>-<User>-Enable-Hibernation.txt`.
-  * Automatically creates missing target directories.
-  * Allows custom path specification via the `-LogPath` parameter.
-* **Direct Registry Audit & Modification via .NET Registry API:** Native operations via `[Microsoft.Win32.RegistryKey]` on the 64-bit `HKLM` view under `SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings`.
-* **Post-Execution State Verification:** Automated audit verifying the presence of `hiberfil.sys` on the system drive and the exact DWORD registry state.
-  
----
-  
-## Directory Structure
-  
-```shell
-enable-hibernation/
-├── assets/
-│   ├── Standard_run.jpg          # Standard run / help menu view
-│   ├── enable_hibernation.jpg     # Screenshot of enabling hibernation
-│   └── disable_hibernation.jpg    # Screenshot of disabling hibernation
-├── enable-hibernation.ps1        # Main PowerShell configuration script
-└── README.md                     # Technical documentation
+# Enable-Hibernation
+
+[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%20%7C%207%2B-blue.svg?logo=powershell)](https://microsoft.com/powershell)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20x64-0078D6.svg?logo=windows)](https://www.microsoft.com/windows)
+
+## Problem Statement
+
+On Windows 10 and 11 systems, hibernation may be disabled at the kernel level (`hiberfil.sys` absent) or hidden from the Start Menu power options even when enabled, while virtual machines or SSD-constrained workstations may need hibernation disabled cleanly to reclaim gigabytes of disk space. Administrators need a quick utility to toggle both `powercfg.exe` hibernation state and Start Menu visibility together with execution logging.
+
+## Overview
+
+`Enable-Hibernation.ps1` manages the Windows hibernation subsystem via `powercfg /hibernate` and updates the Start Menu power visibility registry value (`ShowHibernateOption` under `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings`). Using `-EnableHibernation` allocates `hiberfil.sys` and shows Hibernate in the power menu, `-DisableHibernation` removes `hiberfil.sys` and hides the option, and running without action parameters or with `-Help` prints usage help.
+
+## Environment & Prerequisites
+
+- **OS:** Windows 10 / Windows 11 (x64)
+- **PowerShell:** Windows PowerShell 5.1 or PowerShell 7.x+
+- **Dependencies:** Native `powercfg.exe` utility and Windows Registry; no external modules required.
+
+## Permissions Required
+
+**Admin** — Executing `powercfg /hibernate on|off` and modifying `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings` require elevated Administrator privileges (`S-1-5-32-544`), and the script automatically requests UAC elevation when `-EnableHibernation` or `-DisableHibernation` is run from a standard session. Running without parameters or with `-Help` works as a standard `User`.
+
+## Safety & Impact
+
+- **Risk Level:** `Modifies system state` — Allocates or deletes `C:\hiberfil.sys` via `powercfg.exe` and creates or updates `ShowHibernateOption` under `HKLM`.
+- **WhatIf / Confirm & Backup:** Does not support `-WhatIf` / `-Confirm` and does not create a registry backup before applying changes; writes timestamped UTF-8 logs to `C:\Logs\` by default (or `-LogPath`).
+
+## Usage Examples
+
+```powershell
+# Display built-in help and usage examples (zero-parameter run)
+.\Enable-Hibernation.ps1
+.\Enable-Hibernation.ps1 -h
+
+# Enable hibernation and reveal Hibernate in the Start Menu power options
+.\Enable-Hibernation.ps1 -EnableHibernation
+
+# Disable hibernation, delete hiberfil.sys, and hide Hibernate in the Start Menu
+.\Enable-Hibernation.ps1 -DisableHibernation
+
+# Enable hibernation with a custom execution log path
+.\Enable-Hibernation.ps1 -e -LogPath "C:\Logs\hibernation_setup.txt"
 ```
-  
-## System Requirements
-  
-- **Operating System:** Windows 10 / Windows 11 (64-bit architecture).
-- **Privileges:** PowerShell console running with Administrator privileges (required for `hiberfil.sys` management and HKLM modifications).
-  
-## Usage Guide
-  
-### 1. Allow Script Execution (If Restricted)
-```shell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-  
-### 2. Display Help Menu & Author Information
-```shell
-.\enable-hibernation.ps1
-# (or: .\enable-hibernation.ps1 -h)
-```
-  
-### 3. Enable Hibernation and Add to Start Menu
-```shell
-.\enable-hibernation.ps1 -EnableHibernation
-# (or: .\enable-hibernation.ps1 -e)
-```
-  
-### 4. Disable Hibernation and Free Disk Space
-```shell
-.\enable-hibernation.ps1 -DisableHibernation
-# (or: .\enable-hibernation.ps1 -d)
-```
-  
-### 5. Run with Custom Log File Path
-```shell
-.\enable-hibernation.ps1 -EnableHibernation -LogPath "C:\Deploy\hibernation.txt"
-```
-  
-## Screenshots
-  
-### Standard Run / Help
-![Standard Run / Help](assets/Standard_run.jpg)
-  
-### Enabling Hibernation (-EnableHibernation)
-![Enabling Hibernation](assets/enable_hibernation.jpg)
-  
-### Disabling Hibernation (-DisableHibernation)
-![Disabling Hibernation](assets/disable_hibernation.jpg)
-  
-## Exit Codes & Diagnostics
-  
-| Status / Exit Code | Technical Meaning | Script Action |
-| :--- | :--- | :--- |
-| **0** | Successful execution | Desired operation (enable/disable) completed successfully. |
-| **Missing admin rights** | Executed without elevated UAC privileges | Throws exception and immediately stops execution (`throw`). |
-| **powercfg error** | Exit code of `powercfg.exe` other than 0 | Logs warning to console and log file. |
-  
-## Contact & Support
-  
-For questions or issues regarding deployment:
-- **Author:** Roman Pindela
-- **Email:** roman.pindela@gmail.com
-- **License:** MIT License
+
+### Parameters
+
+| Parameter | Alias | Type | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `-EnableHibernation` | `-e`, `-Enable` | `[switch]` | `$false` | Enables hibernation via `powercfg` and shows Hibernate in the Start Menu. |
+| `-DisableHibernation` | `-d`, `-Disable` | `[switch]` | `$false` | Disables hibernation, deletes `hiberfil.sys`, and hides Hibernate in the Start Menu. |
+| `-LogPath` | `-l`, `-Log` | `[string]` | `C:\Logs\...` | Custom path for the UTF-8 execution log file. |
+| `-Help` | `-h` | `[switch]` | `$false` | Displays interactive help, version, and author details. |
+
+### Screenshots
+
+![Standard Run](assets/Standard_run.jpg)
+
+![Enable Hibernation](assets/enable_hibernation.jpg)
+
+![Disable Hibernation](assets/disable_hibernation.jpg)
+
+## Author
+
+- **Roman Pindela**
+- **Email:** [roman.pindela@gmail.com](mailto:roman.pindela@gmail.com)
+- **GitHub:** [https://github.com/romanpindela](https://github.com/romanpindela)
+- **License:** MIT
