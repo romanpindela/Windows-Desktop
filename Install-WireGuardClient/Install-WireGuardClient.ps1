@@ -1,53 +1,54 @@
+﻿# ================================================================================
+#   Script Name : Install-WireGuardClient.ps1
+#   Author      : Roman Pindela
+#   Contact     : roman.pindela@gmail.com
+#   Version     : 1.2.0
+#   Release Date: 2026-10-18
+#   License     : MIT
+#   Repository  : https://github.com/romanpindela
+#
+#   DESCRIPTION:
+#     Enterprise-grade PowerShell automation tool for deploying and updating the
+#     official WireGuard VPN Client (WireGuard.WireGuard) via Windows Package
+#     Manager (winget) and importing optional WireGuard tunnel configuration
+#     files (.conf / .conf.dpapi) into the client settings across Windows 10,
+#     Windows 11, and Windows Server (English and Polish editions).
+#
+#     Key Capabilities:
+#     1. Zero-Parameter Interactive Help (-Help / -h):
+#        Displays complete syntax, parameter documentation, usage examples,
+#        version, and author details when launched without arguments—without
+#        triggering an unnecessary UAC prompt.
+#     2. Automated WireGuard Client Deployment & Update via Winget:
+#        Verifies winget availability, checks existing WireGuard installations,
+#        downloads and installs/upgrades the latest official WireGuard client
+#        (WireGuard.WireGuard), and ensures the WireGuardManager Windows service
+#        is installed and running.
+#     3. Optional Configuration Profile Import (-ConfigPath):
+#        Validates, parses (masking sensitive PrivateKey/PresharedKey values),
+#        and imports one or more WireGuard tunnel configuration files (.conf)
+#        into WireGuard's secure configuration store
+#        (C:\Program Files\WireGuard\Data\Configurations\), where WireGuardManager
+#        automatically encrypts them via Windows DPAPI (.conf.dpapi) for immediate
+#        availability in the WireGuard GUI. Optionally activates the VPN tunnel
+#        service immediately when -ActivateTunnel is specified.
+#     4. Detailed Step-by-Step Telemetry, Execution Summary & User Guide:
+#        Displays granular progress for every stage of execution and concludes
+#        with a structured summary report and a concise end-user quick-start guide.
+#     5. Input Sanitization & Defensive Validation:
+#        Protects against command injection, path traversal, and malformed
+#        configuration files or tunnel names.
+#     6. Language-Independent UAC Auto-Elevation:
+#        Verifies Administrator privileges using the well-known Windows SID
+#        (S-1-5-32-544 / BuiltInAdministratorsSid) for 100% compatibility across
+#        Polish ("Administratorzy") and English ("Administrators") Windows systems,
+#        and automatically elevates via UAC while preserving all CLI parameters.
+#     7. Detailed Audit Logging:
+#        Logs all operations with UTF-8 timestamps to:
+#        C:\Logs\<yyyyMMdd_HHmmss>-Install-WireGuardClient-<ComputerName>-<UserName>.logs
+# ================================================================================
+
 <#
-================================================================================
-  Script Name : deploy-WireGuardClient.ps1
-  Author      : Roman Pindela
-  Contact     : roman.pindela@gmail.com
-  Version     : 1.2.0
-  Release Date: 2026-10-18
-  License     : MIT
-  Repository  : https://github.com/romanpindela
-
-  DESCRIPTION:
-    Enterprise-grade PowerShell automation tool for deploying and updating the
-    official WireGuard VPN Client (WireGuard.WireGuard) via Windows Package
-    Manager (winget) and importing optional WireGuard tunnel configuration
-    files (.conf / .conf.dpapi) into the client settings across Windows 10,
-    Windows 11, and Windows Server (English and Polish editions).
-
-    Key Capabilities:
-    1. Zero-Parameter Interactive Help (-Help / -h):
-       Displays complete syntax, parameter documentation, usage examples,
-       version, and author details when launched without arguments—without
-       triggering an unnecessary UAC prompt.
-    2. Automated WireGuard Client Deployment & Update via Winget:
-       Verifies winget availability, checks existing WireGuard installations,
-       downloads and installs/upgrades the latest official WireGuard client
-       (WireGuard.WireGuard), and ensures the WireGuardManager Windows service
-       is installed and running.
-    3. Optional Configuration Profile Import (-ConfigPath):
-       Validates, parses (masking sensitive PrivateKey/PresharedKey values),
-       and imports one or more WireGuard tunnel configuration files (.conf)
-       into WireGuard's secure configuration store
-       (C:\Program Files\WireGuard\Data\Configurations\), where WireGuardManager
-       automatically encrypts them via Windows DPAPI (.conf.dpapi) for immediate
-       availability in the WireGuard GUI. Optionally activates the VPN tunnel
-       service immediately when -ActivateTunnel is specified.
-    4. Detailed Step-by-Step Telemetry, Execution Summary & User Guide:
-       Displays granular progress for every stage of execution and concludes
-       with a structured summary report and a concise end-user quick-start guide.
-    5. Input Sanitization & Defensive Validation:
-       Protects against command injection, path traversal, and malformed
-       configuration files or tunnel names.
-    6. Language-Independent UAC Auto-Elevation:
-       Verifies Administrator privileges using the well-known Windows SID
-       (S-1-5-32-544 / BuiltInAdministratorsSid) for 100% compatibility across
-       Polish ("Administratorzy") and English ("Administrators") Windows systems,
-       and automatically elevates via UAC while preserving all CLI parameters.
-    7. Detailed Audit Logging:
-       Logs all operations with UTF-8 timestamps to:
-       C:\Logs\<yyyyMMdd_HHmmss>-deploy-WireGuardClient-<ComputerName>-<UserName>.logs
-================================================================================
 .SYNOPSIS
     Deploys or updates the WireGuard VPN Client via winget and optionally imports
     a WireGuard tunnel configuration file (.conf) into the client settings.
@@ -132,7 +133,7 @@
 
 .PARAMETER LogPath
     Custom file path for the execution log.
-    Default: C:\Logs\<yyyyMMdd_HHmmss>-deploy-WireGuardClient-<ComputerName>-<UserName>.logs
+    Default: C:\Logs\<yyyyMMdd_HHmmss>-Install-WireGuardClient-<ComputerName>-<UserName>.logs
     Aliases: -l, -Log
 
 .PARAMETER NoLog
@@ -144,38 +145,38 @@
     Aliases: -h
 
 .EXAMPLE
-    .\deploy-WireGuardClient.ps1
+    .\Install-WireGuardClient.ps1
     Displays the help screen, usage syntax, parameter reference, examples,
     version, and author details without requiring UAC elevation.
 
 .EXAMPLE
-    .\deploy-WireGuardClient.ps1 -Install
+    .\Install-WireGuardClient.ps1 -Install
     Downloads and installs (or updates) the latest WireGuard client via winget,
     ensures the WireGuardManager service is running, and displays a summary and
     user guide.
 
 .EXAMPLE
-    .\deploy-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf"
+    .\Install-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf"
     Installs/verifies the WireGuard client via winget and imports the
     'office-vpn.conf' configuration file into the WireGuard client settings.
 
 .EXAMPLE
-    .\deploy-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -ActivateTunnel -LaunchGUI
+    .\Install-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -ActivateTunnel -LaunchGUI
     Installs/verifies WireGuard, imports 'office-vpn.conf', immediately activates
     the VPN tunnel service (WireGuardTunnel$office-vpn), and opens the WireGuard GUI.
 
 .EXAMPLE
-    .\deploy-WireGuardClient.ps1 -ConfigPath "C:\VPN\client01.conf" -TunnelName "Corp-HQ" -ForceOverwrite
+    .\Install-WireGuardClient.ps1 -ConfigPath "C:\VPN\client01.conf" -TunnelName "Corp-HQ" -ForceOverwrite
     Imports 'client01.conf' under the custom tunnel name 'Corp-HQ', overwriting
     any existing 'Corp-HQ' profile without prompting.
 
 .EXAMPLE
-    .\deploy-WireGuardClient.ps1 -Status
+    .\Install-WireGuardClient.ps1 -Status
     Displays a detailed status report of the installed WireGuard client,
     services, imported profiles, and active VPN interfaces.
 
 .EXAMPLE
-    .\deploy-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -DryRun
+    .\Install-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -DryRun
     Simulates installing WireGuard and validating/importing 'office-vpn.conf'
     without making any changes to the system.
 
@@ -257,8 +258,8 @@ $ErrorActionPreference = "Stop"
 # SCRIPT METADATA & CONFIGURATION
 # ==============================================================================
 $SCRIPT_INFO = @{
-    Name        = "deploy-WireGuardClient"
-    FileName    = "deploy-WireGuardClient.ps1"
+    Name        = "Install-WireGuardClient"
+    FileName    = "Install-WireGuardClient.ps1"
     Version     = "1.2.0"
     Author      = "Roman Pindela"
     Contact     = "roman.pindela@gmail.com"
@@ -444,21 +445,21 @@ DESCRIPTION:
      full compatibility with Polish ("Administratorzy") and English
      ("Administrators") Windows systems.
   6. Audit Logging: Automatically writes detailed execution logs to:
-     C:\Logs\<yyyyMMdd_HHmmss>-deploy-WireGuardClient-<ComputerName>-<UserName>.logs
+     C:\Logs\<yyyyMMdd_HHmmss>-Install-WireGuardClient-<ComputerName>-<UserName>.logs
 
 SYNTAX:
   # 1. Display Help (Default when run without parameters):
-  .\deploy-WireGuardClient.ps1 [-Help | -h]
+  .\Install-WireGuardClient.ps1 [-Help | -h]
 
   # 2. Install / Update WireGuard Client Only (without config file):
-  .\deploy-WireGuardClient.ps1 -Install [-ForceUpgrade] [-LaunchGUI] [-DryRun]
+  .\Install-WireGuardClient.ps1 -Install [-ForceUpgrade] [-LaunchGUI] [-DryRun]
 
   # 3. Install / Update WireGuard Client & Import Configuration File(s):
-  .\deploy-WireGuardClient.ps1 [-ConfigPath] <File.conf[]> [-TunnelName <Name>]
+  .\Install-WireGuardClient.ps1 [-ConfigPath] <File.conf[]> [-TunnelName <Name>]
       [-ActivateTunnel] [-ForceOverwrite] [-LaunchGUI] [-DryRun]
 
   # 4. Inspect Installed WireGuard Client, Services & Active Tunnels:
-  .\deploy-WireGuardClient.ps1 -Status
+  .\Install-WireGuardClient.ps1 -Status
 
 PARAMETERS:
   -ConfigPath <String[]>  : Optional path(s) to WireGuard .conf (or .conf.dpapi)
@@ -489,29 +490,29 @@ PARAMETERS:
 
 PRACTICAL EXAMPLES:
   1. Display help, author, and version info (zero-parameter run):
-     .\deploy-WireGuardClient.ps1
+     .\Install-WireGuardClient.ps1
 
   2. Download and install/update the WireGuard client via winget (no config):
-     .\deploy-WireGuardClient.ps1 -Install
+     .\Install-WireGuardClient.ps1 -Install
 
   3. Install WireGuard and import a VPN configuration file into settings:
-     .\deploy-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf"
+     .\Install-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf"
 
   4. Install WireGuard, import config, activate VPN tunnel immediately, and open GUI:
-     .\deploy-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -ActivateTunnel -LaunchGUI
+     .\Install-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -ActivateTunnel -LaunchGUI
 
   5. Import a configuration with a custom tunnel name and overwrite if existing:
-     .\deploy-WireGuardClient.ps1 -ConfigPath ".\wg0.conf" -TunnelName "Corp-VPN" -ForceOverwrite
+     .\Install-WireGuardClient.ps1 -ConfigPath ".\wg0.conf" -TunnelName "Corp-VPN" -ForceOverwrite
 
   6. Check current WireGuard installation, services, and tunnel status:
-     .\deploy-WireGuardClient.ps1 -Status
+     .\Install-WireGuardClient.ps1 -Status
 
   7. Simulate deployment and configuration validation (Dry-Run mode):
-     .\deploy-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -DryRun
+     .\Install-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -DryRun
 
 FIRST RUN / UNBLOCKING NOTE:
   After downloading this script from GitHub, unblock it before running:
-     Unblock-File -Path .\deploy-WireGuardClient.ps1
+     Unblock-File -Path .\Install-WireGuardClient.ps1
 ================================================================================
 "@ -ForegroundColor Yellow
 }
@@ -1197,7 +1198,7 @@ $importedResults = [System.Collections.Generic.List[PSCustomObject]]::new()
 if ($parsedConfigs.Count -eq 0) {
     Write-Log "  [i] No configuration file was specified (-ConfigPath omitted). Skipping profile import." -Level INFO
     Write-Log "      You can import a .conf file anytime via the WireGuard GUI ('Import tunnel(s) from file')" -Level DETAIL
-    Write-Log "      or by re-running: .\deploy-WireGuardClient.ps1 -ConfigPath `"C:\Path\To\vpn.conf`"" -Level DETAIL
+    Write-Log "      or by re-running: .\Install-WireGuardClient.ps1 -ConfigPath `"C:\Path\To\vpn.conf`"" -Level DETAIL
 }
 else {
     $configStoreDir = Join-Path -Path $InstallDir -ChildPath "Data\Configurations"
