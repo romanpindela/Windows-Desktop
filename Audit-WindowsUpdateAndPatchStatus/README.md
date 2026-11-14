@@ -112,8 +112,14 @@
 ### Scanning Progress
 ![Scanning Progress](assets/Scanning.jpg)
 
+### Console Audit Report
+![Console Report](assets/Console_raport.jpg)
+
 ### HTML Audit Dashboard
 ![HTML Audit Dashboard](assets/Patch-Audit-ROMAN-PC-E590-11-13-2026_07_42_PM.png)
+
+### HTML Audit Dashboard (Updated with Author Footer)
+![HTML Audit Dashboard Updated](assets/Patch-Audit-ROMAN-PC-E590-11-14-2026_07_47_AM.png)
 
 ---
 

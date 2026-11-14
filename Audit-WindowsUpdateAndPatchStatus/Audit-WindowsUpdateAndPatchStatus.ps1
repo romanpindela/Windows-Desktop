@@ -1428,6 +1428,144 @@ function Export-PatchAuditHtmlReport {
     [System.IO.File]::WriteAllText($HtmlPath, $html, [System.Text.Encoding]::UTF8)
 }
 
+function Show-PatchAuditConsoleSummary {
+    <#
+    .SYNOPSIS
+        Displays a colorized audit report and summary directly in the PowerShell console.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [object]$AuditData,
+
+        [Parameter(Mandatory = $true)]
+        [string]$HtmlPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$SummaryCsvPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DetailsCsvPath,
+
+        [Parameter(Mandatory = $false)]
+        [string]$JsonPath = '',
+
+        [Parameter(Mandatory = $true)]
+        [string]$LogPath
+    )
+
+    $b = $AuditData.Baseline
+    $ph = $AuditData.PatchHistory
+    $pr = $AuditData.PendingReboot
+    $pol = $AuditData.PolicyAudit
+    $mu = $AuditData.MissingUpdates
+    $h = $AuditData.Health
+
+    $healthColor = switch ($h.OverallHealthStatus) {
+        'Healthy'           { 'Green' }
+        'AttentionRequired' { 'Yellow' }
+        default             { 'Red' }
+    }
+
+    Write-Host ''
+    Write-Host '================================================================================' -ForegroundColor DarkCyan
+    Write-Host ('  WINDOWS UPDATE & PATCH STATUS AUDIT REPORT - {0}' -f $b.ComputerName) -ForegroundColor Cyan
+    Write-Host '================================================================================' -ForegroundColor DarkCyan
+    Write-Host ('  OS / Build       : {0} (Version {1}, Build {2})' -f $b.OSCaption, $b.OSVersion, $b.FullBuildString)
+    Write-Host ('  Domain           : {0} | Uptime: {1} days (Last Boot: {2})' -f $b.Domain, $b.UptimeDays, $b.LastBootUpTime.ToString('yyyy-MM-dd HH:mm'))
+    Write-Host ('  Scan Timestamp   : {0}' -f $AuditData.ScanTimestamp.ToString('yyyy-MM-dd HH:mm:ss'))
+    Write-Host -NoNewline '  Overall Health   : '
+    Write-Host $h.OverallHealthStatus.ToUpperInvariant() -ForegroundColor $healthColor
+
+    if ($h.RiskReasons.Count -gt 0) {
+        Write-Host '  Risk Reasons     :' -ForegroundColor Yellow
+        foreach ($reason in $h.RiskReasons) {
+            Write-Host ('    - {0}' -f $reason) -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host '  Risk Reasons     : None (All checks compliant)' -ForegroundColor Green
+    }
+
+    Write-Host '--------------------------------------------------------------------------------' -ForegroundColor DarkGray
+    Write-Host '  KEY METRICS' -ForegroundColor Cyan
+    $lastPatchDateStr = if ($null -ne $ph.LastPatchDate) { $ph.LastPatchDate.ToString('yyyy-MM-dd') } else { 'N/A' }
+    $patchAgeStr = if ($null -ne $ph.DaysSinceLastPatch) { '{0} days' -f $ph.DaysSinceLastPatch } else { 'Unknown' }
+    $slaColor = switch ($ph.PatchSlaStatus) {
+        'Compliant' { 'Green' }
+        'Warning'   { 'Yellow' }
+        default     { 'Red' }
+    }
+    Write-Host -NoNewline ('  Last Patch       : {0} ({1}, {2} ago) - SLA: ' -f $ph.LastPatchKB, $lastPatchDateStr, $patchAgeStr)
+    Write-Host $ph.PatchSlaStatus -ForegroundColor $slaColor
+
+    $rebootColor = if ($pr.PendingReboot) { 'Yellow' } else { 'Green' }
+    $rebootText = if ($pr.PendingReboot) { 'YES ({0})' -f ($pr.PendingRebootSources -join ', ') } else { 'NO' }
+    Write-Host -NoNewline '  Pending Reboot   : '
+    Write-Host $rebootText -ForegroundColor $rebootColor
+
+    Write-Host ('  Update Channel   : {0} (WSUS: {1})' -f $pol.UpdateChannel, $pol.WSUSServer)
+
+    $missingColor = if ($mu.MissingCriticalCount -gt 0) { 'Red' } elseif ($mu.MissingTotalCount -gt 0) { 'Yellow' } else { 'Green' }
+    Write-Host -NoNewline '  Missing Updates  : '
+    Write-Host ('{0} Total (Critical: {1}, Important: {2}, Security: {3}) [Mode: {4}]' -f $mu.MissingTotalCount, $mu.MissingCriticalCount, $mu.MissingImportantCount, $mu.MissingSecurityCount, $mu.ScanMode) -ForegroundColor $missingColor
+
+    Write-Host '--------------------------------------------------------------------------------' -ForegroundColor DarkGray
+    Write-Host '  UPDATE SERVICES' -ForegroundColor Cyan
+    foreach ($svc in $b.Services) {
+        $svcColor = if ($svc.StartType -eq 'Disabled' -or $svc.Status -eq 'NotFound') { 'Red' } elseif ($svc.Status -eq 'Running') { 'Green' } else { 'Gray' }
+        Write-Host ('    {0,-18} Status: {1,-10} StartType: {2}' -f $svc.Name, $svc.Status, $svc.StartType) -ForegroundColor $svcColor
+    }
+
+    Write-Host '--------------------------------------------------------------------------------' -ForegroundColor DarkGray
+    Write-Host '  EDR / POLICY RED FLAGS' -ForegroundColor Cyan
+    if ($pol.PolicyRedFlags.Count -gt 0) {
+        foreach ($flag in $pol.PolicyRedFlags) {
+            Write-Host ('    [RED FLAG] {0}' -f $flag) -ForegroundColor Red
+        }
+    }
+    else {
+        Write-Host '    [OK] No suspicious Windows Update policy tampering detected.' -ForegroundColor Green
+    }
+
+    if ($mu.MissingUpdates.Count -gt 0) {
+        Write-Host '--------------------------------------------------------------------------------' -ForegroundColor DarkGray
+        Write-Host ('  MISSING UPDATES ({0})' -f $mu.MissingUpdates.Count) -ForegroundColor Cyan
+        foreach ($upd in $mu.MissingUpdates) {
+            $uColor = switch ($upd.MsrcSeverity) {
+                'Critical'  { 'Red' }
+                'Important' { 'Yellow' }
+                default     { 'White' }
+            }
+            Write-Host ('    [{0,-11}] {1,-10} ({2,6} MB) {3}' -f $upd.MsrcSeverity, $upd.KBArticleID, $upd.SizeMB, $upd.Title) -ForegroundColor $uColor
+        }
+    }
+
+    if ($ph.HistoryEntries.Count -gt 0) {
+        $consoleHistoryLimit = [math]::Min(10, $ph.HistoryEntries.Count)
+        Write-Host '--------------------------------------------------------------------------------' -ForegroundColor DarkGray
+        Write-Host ('  RECENT UPDATE HISTORY (Top {0} of {1})' -f $consoleHistoryLimit, $ph.HistoryEntries.Count) -ForegroundColor Cyan
+        foreach ($entry in ($ph.HistoryEntries | Select-Object -First $consoleHistoryLimit)) {
+            $dStr = if ($null -ne $entry.Date) { $entry.Date.ToString('yyyy-MM-dd') } else { 'N/A       ' }
+            $eColor = if ($entry.RecordType -eq 'Failed') { 'Red' } else { 'Gray' }
+            $shortTitle = if ($entry.Title.Length -gt 55) { $entry.Title.Substring(0, 52) + '...' } else { $entry.Title }
+            Write-Host ('    {0} | {1,-10} | {2,-12} | {3}' -f $dStr, $entry.KBArticleID, $entry.ResultStatus, $shortTitle) -ForegroundColor $eColor
+        }
+    }
+
+    Write-Host '--------------------------------------------------------------------------------' -ForegroundColor DarkGray
+    Write-Host '  GENERATED FILES' -ForegroundColor Cyan
+    Write-Host ('    Log File    : {0}' -f $LogPath)
+    Write-Host ('    HTML Report : {0}' -f $HtmlPath)
+    Write-Host ('    Summary CSV : {0}' -f $SummaryCsvPath)
+    Write-Host ('    Details CSV : {0}' -f $DetailsCsvPath)
+    if (-not [string]::IsNullOrWhiteSpace($JsonPath)) {
+        Write-Host ('    JSON Report : {0}' -f $JsonPath)
+    }
+    Write-Host '================================================================================' -ForegroundColor DarkCyan
+    Write-Host ''
+}
+
 function Show-AuditHelp {
     <#
     .SYNOPSIS
@@ -1605,7 +1743,9 @@ try {
 
     Write-AuditLog -Message ('HTML report saved: {0}' -f $htmlReportPath) -Level 'INFO'
     Write-AuditLog -Message ('CSV reports saved: {0} | {1}' -f $summaryCsvPath, $detailsCsvPath) -Level 'INFO'
-    Write-AuditLog -Message ('Overall Health: {0} | Reasons: {1}' -f $health.OverallHealthStatus, $(if ($health.RiskReasons.Count -gt 0) { $health.RiskReasons -join '; ' } else { 'None' })) -Level $(if ($health.OverallHealthStatus -eq 'Healthy') { 'SUCCESS' } else { 'WARNING' }) -ConsoleSummary
+    Write-AuditLog -Message ('Overall Health: {0} | Reasons: {1}' -f $health.OverallHealthStatus, $(if ($health.RiskReasons.Count -gt 0) { $health.RiskReasons -join '; ' } else { 'None' })) -Level $(if ($health.OverallHealthStatus -eq 'Healthy') { 'SUCCESS' } else { 'WARNING' })
+
+    Show-PatchAuditConsoleSummary -AuditData $auditData -HtmlPath $htmlReportPath -SummaryCsvPath $summaryCsvPath -DetailsCsvPath $detailsCsvPath -JsonPath $(if ($ExportJson) { $jsonReportPath } else { '' }) -LogPath $script:LogFilePath
 
     if ($OpenReport -and (Test-Path -Path $htmlReportPath)) {
         Start-Process -FilePath $htmlReportPath | Out-Null
