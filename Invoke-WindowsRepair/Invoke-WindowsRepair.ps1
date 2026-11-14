@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Automated Windows Health Checker and Repair Tool (DISM & SFC).
 .DESCRIPTION
@@ -12,11 +12,16 @@
 .PARAMETER Help
     Displays the help menu and usage examples.
 .EXAMPLE
-    .\invoke-windows-repair.ps1 -Action All
+    .\Invoke-WindowsRepair.ps1 -Action All
 .EXAMPLE
-    .\invoke-windows-repair.ps1 -Action Scan -LogPath "C:\CustomLogs\Repair.txt"
+    .\Invoke-WindowsRepair.ps1 -Action Scan -LogPath "C:\CustomLogs\Repair.txt"
 .EXAMPLE
-    .\invoke-windows-repair.ps1 -Help
+    .\Invoke-WindowsRepair.ps1 -Help
+.NOTES
+    Author: Roman Pindela
+    Email: roman.pindela@gmail.com
+    GitHub: https://github.com/romanpindela
+    Version: 1.2.0
 #>
 
 param (
@@ -57,9 +62,9 @@ function Show-HelpMenu {
     Write-Host "  -Help               Displays this professional help interface."
     Write-Host ""
     Write-Host "EXAMPLES:"
-    Write-Host "  .\invoke-windows-repair.ps1 -Help"
-    Write-Host "  .\invoke-windows-repair.ps1 -Action All"
-    Write-Host "  .\invoke-windows-repair.ps1 -Action Restore -LogPath 'D:\Logs\repair.txt'"
+    Write-Host "  .\Invoke-WindowsRepair.ps1 -Help"
+    Write-Host "  .\Invoke-WindowsRepair.ps1 -Action All"
+    Write-Host "  .\Invoke-WindowsRepair.ps1 -Action Restore -LogPath 'D:\Logs\repair.txt'"
     Write-Host "=========================================================================" -ForegroundColor Cyan
 }
 
