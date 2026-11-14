@@ -1,9 +1,9 @@
-<#
+﻿<#
 .SYNOPSIS
     Comprehensive management utility for Windows SMB Network Shares and NTFS permissions.
 
 .DESCRIPTION
-    manage-smb-share-access.ps1 is an all-in-one, enterprise-grade PowerShell utility for 
+    Manage-SmbShareAccess.ps1 is an all-in-one, enterprise-grade PowerShell utility for 
     administering Windows SMB shares and backing file system NTFS ACLs. It automates:
       1. Share Discovery & Inventory (List all or specific shares, session metrics, hidden shares).
       2. Comprehensive Permission Auditing (Show side-by-side SMB and NTFS ACLs with consistency analysis).
@@ -69,27 +69,27 @@
     Displays the interactive help and syntax reference. Aliased to -h.
 
 .EXAMPLE
-    .\manage-smb-share-access.ps1 -Action List
+    .\Manage-SmbShareAccess.ps1 -Action List
     Lists all non-hidden SMB shares with path, description, ABE, encryption status, and session counts.
 
 .EXAMPLE
-    .\manage-smb-share-access.ps1 -Action Show -ShareName "Raporty"
+    .\Manage-SmbShareAccess.ps1 -Action Show -ShareName "Raporty"
     Audits and displays SMB permissions and NTFS directory permissions for the 'Raporty' share with consistency analysis.
 
 .EXAMPLE
-    .\manage-smb-share-access.ps1 -Action Create -ShareName "Projekty" -Path "D:\Shares\Projekty" -Description "Team Projects" -EnableABE -EncryptData
+    .\Manage-SmbShareAccess.ps1 -Action Create -ShareName "Projekty" -Path "D:\Shares\Projekty" -Description "Team Projects" -EnableABE -EncryptData
     Creates a new SMB share on D:\Shares\Projekty with Access-Based Enumeration and SMB Encryption enabled.
 
 .EXAMPLE
-    .\manage-smb-share-access.ps1 -Action Remove -ShareName "StaryProjekt"
+    .\Manage-SmbShareAccess.ps1 -Action Remove -ShareName "StaryProjekt"
     Removes the 'StaryProjekt' SMB share while safely leaving the underlying files and folder intact on disk.
 
 .EXAMPLE
-    .\manage-smb-share-access.ps1 -Action Grant -ShareName "Raporty" -AccountName "DOMENA\k.nowak" -AccessRight Read
+    .\Manage-SmbShareAccess.ps1 -Action Grant -ShareName "Raporty" -AccountName "DOMENA\k.nowak" -AccessRight Read
     Grants Read access to the domain user on both the SMB share and underlying NTFS directory.
 
 .EXAMPLE
-    .\manage-smb-share-access.ps1 -Action Revoke -ShareName "Dane" -AccountName "DOMENA\b.kowalski" -WhatIf
+    .\Manage-SmbShareAccess.ps1 -Action Revoke -ShareName "Dane" -AccountName "DOMENA\b.kowalski" -WhatIf
     Simulates revoking access from SMB and NTFS without applying modifications.
 
 .NOTES
@@ -157,7 +157,7 @@ $ErrorActionPreference = 'Stop'
 # SCRIPT METADATA
 # ==============================================================================
 $Script:Metadata = @{
-    Name        = 'manage-smb-share-access.ps1'
+    Name        = 'Manage-SmbShareAccess.ps1'
     Version     = '2.0.0'
     Author      = 'Roman Pindela'
     Email       = 'roman.pindela@gmail.com'
@@ -191,49 +191,49 @@ DESCRIPTION:
 
 SYNTAX:
     # 1. Display Help:
-    .\manage-smb-share-access.ps1 [-Help | -h]
+    .\Manage-SmbShareAccess.ps1 [-Help | -h]
 
     # 2. List Shares:
-    .\manage-smb-share-access.ps1 -Action List [-ShareName <string>] [-IncludeHidden] [-LogPath <string>]
+    .\Manage-SmbShareAccess.ps1 -Action List [-ShareName <string>] [-IncludeHidden] [-LogPath <string>]
 
     # 3. Show & Audit Permissions:
-    .\manage-smb-share-access.ps1 -Action Show -ShareName <string> [-LogPath <string>]
+    .\Manage-SmbShareAccess.ps1 -Action Show -ShareName <string> [-LogPath <string>]
 
     # 4. Create / Enable Share:
-    .\manage-smb-share-access.ps1 -Action Create -ShareName <string> -Path <string>
+    .\Manage-SmbShareAccess.ps1 -Action Create -ShareName <string> -Path <string>
                                  [-Description <string>] [-EnableABE] [-EncryptData]
                                  [-CachingMode <None|Manual|Programs|Documents|BranchCache>]
                                  [-ConcurrentUserLimit <int>] [-WhatIf] [-Confirm]
 
     # 5. Remove / Disable Share:
-    .\manage-smb-share-access.ps1 -Action Remove -ShareName <string> [-WhatIf] [-Confirm]
+    .\Manage-SmbShareAccess.ps1 -Action Remove -ShareName <string> [-WhatIf] [-Confirm]
 
     # 6. Manage Permissions (Grant / Revoke / Deny):
-    .\manage-smb-share-access.ps1 -Action <Grant | Revoke | Deny> -ShareName <string>
+    .\Manage-SmbShareAccess.ps1 -Action <Grant | Revoke | Deny> -ShareName <string>
                                  -AccountName <string[]> [-AccessRight <Read|Change|FullControl>]
                                  [-ApplyToNtfs[:<bool>]] [-WhatIf] [-Confirm]
 
 EXAMPLES:
     # Inventory all non-hidden shares:
-    .\manage-smb-share-access.ps1 -Action List
+    .\Manage-SmbShareAccess.ps1 -Action List
 
     # Audit permissions and consistency for 'Raporty':
-    .\manage-smb-share-access.ps1 -Action Show -ShareName "Raporty"
+    .\Manage-SmbShareAccess.ps1 -Action Show -ShareName "Raporty"
 
     # Create new share with Access-Based Enumeration (ABE) and Encryption:
-    .\manage-smb-share-access.ps1 -Action Create -ShareName "Projekty" -Path "D:\Shares\Projekty" -EnableABE -EncryptData
+    .\Manage-SmbShareAccess.ps1 -Action Create -ShareName "Projekty" -Path "D:\Shares\Projekty" -EnableABE -EncryptData
 
     # Grant Read access to domain user across SMB and NTFS:
-    .\manage-smb-share-access.ps1 -Action Grant -ShareName "Projekty" -AccountName "DOMENA\k.nowak" -AccessRight Read
+    .\Manage-SmbShareAccess.ps1 -Action Grant -ShareName "Projekty" -AccountName "DOMENA\k.nowak" -AccessRight Read
 
     # Grant Modify (Change) access to a local group on SMB only:
-    .\manage-smb-share-access.ps1 -Action Grant -ShareName "Projekty" -AccountName "Edytorzy" -AccessRight Change -ApplyToNtfs:`$false
+    .\Manage-SmbShareAccess.ps1 -Action Grant -ShareName "Projekty" -AccountName "Edytorzy" -AccessRight Change -ApplyToNtfs:`$false
 
     # Revoke access across SMB and NTFS (simulated):
-    .\manage-smb-share-access.ps1 -Action Revoke -ShareName "Projekty" -AccountName "DOMENA\b.kowalski" -WhatIf
+    .\Manage-SmbShareAccess.ps1 -Action Revoke -ShareName "Projekty" -AccountName "DOMENA\b.kowalski" -WhatIf
 
     # Disable / Remove an existing share:
-    .\manage-smb-share-access.ps1 -Action Remove -ShareName "StaryZasob"
+    .\Manage-SmbShareAccess.ps1 -Action Remove -ShareName "StaryZasob"
 
 ================================================================================
 "@ -ForegroundColor Cyan
@@ -282,7 +282,7 @@ function Initialize-Logging {
             New-Item -Path $DestinationDirectory -ItemType Directory -Force | Out-Null
         }
         $dateStr = Get-Date -Format 'yyyyMMdd'
-        $Script:LogFilePath = Join-Path -Path $DestinationDirectory -ChildPath "manage-smb-share-access_$dateStr.log"
+        $Script:LogFilePath = Join-Path -Path $DestinationDirectory -ChildPath "Manage-SmbShareAccess_$dateStr.log"
     }
     catch {
         Write-Warning "Could not initialize log directory '$DestinationDirectory'. Falling back to console output only. Details: $($_.Exception.Message)"

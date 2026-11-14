@@ -1,10 +1,10 @@
-# ==============================================================================
-# PESTER TEST SUITE: manage-smb-share-access.Tests.ps1
+﻿# ==============================================================================
+# PESTER TEST SUITE: Manage-SmbShareAccess.Tests.ps1
 # ==============================================================================
 $scriptRoot = Split-Path -Parent $PSScriptRoot
-$scriptPath = Join-Path -Path $scriptRoot -ChildPath 'manage-smb-share-access.ps1'
+$scriptPath = Join-Path -Path $scriptRoot -ChildPath 'Manage-SmbShareAccess.ps1'
 
-Describe 'manage-smb-share-access - Script Integrity & Syntax' {
+Describe 'Manage-SmbShareAccess - Script Integrity & Syntax' {
     It 'Script file exists in the project root' {
         (Test-Path -Path $scriptPath) | Should Be $true
     }
@@ -27,7 +27,7 @@ Describe 'manage-smb-share-access - Script Integrity & Syntax' {
     }
 }
 
-Describe 'manage-smb-share-access - Parameter Sets & Attribute Validation' {
+Describe 'Manage-SmbShareAccess - Parameter Sets & Attribute Validation' {
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$null)
     $params = $ast.ParamBlock.Parameters
 
@@ -94,7 +94,7 @@ Describe 'manage-smb-share-access - Parameter Sets & Attribute Validation' {
     }
 }
 
-Describe 'manage-smb-share-access - Help and Safe Default Invocation' {
+Describe 'Manage-SmbShareAccess - Help and Safe Default Invocation' {
     It 'Displays help without errors when run with -Help' {
         $output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath -Help
         ($output | Out-String) -match 'MANAGE SMB SHARE AND NTFS ACCESS UTILITY' | Should Be $true
@@ -111,7 +111,7 @@ Describe 'manage-smb-share-access - Help and Safe Default Invocation' {
     }
 }
 
-Describe 'manage-smb-share-access - Input Validation & Security' {
+Describe 'Manage-SmbShareAccess - Input Validation & Security' {
     It 'Disallows command injection characters in AccountName' {
         $validateAccount = {
             param ($Account)
@@ -126,7 +126,7 @@ Describe 'manage-smb-share-access - Input Validation & Security' {
     }
 }
 
-Describe 'manage-smb-share-access - Permission Mapping Logic' {
+Describe 'Manage-SmbShareAccess - Permission Mapping Logic' {
     It 'Maps AccessRight to correct SMB share rights' {
         $mapSmb = {
             param ($right)
@@ -177,7 +177,7 @@ Describe 'manage-smb-share-access - Permission Mapping Logic' {
     }
 }
 
-Describe 'manage-smb-share-access - Consistency Analysis Logic' {
+Describe 'Manage-SmbShareAccess - Consistency Analysis Logic' {
     $testConsistency = {
         param ([string]$SmbRight, [string]$NtfsRight)
         function Get-AccessRank ([string]$text) {
