@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Hardening, repair, and configuration script for Microsoft Defender Antivirus and Windows Security.
 
@@ -21,19 +21,19 @@
     Displays help and usage instructions.
 
 .EXAMPLE
-    .\configure-microsoft-defender.ps1 -Help
+    .\Set-MicrosoftDefenderConfiguration.ps1 -Help
     Displays help and execution guidelines.
 
 .EXAMPLE
-    .\configure-microsoft-defender.ps1 -Run
+    .\Set-MicrosoftDefenderConfiguration.ps1 -Run
     Applies configurations directly to the console without persistent file logging.
 
 .EXAMPLE
-    .\configure-microsoft-defender.ps1 -Run -EnableLog
+    .\Set-MicrosoftDefenderConfiguration.ps1 -Run -EnableLog
     Applies configurations and writes a detailed log file to 'C:\Logs'.
 
 .EXAMPLE
-    .\configure-microsoft-defender.ps1 -Run -EnableLog -LogDirectory "D:\SecurityLogs"
+    .\Set-MicrosoftDefenderConfiguration.ps1 -Run -EnableLog -LogDirectory "D:\SecurityLogs"
     Applies configurations and stores the log file in a custom directory.
 
 .NOTES
@@ -68,7 +68,7 @@ $ErrorActionPreference = 'Stop'
 # SCRIPT CONFIGURATION & METADATA
 # ==============================================================================
 $Script:Metadata = @{
-    Name        = 'configure-microsoft-defender.ps1'
+    Name        = 'Set-MicrosoftDefenderConfiguration.ps1'
     Version     = '2.0.2'
     Author      = 'Roman Pindela'
     Company     = 'GitHub'
@@ -94,8 +94,8 @@ GitHub : $($Script:Metadata.GitHub)
 ================================================================================
 
 SYNTAX:
-    .\configure-microsoft-defender.ps1 [-Help | -h]
-    .\configure-microsoft-defender.ps1 -Run [-EnableLog] [-LogDirectory <path>]
+    .\Set-MicrosoftDefenderConfiguration.ps1 [-Help | -h]
+    .\Set-MicrosoftDefenderConfiguration.ps1 -Run [-EnableLog] [-LogDirectory <path>]
 
 PARAMETERS:
     -Run
@@ -114,16 +114,16 @@ PARAMETERS:
 
 EXAMPLES:
     # 1. Show Help
-    .\configure-microsoft-defender.ps1 -Help
+    .\Set-MicrosoftDefenderConfiguration.ps1 -Help
 
     # 2. Run remediation directly in console
-    .\configure-microsoft-defender.ps1 -Run
+    .\Set-MicrosoftDefenderConfiguration.ps1 -Run
 
     # 3. Run remediation and generate detailed log in C:\Logs
-    .\configure-microsoft-defender.ps1 -Run -EnableLog
+    .\Set-MicrosoftDefenderConfiguration.ps1 -Run -EnableLog
 
     # 4. Run remediation with custom log destination
-    .\configure-microsoft-defender.ps1 -Run -EnableLog -LogDirectory "D:\SecurityLogs"
+    .\Set-MicrosoftDefenderConfiguration.ps1 -Run -EnableLog -LogDirectory "D:\SecurityLogs"
 
 ================================================================================
 "@ -ForegroundColor Cyan
