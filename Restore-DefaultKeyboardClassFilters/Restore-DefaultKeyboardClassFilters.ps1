@@ -1,34 +1,35 @@
+﻿# ================================================================================
+#   Script Name : Restore-DefaultKeyboardClassFilters.ps1
+#   Author      : Roman Pindela
+#   Contact     : roman.pindela@gmail.com
+#   GitHub      : https://github.com/romanpindela
+#   Version     : 1.2.0
+#   Release Date: 2026-10-12
+#   License     : MIT
+#   Repository  : https://github.com/romanpindela/Windows-Desktop
+#
+#   DESCRIPTION:
+#     Enterprise automation script to diagnose, audit, back up, and restore default
+#     Windows Keyboard Class driver filters (UpperFilters / LowerFilters).
+#     Resolves non-functioning keyboards and Device Manager error codes:
+#       - Code 19: Registry configuration information incomplete or damaged
+#       - Code 10: This device cannot start
+#       - Code 39: Driver corrupt or missing
+#     Third-party software (macro engines, gaming RGB suites, remote control tools,
+#     virtualization software, security agents) frequently inject custom filter
+#     drivers into the keyboard stack. When uninstalled improperly or corrupted,
+#     the entire driver stack fails to initialize.
+#     This script creates a timestamped .reg backup, restores UpperFilters to
+#     'kbdclass', removes invalid LowerFilters, and logs all operations.
+#
+# ================================================================================
+
 <#
-================================================================================
-  Script Name : restore-default-keyboard-class-filters.ps1
-  Author      : Roman Pindela
-  Contact     : roman.pindela@gmail.com
-  GitHub      : https://github.com/romanpindela
-  Version     : 1.2.0
-  Release Date: 2026-10-12
-  License     : MIT
-  Repository  : https://github.com/romanpindela/Windows-Desktop
-
-  DESCRIPTION:
-    Enterprise automation script to diagnose, audit, back up, and restore default
-    Windows Keyboard Class driver filters (UpperFilters / LowerFilters).
-    Resolves non-functioning keyboards and Device Manager error codes:
-      - Code 19: Registry configuration information incomplete or damaged
-      - Code 10: This device cannot start
-      - Code 39: Driver corrupt or missing
-    Third-party software (macro engines, gaming RGB suites, remote control tools,
-    virtualization software, security agents) frequently inject custom filter
-    drivers into the keyboard stack. When uninstalled improperly or corrupted,
-    the entire driver stack fails to initialize.
-    This script creates a timestamped .reg backup, restores UpperFilters to
-    'kbdclass', removes invalid LowerFilters, and logs all operations.
-
-================================================================================
 .SYNOPSIS
     Audits and restores default Windows keyboard class driver registry filters.
 
 .DESCRIPTION
-    restore-default-keyboard-class-filters.ps1 audits and repairs keyboard driver
+    Restore-DefaultKeyboardClassFilters.ps1 audits and repairs keyboard driver
     filter registrations under HKLM:\SYSTEM\CurrentControlSet\Control\Class.
     Key capabilities:
     - Language-independent administrator elevation using Well-Known SIDs.
@@ -75,32 +76,38 @@
     Alias: -h.
 
 .EXAMPLE
-    .\restore-default-keyboard-class-filters.ps1
+    .\Restore-DefaultKeyboardClassFilters.ps1
     Displays the built-in help guide, syntax, and author metadata (default safe behavior).
 
 .EXAMPLE
-    .\restore-default-keyboard-class-filters.ps1 -h
+    .\Restore-DefaultKeyboardClassFilters.ps1 -h
     Displays detailed help guide and usage examples.
 
 .EXAMPLE
-    .\restore-default-keyboard-class-filters.ps1 -Audit
+    .\Restore-DefaultKeyboardClassFilters.ps1 -Audit
     Performs a non-destructive audit of current keyboard class filters.
 
 .EXAMPLE
-    .\restore-default-keyboard-class-filters.ps1 -Repair
+    .\Restore-DefaultKeyboardClassFilters.ps1 -Repair
     Prompts for confirmation, exports registry backup, and restores default filters.
 
 .EXAMPLE
-    .\restore-default-keyboard-class-filters.ps1 -Repair -Force
+    .\Restore-DefaultKeyboardClassFilters.ps1 -Repair -Force
     Executes repair silently without interactive confirmation prompt.
 
 .EXAMPLE
-    .\restore-default-keyboard-class-filters.ps1 -Repair -BackupPath "D:\Backups\Registry" -LogPath "C:\Logs\KeyboardFix.txt"
+    .\Restore-DefaultKeyboardClassFilters.ps1 -Repair -BackupPath "D:\Backups\Registry" -LogPath "C:\Logs\KeyboardFix.txt"
     Executes repair using custom backup directory and explicit log file.
 
 .EXAMPLE
-    .\restore-default-keyboard-class-filters.ps1 -BackupOnly
+    .\Restore-DefaultKeyboardClassFilters.ps1 -BackupOnly
     Creates an export (.reg) of the keyboard class key without altering any values.
+.NOTES
+    Author: Roman Pindela
+    Email: roman.pindela@gmail.com
+    GitHub: https://github.com/romanpindela
+    Version: 1.2.0
+    License: MIT
 #>
 
 [CmdletBinding(DefaultParameterSetName = "Default", SupportsShouldProcess = $true)]
@@ -144,8 +151,8 @@ $ErrorActionPreference = "Stop"
 
 # Script Metadata
 $SCRIPT_INFO = @{
-    Name        = "restore-default-keyboard-class-filters"
-    ScriptFile  = "restore-default-keyboard-class-filters.ps1"
+    Name        = "Restore-DefaultKeyboardClassFilters"
+    ScriptFile  = "Restore-DefaultKeyboardClassFilters.ps1"
     Version     = "1.2.0"
     Author      = "Roman Pindela"
     Contact     = "roman.pindela@gmail.com"
