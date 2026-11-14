@@ -1,7 +1,16 @@
-<#
+﻿<#
 .SYNOPSIS
-    Script resetting keyboard settings in Windows 11 to Polish (Programmers) layout
-    and disabling accessibility ease-of-access shortcuts (Sticky Keys, etc.).
+    Resets current-user keyboard settings to Polish (Programmers) layout and disables accessibility shortcuts.
+.DESCRIPTION
+    Configures the active user language list to Polish (Programmers) (0415:00000415),
+    disables Sticky Keys, Filter Keys, and Toggle Keys under HKCU:\Control Panel\Accessibility,
+    restores standard keyboard repeat delay and speed, and restarts explorer.exe to apply changes.
+.EXAMPLE
+    .\Restore-KeyboardSettings.ps1
+    Resets keyboard layout, accessibility shortcuts, and repeat settings for the current user.
+.NOTES
+    Author: Roman Pindela
+    GitHub: https://github.com/romanpindela
 #>
 
 Write-Host "Starting repair and restoration of default keyboard settings..." -ForegroundColor Cyan
