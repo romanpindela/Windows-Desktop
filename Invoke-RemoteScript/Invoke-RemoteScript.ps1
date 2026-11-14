@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Executes a local PowerShell script file on a remote machine.
 .DESCRIPTION
@@ -13,6 +13,14 @@
     Optional PSCredential object. If not provided, you will be prompted.
 .PARAMETER ArgumentList
     Optional array of arguments to pass to the remote script.
+.PARAMETER ShowHelp
+    Displays help and usage examples (aliases -h, -Help).
+.EXAMPLE
+    .\Invoke-RemoteScript.ps1 -ComputerName 'SRV-PROD01' -ScriptPath 'C:\Scripts\Get-Audit.ps1'
+    Executes C:\Scripts\Get-Audit.ps1 remotely in memory on SRV-PROD01.
+.EXAMPLE
+    .\Invoke-RemoteScript.ps1 -ComputerName '10.10.1.5' -ScriptPath '.\Deploy.ps1' -ArgumentList 'Prod', 123
+    Executes Deploy.ps1 on 10.10.1.5 with positional arguments.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
@@ -41,7 +49,7 @@ $ScriptVersion = "1.0.0"
 
 function Show-Help {
     Write-Host ""
-    Write-Host "INVOKE-REMOTESCRIPT v$ScriptVersion" -ForegroundColor Cyan
+    Write-Host "Invoke-RemoteScript v$ScriptVersion" -ForegroundColor Cyan
     Write-Host "Execute local .ps1 scripts on remote machines via WinRM"
     Write-Host ""
 
@@ -51,7 +59,7 @@ function Show-Help {
     Write-Host ""
 
     Write-Host "USAGE"
-    Write-Host "    .\invoke-remote-script -ComputerName <String> -ScriptPath <String>"
+    Write-Host "    .\Invoke-RemoteScript.ps1 -ComputerName <String> -ScriptPath <String>"
     Write-Host ""
 
     Write-Host "PARAMETERS"
@@ -63,11 +71,11 @@ function Show-Help {
     Write-Host ""
 
     Write-Host "EXAMPLES"
-    Write-Host "    .\invoke-remote-script -ComputerName 'SRV-PROD01' -ScriptPath 'C:\Scripts\Get-Audit.ps1'"
-    Write-Host "    .\invoke-remote-script -ComputerName '10.10.1.5' -ScriptPath '.\HealthCheck.ps1'"
-    Write-Host "    .\invoke-remote-script -ComputerName '10.10.1.5' -ScriptPath '.\Deploy.ps1' -ArgumentList 'Prod', 123"
+    Write-Host "    .\Invoke-RemoteScript.ps1 -ComputerName 'SRV-PROD01' -ScriptPath 'C:\Scripts\Get-Audit.ps1'"
+    Write-Host "    .\Invoke-RemoteScript.ps1 -ComputerName '10.10.1.5' -ScriptPath '.\HealthCheck.ps1'"
+    Write-Host "    .\Invoke-RemoteScript.ps1 -ComputerName '10.10.1.5' -ScriptPath '.\Deploy.ps1' -ArgumentList 'Prod', 123"
     Write-Host "    `$Credential = Get-Credential"
-    Write-Host "    .\invoke-remote-script -ComputerName '10.10.1.5' -ScriptPath '.\HealthCheck.ps1' -Credential `$Credential"
+    Write-Host "    .\Invoke-RemoteScript.ps1 -ComputerName '10.10.1.5' -ScriptPath '.\HealthCheck.ps1' -Credential `$Credential"
     Write-Host ""
 
     Write-Host "CONTACT & INFO"
