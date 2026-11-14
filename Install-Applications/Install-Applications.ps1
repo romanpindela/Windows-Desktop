@@ -1,33 +1,39 @@
+﻿# ================================================================================
+#   Script Name : Install-Applications.ps1
+#   Author      : Roman Pindela
+#   Contact     : roman.pindela@gmail.com
+#   Version     : 2.0.0
+#   Release Date: 2026-10-12
+#   License     : MIT
+#   Repository  : https://github.com/romanpindela/Windows-Desktop
+#
+#   DESCRIPTION:
+#     Automates workstation software installation, upgrades, and catalog search
+#     in Windows (x64 architecture) based on winget and optional JSON configurations.
+#     Utilizes native .NET Registry API for fast in-memory auditing and retrieval
+#     of installed application metadata (DisplayName, DisplayVersion,
+#     InstallDate, InstallLocation). Skips programs already present on the system
+#     and supports user-profile fallback (non-admin execution for apps like Spotify).
+#     Supports:
+#     - Workstation software deployment from a JSON configuration file.
+#     - Upgrading all installed applications (or a specific package) via winget.
+#     - Installing individual applications by package name/ID with disambiguation.
+#     - Searching the online winget repository by keyword/pattern (e.g. "Google").
+#     - Generating an audit report of currently installed workstation software.
+#     The emergency Office Deployment Tool (ODT) procedure for Microsoft 365
+#     is executed ONLY when the user explicitly provides the -Fallback switch.
+#     Includes comprehensive execution logging to a file.
+#
+# ================================================================================
+
 <#
-================================================================================
-  Script Name : Install-Applications.ps1
-  Author      : Roman Pindela
-  Contact     : roman.pindela@gmail.com
-  Version     : 2.0.0
-  Release Date: 2026-10-12
-  License     : MIT
-  Repository  : https://github.com/roman/install-applications
-
-  DESCRIPTION:
-    Automates workstation software installation, upgrades, and catalog search
-    in Windows (x64 architecture) based on winget and optional JSON configurations.
-    Utilizes native .NET Registry API for fast in-memory auditing and retrieval
-    of installed application metadata (DisplayName, DisplayVersion,
-    InstallDate, InstallLocation). Skips programs already present on the system
-    and supports user-profile fallback (non-admin execution for apps like Spotify).
-    Supports:
-    - Workstation software deployment from a JSON configuration file.
-    - Upgrading all installed applications (or a specific package) via winget.
-    - Installing individual applications by package name/ID with disambiguation.
-    - Searching the online winget repository by keyword/pattern (e.g. "Google").
-    - Generating an audit report of currently installed workstation software.
-    The emergency Office Deployment Tool (ODT) procedure for Microsoft 365
-    is executed ONLY when the user explicitly provides the -Fallback switch.
-    Includes comprehensive execution logging to a file.
-
-================================================================================
 .SYNOPSIS
     Installs, upgrades, searches, and audits software packages using winget and native registry inspection.
+.DESCRIPTION
+    Automates Windows x64 software installation, upgrades, online catalog search,
+    and registry-based installed application reporting via WinGet, with optional
+    JSON configuration lists, user-context scheduled task fallback, and explicit
+    Office 365 ODT fallback.
 .PARAMETER ConfigPath
     Path to the JSON file containing the list of software packages to install.
 .PARAMETER Package
@@ -69,7 +75,14 @@
     .\Install-Applications.ps1 -v -l ""
 .EXAMPLE
     .\Install-Applications.ps1 -h
+.NOTES
+    Author: Roman Pindela
+    Email: roman.pindela@gmail.com
+    GitHub: https://github.com/romanpindela
+    Version: 2.0.0
+    License: MIT
 #>
+
 [CmdletBinding(DefaultParameterSetName = "Config")]
 param (
     # --- Mode: Deploy from JSON configuration ---
