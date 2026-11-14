@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Restart the Windows Print Spooler service and clear stuck print jobs.
 
@@ -14,14 +14,17 @@
 .PARAMETER SkipPrinterResume
     Skips the automatic resuming of paused printers.
 
-.EXAMPLE
-    .\spooler-restart.ps1
+.PARAMETER H
+    Short switch to display help and exit.
 
 .EXAMPLE
-    .\spooler-restart.ps1 -Help
+    .\Restart-PrintSpooler.ps1
 
 .EXAMPLE
-    .\spooler-restart.ps1 -SkipPrinterResume
+    .\Restart-PrintSpooler.ps1 -Help
+
+.EXAMPLE
+    .\Restart-PrintSpooler.ps1 -SkipPrinterResume
 
 .NOTES
     Version : 1.2.0
@@ -41,7 +44,7 @@ $ScriptVersion = "1.2.0"
 function Show-Help {
 
     Write-Host ""
-    Write-Host "SPOOLER-RESTART v$ScriptVersion" -ForegroundColor Cyan
+    Write-Host "Restart-PrintSpooler v$ScriptVersion" -ForegroundColor Cyan
     Write-Host "Windows Print Spooler Recovery Utility"
     Write-Host ""
 
@@ -54,7 +57,7 @@ function Show-Help {
     Write-Host ""
 
     Write-Host "USAGE"
-    Write-Host "    .\spooler-restart.ps1"
+    Write-Host "    .\Restart-PrintSpooler.ps1"
     Write-Host ""
 
     Write-Host "OPTIONS"
