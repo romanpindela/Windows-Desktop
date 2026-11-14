@@ -1,3 +1,28 @@
+﻿<#
+.SYNOPSIS
+    Configures Windows Storage Sense policies and triggers system disk cleanup.
+.DESCRIPTION
+    Configures Storage Sense registry settings under HKCU (monthly run schedule,
+    60-day Recycle Bin cleanup, 30-day OneDrive cloud dehydration, Windows.old
+    removal, and unused app archival), clears Delivery Optimization and Windows
+    Update download caches, removes selected consumer Appx packages, and runs
+    the SilentCleanup scheduled task. Requires Administrator privileges.
+.PARAMETER Help
+    Displays this help screen and exits.
+.PARAMETER h
+    Short alias switch to display this help screen and exit.
+.EXAMPLE
+    .\Enable-StorageSense.ps1
+    Applies Storage Sense policies and runs disk cleanup.
+.EXAMPLE
+    .\Enable-StorageSense.ps1 -Help
+    Displays interactive help without making changes.
+.NOTES
+    Author: Roman Pindela
+    Email: roman.pindela@gmail.com
+    GitHub: https://github.com/romanpindela
+    Version: 1.0.0
+#>
 # ==============================================================================
 # EXTENDED STORAGE SENSE AND SYSTEM CLEANUP CONFIGURATION SCRIPT
 # ==============================================================================
@@ -11,7 +36,7 @@ $ScriptVersion = "1.0.0"
 
 function Show-Help {
     Write-Host ""
-    Write-Host "ENABLE-STORAGE-SENSE v$ScriptVersion" -ForegroundColor Cyan
+    Write-Host "Enable-StorageSense v$ScriptVersion" -ForegroundColor Cyan
     Write-Host "Windows Automatic Cleanup Configuration Script"
     Write-Host ""
     Write-Host "DESCRIPTION"
@@ -21,11 +46,11 @@ function Show-Help {
     Write-Host "    apps, securely clears Windows Update cache, and removes bloatware."
     Write-Host ""
     Write-Host "USAGE"
-    Write-Host "    .\enable-storage-sense.ps1"
+    Write-Host "    .\Enable-StorageSense.ps1"
     Write-Host ""
     Write-Host "EXAMPLES"
-    Write-Host "    .\enable-storage-sense.ps1"
-    Write-Host "    .\enable-storage-sense.ps1 -Help"
+    Write-Host "    .\Enable-StorageSense.ps1"
+    Write-Host "    .\Enable-StorageSense.ps1 -Help"
     Write-Host ""
     Write-Host "OPTIONS"
     Write-Host "    -Help, -h"
