@@ -1,31 +1,32 @@
+﻿# ================================================================================
+#   Script Name : Manage-PrinterDiscovery.ps1
+#   Author      : Roman Pindela
+#   Contact     : roman.pindela@gmail.com
+#   Version     : 1.0.0
+#   Release Date: 2026-10-11
+#   License     : MIT
+#   Repository  : https://github.com/romanpindela
+#
+#   DESCRIPTION:
+#     Controls automatic discovery and background mapping of network printers in
+#     local networks on Windows 10, Windows 11, and Windows Server (x64/ARM64).
+#     
+#     When disabled, Windows ceases silent, unsolicited background installation
+#     of broadcasted network printers (WSD/mDNS/UPnP) via the Network Connected
+#     Devices Auto-Setup subsystem (NcdAutoSetup), preventing printer queue clutter.
+#     Manual addition of network printers remains fully operational: users can
+#     still manually search, discover, and install network printers via Settings
+#     or the Control Panel Add Printer wizard.
+#     
+#     When enabled, Windows restores default plug-and-play auto-discovery and
+#     automatic mapping for local network-connected devices.
+#
+#     Running without parameters displays the help menu with author, version,
+#     syntax, and practical usage examples.
+#
+# ================================================================================
+
 <#
-================================================================================
-  Script Name : manage-printer-discovery.ps1
-  Author      : Roman Pindela
-  Contact     : roman.pindela@gmail.com
-  Version     : 1.0.0
-  Release Date: 2026-10-11
-  License     : MIT
-  Repository  : https://github.com/romanpindela
-
-  DESCRIPTION:
-    Controls automatic discovery and background mapping of network printers in
-    local networks on Windows 10, Windows 11, and Windows Server (x64/ARM64).
-    
-    When disabled, Windows ceases silent, unsolicited background installation
-    of broadcasted network printers (WSD/mDNS/UPnP) via the Network Connected
-    Devices Auto-Setup subsystem (NcdAutoSetup), preventing printer queue clutter.
-    Manual addition of network printers remains fully operational: users can
-    still manually search, discover, and install network printers via Settings
-    or the Control Panel Add Printer wizard.
-    
-    When enabled, Windows restores default plug-and-play auto-discovery and
-    automatic mapping for local network-connected devices.
-
-    Running without parameters displays the help menu with author, version,
-    syntax, and practical usage examples.
-
-================================================================================
 .SYNOPSIS
     Enables or disables automatic network printer discovery and mapping on Windows.
 
@@ -56,30 +57,30 @@
 
 .PARAMETER LogPath
     Optional path to a custom execution log file.
-    Default: C:\Logs\<yyyyMMdd_HHmmss>-<ComputerName>-<UserName>-Manage-Printer-Discovery.txt
+    Default: C:\Logs\<yyyyMMdd_HHmmss>-<ComputerName>-<UserName>-Manage-PrinterDiscovery.txt
 
 .EXAMPLE
-    .\manage-printer-discovery.ps1
+    .\Manage-PrinterDiscovery.ps1
     Displays the help guide, author information, and syntax overview.
 
 .EXAMPLE
-    .\manage-printer-discovery.ps1 -Help
+    .\Manage-PrinterDiscovery.ps1 -Help
     Displays detailed help and parameter usage.
 
 .EXAMPLE
-    .\manage-printer-discovery.ps1 disable
+    .\Manage-PrinterDiscovery.ps1 disable
     Disables automatic discovery and mapping of network printers.
 
 .EXAMPLE
-    .\manage-printer-discovery.ps1 enable
+    .\Manage-PrinterDiscovery.ps1 enable
     Enables automatic discovery and mapping of network printers.
 
 .EXAMPLE
-    .\manage-printer-discovery.ps1 -Action Status
+    .\Manage-PrinterDiscovery.ps1 -Action Status
     Audits the current discovery configuration without making modifications.
 
 .EXAMPLE
-    .\manage-printer-discovery.ps1 -Disable -LogPath "C:\Logs\printer_config.txt"
+    .\Manage-PrinterDiscovery.ps1 -Disable -LogPath "C:\Logs\printer_config.txt"
     Disables autodiscovery and writes execution details to a custom log file.
 
 .NOTES
@@ -128,8 +129,8 @@ $ErrorActionPreference = "Stop"
 # SCRIPT METADATA & GLOBALS
 # ==============================================================================
 $SCRIPT_INFO = @{
-    Name        = "Manage-Printer-Discovery"
-    FileName    = "manage-printer-discovery.ps1"
+    Name        = "Manage-PrinterDiscovery"
+    FileName    = "Manage-PrinterDiscovery.ps1"
     Version     = "1.0.0"
     Author      = "Roman Pindela"
     Contact     = "roman.pindela@gmail.com"
@@ -217,49 +218,49 @@ DESCRIPTION:
   - STATUS : Audits and reports the current registry policy and service state.
 
 USAGE:
-  .\manage-printer-discovery.ps1 enable [-LogPath <path_to_log.txt>]
-  .\manage-printer-discovery.ps1 disable [-LogPath <path_to_log.txt>]
-  .\manage-printer-discovery.ps1 status
-  .\manage-printer-discovery.ps1 -Action <Enable|Disable|Status|Help>
-  .\manage-printer-discovery.ps1 -Enable | -Disable | -Status
-  .\manage-printer-discovery.ps1 -h | -Help
+  .\Manage-PrinterDiscovery.ps1 enable [-LogPath <path_to_log.txt>]
+  .\Manage-PrinterDiscovery.ps1 disable [-LogPath <path_to_log.txt>]
+  .\Manage-PrinterDiscovery.ps1 status
+  .\Manage-PrinterDiscovery.ps1 -Action <Enable|Disable|Status|Help>
+  .\Manage-PrinterDiscovery.ps1 -Enable | -Disable | -Status
+  .\Manage-PrinterDiscovery.ps1 -h | -Help
 
 PARAMETERS:
   Action                  : Desired action: 'Enable', 'Disable', 'Status', or 'Help'.
-                            Can be supplied positionally (e.g., .\manage-printer-discovery.ps1 disable).
+                            Can be supplied positionally (e.g., .\Manage-PrinterDiscovery.ps1 disable).
   -Enable, -e             : Enables automatic network printer discovery and mapping.
   -Disable, -d            : Disables automatic network printer discovery and mapping.
   -Status, -s             : Checks current configuration without making any changes.
   -LogPath, -l, -Log      : [Optional] Custom path to text log file.
-                            Default: C:\Logs\<DateTime>-<Host>-<User>-Manage-Printer-Discovery.txt
+                            Default: C:\Logs\<DateTime>-<Host>-<User>-Manage-PrinterDiscovery.txt
   -Help, -h               : Displays this help menu, author information, and examples.
 
 EXAMPLES:
   # 1. Display help and info:
-  .\manage-printer-discovery.ps1
-  .\manage-printer-discovery.ps1 -h
+  .\Manage-PrinterDiscovery.ps1
+  .\Manage-PrinterDiscovery.ps1 -h
 
   # 2. Disable automatic discovery and mapping (positional or switch):
-  .\manage-printer-discovery.ps1 disable
-  .\manage-printer-discovery.ps1 -Disable
+  .\Manage-PrinterDiscovery.ps1 disable
+  .\Manage-PrinterDiscovery.ps1 -Disable
 
   # 3. Enable automatic discovery and mapping:
-  .\manage-printer-discovery.ps1 enable
-  .\manage-printer-discovery.ps1 -Enable
+  .\Manage-PrinterDiscovery.ps1 enable
+  .\Manage-PrinterDiscovery.ps1 -Enable
 
   # 4. Check current status:
-  .\manage-printer-discovery.ps1 status
-  .\manage-printer-discovery.ps1 -Status
+  .\Manage-PrinterDiscovery.ps1 status
+  .\Manage-PrinterDiscovery.ps1 -Status
 
   # 5. Disable autodiscovery with custom logging:
-  .\manage-printer-discovery.ps1 disable -LogPath "C:\Logs\PrinterDiscoverySetup.txt"
+  .\Manage-PrinterDiscovery.ps1 disable -LogPath "C:\Logs\PrinterDiscoverySetup.txt"
 
 SECURITY & REQUIREMENTS:
   - Administrator privileges are required for 'Enable' and 'Disable' actions.
     If not elevated, the script automatically prompts for UAC elevation.
   - Supports both Polish and English editions of Windows (Desktop and Server).
   - Unblock downloaded script if needed:
-    Unblock-File -Path .\manage-printer-discovery.ps1
+    Unblock-File -Path .\Manage-PrinterDiscovery.ps1
 ================================================================================
 "@ -ForegroundColor Yellow
 }
