@@ -1,9 +1,17 @@
-<#
+﻿<#
 .SYNOPSIS
     Diagnoses and repairs the Windows Print Spooler service.
 .DESCRIPTION
     This script performs a thorough diagnosis of the Print Spooler service on a local computer.
     It checks the service status, queued jobs, and can automatically attempt to clear stuck print queues and restart the service.
+.PARAMETER ShowHelp
+    Displays help and usage examples (aliases -h, -Help).
+.EXAMPLE
+    .\Test-PrintSpooler.ps1
+    Checks Print Spooler service health, print queue count, and printer statuses.
+.EXAMPLE
+    .\Test-PrintSpooler.ps1 -ShowHelp
+    Displays help and usage details.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
@@ -17,13 +25,13 @@ param (
 )
 
 function Show-ScriptHelp {
-    Write-Host "`n=== SCRIPT: Diagnose-Spooler ===" -ForegroundColor Cyan
+    Write-Host "`n=== SCRIPT: Test-PrintSpooler ===" -ForegroundColor Cyan
     Write-Host "Description: Diagnoses and attempts to fix Print Spooler issues."
     Write-Host "Author: Roman Pindela (roman.pindela@gmail.com) | https://github.com/romanpindela"
     Write-Host "Version: 1.1.1"
     Write-Host "`nUsage Examples:"
-    Write-Host "  .\spooler-diagnosis.ps1"
-    Write-Host "  .\spooler-diagnosis.ps1 -h`n"
+    Write-Host "  .\Test-PrintSpooler.ps1"
+    Write-Host "  .\Test-PrintSpooler.ps1 -h`n"
 }
 
 if ($ShowHelp) {
@@ -37,7 +45,7 @@ try {
     # 1. Check Service Status
     $spooler = Get-CimInstance -ClassName Win32_Service -Filter "Name='Spooler'" -ErrorAction Stop
     
-    # Kompatybilne z PowerShell 5.1 przypisanie koloru
+    # PowerShell 5.1 compatible color assignment
     $statusColor = if ($spooler.State -eq 'Running') { 'Green' } else { 'Red' }
     Write-Host "Service Status: $($spooler.State)" -ForegroundColor $statusColor
 
