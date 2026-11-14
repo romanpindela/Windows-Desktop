@@ -1,66 +1,67 @@
+﻿# ================================================================================
+#   Script Name : Enable-HyperVRemoteManagement.ps1
+#   Author      : Roman Pindela
+#   Contact     : roman.pindela@gmail.com
+#   Version     : 1.3.0
+#   Release Date: 2026-10-18
+#   License     : MIT
+#   Repository  : https://github.com/romanpindela
+#
+#   DESCRIPTION:
+#     Enterprise-grade PowerShell automation tool that configures a Windows 10,
+#     Windows 11, or Windows Server workstation (Client mode) or Hyper-V host
+#     (Server mode) for seamless remote management via Hyper-V Manager
+#     (virtmgmt.msc) and PowerShell Direct/Remoting in a Workgroup or LAN
+#     environment (English and Polish Windows editions).
+#
+#     Key Capabilities:
+#     1. Zero-Parameter Interactive Help (-Help / -h):
+#        Displays complete syntax, parameter documentation, usage examples,
+#        version, and author details when launched without arguments—without
+#        triggering an unnecessary UAC prompt.
+#     2. Complete Workgroup Hyper-V Client Configuration (-ServerName / -ServerIP):
+#        Addresses the two primary barriers to Hyper-V Manager connectivity in
+#        Workgroup / non-domain environments:
+#        - Name Resolution (hosts file): Hyper-V Manager cannot connect via a raw
+#          IP address in Workgroup mode; it requires a resolvable hostname
+#          (NetBIOS/FQDN). The script safely backs up and updates
+#          C:\Windows\System32\drivers\etc\hosts with '<ServerIP> <ServerName>'
+#          and verifies resolution & connectivity via Test-Connection.
+#        - WinRM TrustedHosts & CredSSP Delegation: Starts and configures the
+#          WinRM service, appends '<ServerName>' to WSMan TrustedHosts, and
+#          enables the CredSSP Client role with credential delegation
+#          (Enable-WSManCredSSP -Role Client -DelegateComputer <ServerName>).
+#        - Local Group Policy (NTLM-Only Fresh Credentials Delegation):
+#          Automatically configures the Group Policy registry settings under
+#          HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation
+#          ('Allow delegating fresh credentials with NTLM-only server
+#          authentication' -> 'wsman/<ServerName>') and executes gpupdate /force.
+#        - Optional Hyper-V Client Tools Provisioning (-InstallManagementTools):
+#          Checks and optionally enables 'Microsoft-Hyper-V-Management-Clients'
+#          (virtmgmt.msc) and 'Microsoft-Hyper-V-Management-PowerShell'.
+#     3. Optional Hyper-V Server-Side Configuration (-Role Server):
+#        Can also be executed directly on the target Hyper-V Server to enable
+#        PSRemoting, CredSSP Server role, Server Manager remoting, and language-
+#        independent Windows Firewall rules for WMI/DCOM, WinRM, and Hyper-V
+#        Management Clients.
+#     4. Detailed Step-by-Step Telemetry, Execution Summary & End-User Guide:
+#        Displays granular progress for every stage of execution and concludes
+#        with a structured summary report, server-side prerequisite checklist,
+#        and step-by-step instructions for connecting in Hyper-V Manager.
+#     5. Input Sanitization & Defensive Validation:
+#        Protects against command injection, path traversal, and malformed IPv4
+#        addresses or hostnames.
+#     6. Language-Independent UAC Auto-Elevation:
+#        Verifies Administrator privileges using the well-known Windows SID
+#        (S-1-5-32-544 / BuiltInAdministratorsSid) for 100% compatibility across
+#        Polish ("Administratorzy") and English ("Administrators") Windows systems,
+#        and automatically elevates via UAC while preserving all CLI parameters.
+#     7. Detailed Audit Logging:
+#        Logs all operations with UTF-8 timestamps to:
+#        C:\Logs\<yyyyMMdd_HHmmss>-Enable-HyperVRemoteManagement-<ComputerName>-<UserName>.logs
+# ================================================================================
+
 <#
-================================================================================
-  Script Name : enable-hyper-v-remote-management.ps1
-  Author      : Roman Pindela
-  Contact     : roman.pindela@gmail.com
-  Version     : 1.3.0
-  Release Date: 2026-10-18
-  License     : MIT
-  Repository  : https://github.com/romanpindela
-
-  DESCRIPTION:
-    Enterprise-grade PowerShell automation tool that configures a Windows 10,
-    Windows 11, or Windows Server workstation (Client mode) or Hyper-V host
-    (Server mode) for seamless remote management via Hyper-V Manager
-    (virtmgmt.msc) and PowerShell Direct/Remoting in a Workgroup or LAN
-    environment (English and Polish Windows editions).
-
-    Key Capabilities:
-    1. Zero-Parameter Interactive Help (-Help / -h):
-       Displays complete syntax, parameter documentation, usage examples,
-       version, and author details when launched without arguments—without
-       triggering an unnecessary UAC prompt.
-    2. Complete Workgroup Hyper-V Client Configuration (-ServerName / -ServerIP):
-       Addresses the two primary barriers to Hyper-V Manager connectivity in
-       Workgroup / non-domain environments:
-       - Name Resolution (hosts file): Hyper-V Manager cannot connect via a raw
-         IP address in Workgroup mode; it requires a resolvable hostname
-         (NetBIOS/FQDN). The script safely backs up and updates
-         C:\Windows\System32\drivers\etc\hosts with '<ServerIP> <ServerName>'
-         and verifies resolution & connectivity via Test-Connection.
-       - WinRM TrustedHosts & CredSSP Delegation: Starts and configures the
-         WinRM service, appends '<ServerName>' to WSMan TrustedHosts, and
-         enables the CredSSP Client role with credential delegation
-         (Enable-WSManCredSSP -Role Client -DelegateComputer <ServerName>).
-       - Local Group Policy (NTLM-Only Fresh Credentials Delegation):
-         Automatically configures the Group Policy registry settings under
-         HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation
-         ('Allow delegating fresh credentials with NTLM-only server
-         authentication' -> 'wsman/<ServerName>') and executes gpupdate /force.
-       - Optional Hyper-V Client Tools Provisioning (-InstallManagementTools):
-         Checks and optionally enables 'Microsoft-Hyper-V-Management-Clients'
-         (virtmgmt.msc) and 'Microsoft-Hyper-V-Management-PowerShell'.
-    3. Optional Hyper-V Server-Side Configuration (-Role Server):
-       Can also be executed directly on the target Hyper-V Server to enable
-       PSRemoting, CredSSP Server role, Server Manager remoting, and language-
-       independent Windows Firewall rules for WMI/DCOM, WinRM, and Hyper-V
-       Management Clients.
-    4. Detailed Step-by-Step Telemetry, Execution Summary & End-User Guide:
-       Displays granular progress for every stage of execution and concludes
-       with a structured summary report, server-side prerequisite checklist,
-       and step-by-step instructions for connecting in Hyper-V Manager.
-    5. Input Sanitization & Defensive Validation:
-       Protects against command injection, path traversal, and malformed IPv4
-       addresses or hostnames.
-    6. Language-Independent UAC Auto-Elevation:
-       Verifies Administrator privileges using the well-known Windows SID
-       (S-1-5-32-544 / BuiltInAdministratorsSid) for 100% compatibility across
-       Polish ("Administratorzy") and English ("Administrators") Windows systems,
-       and automatically elevates via UAC while preserving all CLI parameters.
-    7. Detailed Audit Logging:
-       Logs all operations with UTF-8 timestamps to:
-       C:\Logs\<yyyyMMdd_HHmmss>-enable-hyper-v-remote-management-<ComputerName>-<UserName>.logs
-================================================================================
 .SYNOPSIS
     Configures a Windows client workstation (or server) for remote Hyper-V
     Manager connectivity in a Workgroup or LAN environment.
@@ -161,7 +162,7 @@
 
 .PARAMETER LogPath
     Custom file path for the execution log.
-    Default: C:\Logs\<yyyyMMdd_HHmmss>-enable-hyper-v-remote-management-<ComputerName>-<UserName>.logs
+    Default: C:\Logs\<yyyyMMdd_HHmmss>-Enable-HyperVRemoteManagement-<ComputerName>-<UserName>.logs
     Aliases: -l, -Log
 
 .PARAMETER NoLog
@@ -173,12 +174,12 @@
     Aliases: -h
 
 .EXAMPLE
-    .\enable-hyper-v-remote-management.ps1
+    .\Enable-HyperVRemoteManagement.ps1
     Displays the help screen, usage syntax, parameter reference, examples,
     version, and author details without requiring UAC elevation.
 
 .EXAMPLE
-    .\enable-hyper-v-remote-management.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10"
+    .\Enable-HyperVRemoteManagement.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10"
     Configures the workstation to manage Hyper-V server 'HV-SRV01' (10.10.1.10):
     updates the hosts file, verifies Test-Connection, adds 'HV-SRV01' to WinRM
     TrustedHosts, enables CredSSP Client delegation, configures the Group Policy
@@ -186,28 +187,28 @@
     gpupdate /force.
 
 .EXAMPLE
-    .\enable-hyper-v-remote-management.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -InstallManagementTools -LaunchHyperVManager
+    .\Enable-HyperVRemoteManagement.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -InstallManagementTools -LaunchHyperVManager
     Performs the full client configuration, ensures Hyper-V Manager GUI and
     PowerShell tools are installed, and opens Hyper-V Manager (virtmgmt.msc).
 
 .EXAMPLE
-    .\enable-hyper-v-remote-management.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -SetPrivateNetworkProfile -IncludeIPInTrustedHosts
+    .\Enable-HyperVRemoteManagement.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -SetPrivateNetworkProfile -IncludeIPInTrustedHosts
     Switches any Public network adapter profile to Private, configures hosts,
     and registers both 'HV-SRV01' and '10.10.1.10' in TrustedHosts and CredSSP.
 
 .EXAMPLE
-    .\enable-hyper-v-remote-management.ps1 -Role Server
+    .\Enable-HyperVRemoteManagement.ps1 -Role Server
     Executes the server-side configuration on a Hyper-V host: enables PSRemoting,
     CredSSP Server role, Server Manager Remoting, and WMI/WinRM/Hyper-V firewall
     rules (compatible with Polish and English Windows editions).
 
 .EXAMPLE
-    .\enable-hyper-v-remote-management.ps1 -Status
+    .\Enable-HyperVRemoteManagement.ps1 -Status
     Displays a complete diagnostic audit of the current Hyper-V remote
     management client/server settings on the local computer.
 
 .EXAMPLE
-    .\enable-hyper-v-remote-management.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -DryRun
+    .\Enable-HyperVRemoteManagement.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -DryRun
     Simulates all client configuration changes (hosts, WinRM, CredSSP, GPO)
     without modifying the system.
 
@@ -290,8 +291,8 @@ $ErrorActionPreference = "Stop"
 # SCRIPT METADATA & CONFIGURATION
 # ==============================================================================
 $SCRIPT_INFO = @{
-    Name        = "enable-hyper-v-remote-management"
-    FileName    = "enable-hyper-v-remote-management.ps1"
+    Name        = "Enable-HyperVRemoteManagement"
+    FileName    = "Enable-HyperVRemoteManagement.ps1"
     Version     = "1.3.0"
     Author      = "Roman Pindela"
     Contact     = "roman.pindela@gmail.com"
@@ -522,23 +523,23 @@ DESCRIPTION:
      connecting in Hyper-V Manager.
   8. Multi-Language UAC Auto-Elevation & Audit Logging: Uses Windows SID
      (S-1-5-32-544) for Polish/English Windows compatibility and logs to:
-     C:\Logs\<yyyyMMdd_HHmmss>-enable-hyper-v-remote-management-<ComputerName>-<UserName>.logs
+     C:\Logs\<yyyyMMdd_HHmmss>-Enable-HyperVRemoteManagement-<ComputerName>-<UserName>.logs
 
 SYNTAX:
   # 1. Display Help (Default when run without parameters):
-  .\enable-hyper-v-remote-management.ps1 [-Help | -h]
+  .\Enable-HyperVRemoteManagement.ps1 [-Help | -h]
 
   # 2. Configure Client Workstation for Remote Hyper-V Server (Workgroup / LAN):
-  .\enable-hyper-v-remote-management.ps1 -ServerName <Hostname> [-ServerIP <IPv4>]
+  .\Enable-HyperVRemoteManagement.ps1 -ServerName <Hostname> [-ServerIP <IPv4>]
       [-InstallManagementTools] [-SetPrivateNetworkProfile]
       [-IncludeIPInTrustedHosts] [-StoreCredentials] [-ServerUser <User>]
       [-LaunchHyperVManager] [-DryRun]
 
   # 3. Configure Hyper-V Server Host (Server-Side Prerequisites):
-  .\enable-hyper-v-remote-management.ps1 -Role Server [-SetPrivateNetworkProfile] [-DryRun]
+  .\Enable-HyperVRemoteManagement.ps1 -Role Server [-SetPrivateNetworkProfile] [-DryRun]
 
   # 4. Audit Current Hyper-V Remote Management Configuration:
-  .\enable-hyper-v-remote-management.ps1 -Status [-ServerName <Hostname>]
+  .\Enable-HyperVRemoteManagement.ps1 -Status [-ServerName <Hostname>]
 
 PARAMETERS:
   -ServerName <String>        : Hostname (NetBIOS/FQDN) of the remote Hyper-V
@@ -570,29 +571,29 @@ PARAMETERS:
 
 PRACTICAL EXAMPLES:
   1. Display help, author, and version info (zero-parameter run):
-     .\enable-hyper-v-remote-management.ps1
+     .\Enable-HyperVRemoteManagement.ps1
 
   2. Configure client PC to connect to Hyper-V server 'HV-SRV01' at 10.10.1.10:
-     .\enable-hyper-v-remote-management.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10"
+     .\Enable-HyperVRemoteManagement.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10"
 
   3. Full client setup + install Hyper-V Manager GUI tools + launch Hyper-V Manager:
-     .\enable-hyper-v-remote-management.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -InstallManagementTools -LaunchHyperVManager
+     .\Enable-HyperVRemoteManagement.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -InstallManagementTools -LaunchHyperVManager
 
   4. Configure client, switch Public network to Private, and store credentials:
-     .\enable-hyper-v-remote-management.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -SetPrivateNetworkProfile -StoreCredentials -ServerUser "Administrator"
+     .\Enable-HyperVRemoteManagement.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -SetPrivateNetworkProfile -StoreCredentials -ServerUser "Administrator"
 
   5. Configure the Hyper-V Server itself (run on the Hyper-V host 10.10.1.10):
-     .\enable-hyper-v-remote-management.ps1 -Role Server
+     .\Enable-HyperVRemoteManagement.ps1 -Role Server
 
   6. Audit current client/server configuration without making changes:
-     .\enable-hyper-v-remote-management.ps1 -Status
+     .\Enable-HyperVRemoteManagement.ps1 -Status
 
   7. Simulate client configuration in Dry-Run mode:
-     .\enable-hyper-v-remote-management.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -DryRun
+     .\Enable-HyperVRemoteManagement.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -DryRun
 
 FIRST RUN / UNBLOCKING NOTE:
   After downloading this script from GitHub, unblock it before running:
-     Unblock-File -Path .\enable-hyper-v-remote-management.ps1
+     Unblock-File -Path .\Enable-HyperVRemoteManagement.ps1
 ================================================================================
 "@ -ForegroundColor Yellow
 }
@@ -1355,7 +1356,7 @@ if (-not [string]::IsNullOrWhiteSpace($ServerIP)) {
                     $newHostsLines.Add($line)
                 }
                 elseif (-not $updatedExistingLine -and -not $exactMatchFound) {
-                    $updatedLine = "{0,-15} {1} # Updated by enable-hyper-v-remote-management ({2})" -f $ServerIP, ($mergedHosts -join " "), (Get-Date -Format "yyyy-MM-dd")
+                    $updatedLine = "{0,-15} {1} # Updated by Enable-HyperVRemoteManagement ({2})" -f $ServerIP, ($mergedHosts -join " "), (Get-Date -Format "yyyy-MM-dd")
                     $newHostsLines.Add($updatedLine)
                     $updatedExistingLine = $true
                     Write-Log "      [*] Updating existing hosts entry for '$ServerIP' -> '$($mergedHosts -join ' ')'..." -Level INFO
@@ -1373,7 +1374,7 @@ if (-not [string]::IsNullOrWhiteSpace($ServerIP)) {
     }
     else {
         if (-not $updatedExistingLine) {
-            $newEntryLine = "{0,-15} {1} # Added by enable-hyper-v-remote-management ({2})" -f $ServerIP, $desiredHostsNamesString, (Get-Date -Format "yyyy-MM-dd")
+            $newEntryLine = "{0,-15} {1} # Added by Enable-HyperVRemoteManagement ({2})" -f $ServerIP, $desiredHostsNamesString, (Get-Date -Format "yyyy-MM-dd")
             $newHostsLines.Add($newEntryLine)
         }
 
@@ -1850,7 +1851,7 @@ Write-Log "       Enable-PSRemoting -Force" -Level WARN
 Write-Log "       Enable-WSManCredSSP -Role Server -Force" -Level WARN
 Write-Log "       Set-NetFirewallRule -Name 'WINRM-*','WMI-*','VM-Monitoring-*','Hyper-V-*' -Profile Any -RemoteAddress Any -Enabled True" -Level WARN
 Write-Log "       if (Get-Command Configure-SMRemoting.exe -ErrorAction SilentlyContinue) { Configure-SMRemoting.exe -Enable }" -Level WARN
-Write-Log "     (Or copy this script to '$primaryServerHost' and run: .\enable-hyper-v-remote-management.ps1 -Role Server)" -Level DETAIL
+Write-Log "     (Or copy this script to '$primaryServerHost' and run: .\Enable-HyperVRemoteManagement.ps1 -Role Server)" -Level DETAIL
 Write-Log "" -Level DETAIL
 Write-Log "  STEP B - Connect from This Client PC in Hyper-V Manager (virtmgmt.msc):" -Level INFO
 Write-Log "     1. Open 'Hyper-V Manager' (Menadzer funkcji Hyper-V) or run: virtmgmt.msc" -Level DETAIL
