@@ -1,14 +1,29 @@
-<#
+﻿<#
 .SYNOPSIS
     Manages the automatic upgrade from Windows 10 to Windows 11.
 .DESCRIPTION
-    By default, modifies local registry policies to pin the target release version 
+    Modifies local Windows Update registry policies to pin the target release version
     to Windows 10 (22H2), preventing automatic Windows 11 installation.
-    Use the -Disable switch to remove the block and allow the upgrade.
+    Use -Enable to apply the block, -Disable to remove it, or omit parameters/-ShowHelp to display usage help.
+.PARAMETER ShowHelp
+    Switch parameter (aliases -h, -help). Displays the help message and usage examples.
+.PARAMETER Enable
+    Switch parameter. Applies registry policies to keep the system on Windows 10 (22H2) and restarts wuauserv.
 .PARAMETER Disable
-    Switch parameter. If specified, unblocks the Windows 11 upgrade path.
+    Switch parameter. Removes the Windows 10 target-version block and restarts wuauserv.
+.EXAMPLE
+    .\Block-Win11Upgrade.ps1 -Enable
+    Blocks automatic upgrade to Windows 11 by pinning Windows 10 22H2.
+.EXAMPLE
+    .\Block-Win11Upgrade.ps1 -Disable
+    Removes the upgrade block and restores default Windows Update behavior.
+.EXAMPLE
+    .\Block-Win11Upgrade.ps1 -ShowHelp
+    Displays help and usage examples.
 .NOTES
     Author: Roman Pindela
+    Email: roman.pindela@gmail.com
+    GitHub: https://github.com/romanpindela
     Version: 1.0.0
 #>
 
@@ -24,20 +39,20 @@ param (
 $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
 
 if ($ShowHelp -or $PSBoundParameters.Count -eq 0) {
-    Write-Host "block-win11-upgrade.ps1 - Prevent automatic Windows 10 to Windows 11 upgrade" -ForegroundColor Cyan
+    Write-Host "Block-Win11Upgrade.ps1 - Prevent automatic Windows 10 to Windows 11 upgrade" -ForegroundColor Cyan
     Write-Host "";
     Write-Host "Usage:" -ForegroundColor White
-    Write-Host "  .\block-win11-upgrade.ps1 -Enable     # Block automatic Windows 11 upgrade" -ForegroundColor Gray
-    Write-Host "  .\block-win11-upgrade.ps1 -Disable    # Restore default upgrade behavior" -ForegroundColor Gray
-    Write-Host "  .\block-win11-upgrade.ps1 -Help       # Show this help message" -ForegroundColor Gray
+    Write-Host "  .\Block-Win11Upgrade.ps1 -Enable     # Block automatic Windows 11 upgrade" -ForegroundColor Gray
+    Write-Host "  .\Block-Win11Upgrade.ps1 -Disable    # Restore default upgrade behavior" -ForegroundColor Gray
+    Write-Host "  .\Block-Win11Upgrade.ps1 -ShowHelp       # Show this help message" -ForegroundColor Gray
     Write-Host "";
     Write-Host "Author: Roman Pindela" -ForegroundColor White
     Write-Host "Description: Modifies Windows Update policy to keep the system on Windows 10 (22H2) and prevent an automatic upgrade to Windows 11." -ForegroundColor Gray
     Write-Host "";
     Write-Host "Examples:" -ForegroundColor White
-    Write-Host "  .\block-win11-upgrade.ps1 -Enable" -ForegroundColor Gray
-    Write-Host "  .\block-win11-upgrade.ps1 -Disable" -ForegroundColor Gray
-    Write-Host "  .\block-win11-upgrade.ps1 -h" -ForegroundColor Gray
+    Write-Host "  .\Block-Win11Upgrade.ps1 -Enable" -ForegroundColor Gray
+    Write-Host "  .\Block-Win11Upgrade.ps1 -Disable" -ForegroundColor Gray
+    Write-Host "  .\Block-Win11Upgrade.ps1 -h" -ForegroundColor Gray
     return
 }
 
