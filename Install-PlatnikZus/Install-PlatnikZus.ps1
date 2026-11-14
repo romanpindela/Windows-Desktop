@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Prepares the system environment and downloads the necessary installers for ZUS Płatnik.
 .DESCRIPTION
@@ -11,6 +11,8 @@
     The direct URL to the main ZUS Płatnik installer executable.
 .PARAMETER PatchUrl
     The direct URL to the ZUS Płatnik patch executable.
+.PARAMETER Download
+    Specifies which files to download in PrepareAndDownload mode: 'All', 'InstallerOnly', or 'PatchOnly'. Defaults to 'All'.
 .PARAMETER PrepareEnvironment
     A switch to only prepare the environment by checking and installing prerequisites.
 .PARAMETER PrepareAndDownload
@@ -18,21 +20,21 @@
 .PARAMETER Help
     Displays this help message and exits.
 .EXAMPLE
-    .\deploy-zus-platnik.ps1
+    .\Install-PlatnikZus.ps1
     
     Checks prerequisites, installs them if needed, and downloads the Płatnik
     installer and patch to the C:\Temp folder.
 .EXAMPLE
-    .\deploy-zus-platnik.ps1 -PrepareEnvironment
+    .\Install-PlatnikZus.ps1 -PrepareEnvironment
     
     Checks and installs all necessary prerequisites without downloading any Płatnik files.
 .EXAMPLE
-    .\deploy-zus-platnik.ps1 -PrepareAndDownload -Download PatchOnly
+    .\Install-PlatnikZus.ps1 -PrepareAndDownload -Download PatchOnly
     
     Prepares the environment and then downloads only the Płatnik patch file.
     This is similar to the previous default behavior but explicitly triggered.
 .EXAMPLE
-    .\deploy-zus-platnik.ps1 -Help
+    .\Install-PlatnikZus.ps1 -Help
     
     Displays the help screen with information about the script, parameters, and examples. 
 .NOTES
@@ -43,7 +45,7 @@
 
     This script is designed to be language-agnostic and will work on both Polish and English
     versions of Windows. It is crucial to unblock the script after downloading it from the internet.
-    Run: Unblock-File -Path .\deploy-zus-platnik.ps1
+    Run: Unblock-File -Path .\Install-PlatnikZus.ps1
 #>
 
 [CmdletBinding(DefaultParameterSetName='HelpOnly')]
@@ -90,7 +92,7 @@ function Show-Help {
     Write-Host "    It checks and installs the .NET prerequisite and then downloads the installer and patch to the C:\Temp folder."
     Write-Host ""
     Write-Host "USAGE:" -ForegroundColor Yellow
-    Write-Host "    .\deploy-zus-platnik.ps1 [-PrepareEnvironment | -PrepareAndDownload] [PARAMETERS]"
+    Write-Host "    .\Install-PlatnikZus.ps1 [-PrepareEnvironment | -PrepareAndDownload] [PARAMETERS]"
     Write-Host ""
     Write-Host "PARAMETERS:" -ForegroundColor Yellow
     Write-Host "    -InstallerUrl <string>"
@@ -116,23 +118,23 @@ function Show-Help {
     Write-Host ""
     Write-Host "EXAMPLE:" -ForegroundColor Yellow
     Write-Host "    # Prepare environment and download all files (default)"
-    Write-Host "    .\deploy-zus-platnik.ps1"
+    Write-Host "    .\Install-PlatnikZus.ps1"
     Write-Host ""
     Write-Host "    # Only prepare the environment (install prerequisites)"
-    Write-Host "    .\deploy-zus-platnik.ps1 -PrepareEnvironment"
+    Write-Host "    .\Install-PlatnikZus.ps1 -PrepareEnvironment"
     Write-Host ""
     Write-Host "    # Prepare environment and download all files (explicitly)"
-    Write-Host "    .\deploy-zus-platnik.ps1 -PrepareAndDownload"
+    Write-Host "    .\Install-PlatnikZus.ps1 -PrepareAndDownload"
     Write-Host ""
     Write-Host "    # Prepare environment and download only the patch"
-    Write-Host "    .\deploy-zus-platnik.ps1 -Download PatchOnly"
+    Write-Host "    .\Install-PlatnikZus.ps1 -Download PatchOnly"
     Write-Host ""
     Write-Host "    # Display this help menu"
-    Write-Host "    .\deploy-zus-platnik.ps1 -Help"
+    Write-Host "    .\Install-PlatnikZus.ps1 -Help"
     Write-Host ""
     Write-Host "IMPORTANT:" -ForegroundColor Yellow
     Write-Host "    After downloading, you must unblock the script:"
-    Write-Host "    Unblock-File -Path '.\deploy-zus-platnik.ps1'"
+    Write-Host "    Unblock-File -Path '.\Install-PlatnikZus.ps1'"
     Write-Host ""
     Write-Host "CONTACT:" -ForegroundColor Yellow
     Write-Host "    Author : $AuthorName"
