@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     A utility script to create Directory Junction points in Windows.
 .DESCRIPTION
@@ -7,6 +7,11 @@
     The path where the new junction (link) should be created.
 .PARAMETER TargetPath
     The existing directory path that the junction will point to.
+.PARAMETER ShowHelp
+    Displays help and usage examples (aliases -h, -Help).
+.EXAMPLE
+    .\New-JunctionPoint.ps1 -JunctionPath 'C:\MyLink' -TargetPath 'D:\Data\Folder'
+    Creates an NTFS Directory Junction at C:\MyLink pointing to D:\Data\Folder.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
@@ -32,8 +37,8 @@ function Show-ScriptHelp {
     Write-Host "Web: https://github.com/romanpindela"
     Write-Host "Version: 1.1.1"
     Write-Host "`nUsage Examples:"
-    Write-Host "  .\make-junction-point.ps1 -JunctionPath 'C:\MyLink' -TargetPath 'D:\Data\Folder'"
-    Write-Host "  .\make-junction-point.ps1 -h"
+    Write-Host "  .\New-JunctionPoint.ps1 -JunctionPath 'C:\MyLink' -TargetPath 'D:\Data\Folder'"
+    Write-Host "  .\New-JunctionPoint.ps1 -h"
 }
 
 # 1. Automatic help when no parameters or -h flag is present
