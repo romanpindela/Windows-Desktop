@@ -1,9 +1,21 @@
-<#
+﻿<#
 .SYNOPSIS
     Displays a graphical warning message to the user.
 .DESCRIPTION
     The script generates a pop-up warning window with a red background. 
     It uses Windows Forms and DWM API for full native styling.
+.PARAMETER Message
+    Text body displayed inside the modal warning alert window.
+.PARAMETER Title
+    Optional window title displayed in the dialog bar.
+.PARAMETER ShowHelp
+    Displays help and usage examples (aliases -h, -Help).
+.EXAMPLE
+    .\Show-Alert.ps1
+    Displays the modal warning window with the default message.
+.EXAMPLE
+    .\Show-Alert.ps1 -Message 'A system error occurred. Please log out.' -Title 'FAILURE'
+    Displays a custom warning dialog on screen.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
@@ -28,9 +40,9 @@ function Show-ScriptHelp {
     Write-Host "Author: Roman Pindela (roman.pindela@gmail.com) | https://github.com/romanpindela"
     Write-Host "Version: 1.0.0"
     Write-Host "`nUsage Examples:"
-    Write-Host "  .\show-alert.ps1"
-    Write-Host "  .\show-alert.ps1 -Message 'A system error occurred. Please log out.' -Title 'FAILURE'"
-    Write-Host "  .\show-alert.ps1 -h`n"
+    Write-Host "  .\Show-Alert.ps1"
+    Write-Host "  .\Show-Alert.ps1 -Message 'A system error occurred. Please log out.' -Title 'FAILURE'"
+    Write-Host "  .\Show-Alert.ps1 -h`n"
 }
 
 if ($ShowHelp) {

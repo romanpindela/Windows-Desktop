@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Executes a local PowerShell script interactively on a remote machine's desktop.
 .DESCRIPTION
@@ -13,8 +13,15 @@
     Optional PSCredential object. If not provided, you will be prompted.
 .PARAMETER ArgumentList
     Optional array of arguments to pass to the remote script.
+.PARAMETER ShowHelp
+    Displays help and usage examples (aliases -h, -Help).
+.EXAMPLE
+    .\Invoke-InteractiveScript.ps1 -ComputerName '10.10.1.96' -ScriptPath '.\Show-Alert.ps1' -ArgumentList '-Message "Hello"'
+    Executes Show-Alert.ps1 interactively in the logged-on user session on 10.10.1.96.
 .NOTES
     Author: Roman Pindela
+    Email: roman.pindela@gmail.com
+    GitHub: https://github.com/romanpindela
     Version: 1.0.1
 #>
 
@@ -39,7 +46,7 @@ $ScriptVersion = "1.0.1"
 
 function Show-Help {
     Write-Host ""
-    Write-Host "INVOKE-INTERACTIVESCRIPT v$ScriptVersion" -ForegroundColor Cyan
+    Write-Host "Invoke-InteractiveScript v$ScriptVersion" -ForegroundColor Cyan
     Write-Host "Execute local .ps1 scripts interactively on a remote desktop"
     Write-Host ""
     Write-Host "DESCRIPTION"
@@ -49,7 +56,7 @@ function Show-Help {
     Write-Host "    displayed to the currently active user."
     Write-Host ""
     Write-Host "USAGE"
-    Write-Host "    .\invoke-interactive-script.ps1 -ComputerName <String> -ScriptPath <String>"
+    Write-Host "    .\Invoke-InteractiveScript.ps1 -ComputerName <String> -ScriptPath <String>"
     Write-Host ""
     Write-Host "PARAMETERS"
     Write-Host "    -ComputerName  Hostname or IP address of the target computer."
@@ -59,7 +66,7 @@ function Show-Help {
     Write-Host "    -h, -Help      Display this structured help screen."
     Write-Host ""
     Write-Host "EXAMPLES"
-    Write-Host "    .\invoke-interactive-script.ps1 -ComputerName '10.10.1.96' -ScriptPath '.\show-alert.ps1' -ArgumentList '-Message `"Hello`"'"
+    Write-Host "    .\Invoke-InteractiveScript.ps1 -ComputerName '10.10.1.96' -ScriptPath '.\Show-Alert.ps1' -ArgumentList '-Message `"Hello`"'"
     Write-Host ""
 }
 
