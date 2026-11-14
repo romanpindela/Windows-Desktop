@@ -1,48 +1,49 @@
+﻿# ================================================================================
+#   Script Name : Manage-WindowsOptionalFeatures.ps1
+#   Author      : Roman Pindela
+#   Contact     : roman.pindela@gmail.com
+#   Version     : 1.2.0
+#   Release Date: 2026-10-18
+#   License     : MIT
+#   Repository  : https://github.com/romanpindela
+#
+#   DESCRIPTION:
+#     Enterprise-grade PowerShell automation tool for inspecting, listing,
+#     enabling, and disabling Windows Optional Features (DISM / Win32_OptionalFeature)
+#     across Windows 10, Windows 11, and Windows Server (English and Polish editions).
+#
+#     Key Capabilities:
+#     1. Zero-Parameter Interactive Help (-Help / -h):
+#        Displays complete syntax, parameter documentation, common Windows 10/11
+#        feature names, usage examples, version, and author details when launched
+#        without parameters, without triggering an unnecessary UAC prompt.
+#     2. Enable & Disable Windows Optional Features:
+#        Enables or disables one or multiple Windows features via the -Action
+#        parameter ('Enable' / 'Disable' / 'List' / 'Details') or dedicated
+#        switches (-Enable, -Disable, -List). Automatically resolves parent
+#        feature dependencies (-All by default when enabling) and manages
+#        reboot behavior safely (-NoRestart by default, or -Restart when requested).
+#     3. Comprehensive Feature Details Listing:
+#        Lists full details for each Windows Optional Feature (FeatureName,
+#        DisplayName, State, RestartRequired, Description, and CustomProperties)
+#        both in listing/inspection mode and before/after every Enable or Disable
+#        operation. Combines DISM (Get-WindowsOptionalFeature) with CIM/WMI
+#        (Win32_OptionalFeature) so localized DisplayName and Description are
+#        always populated quickly and accurately.
+#     4. Input Sanitization & Defensive Validation:
+#        Protects against command injection, path traversal, and malformed
+#        feature names or file paths.
+#     5. Language-Independent UAC Auto-Elevation:
+#        Verifies Administrator privileges using the well-known Windows SID
+#        (S-1-5-32-544 / BuiltInAdministratorsSid) for 100% compatibility across
+#        Polish ("Administratorzy") and English ("Administrators") Windows systems,
+#        and automatically elevates via UAC while preserving all CLI parameters.
+#     6. Detailed Audit Logging & Optional CSV/JSON Export:
+#        Logs all operations with UTF-8 timestamps to:
+#        C:\Logs\<yyyyMMdd_HHmmss>-Manage-WindowsOptionalFeatures-<ComputerName>-<UserName>.logs
+# ================================================================================
+
 <#
-================================================================================
-  Script Name : Manage-WindowsOptionalFeatures.ps1
-  Author      : Roman Pindela
-  Contact     : roman.pindela@gmail.com
-  Version     : 1.2.0
-  Release Date: 2026-10-18
-  License     : MIT
-  Repository  : https://github.com/romanpindela
-
-  DESCRIPTION:
-    Enterprise-grade PowerShell automation tool for inspecting, listing,
-    enabling, and disabling Windows Optional Features (DISM / Win32_OptionalFeature)
-    across Windows 10, Windows 11, and Windows Server (English and Polish editions).
-
-    Key Capabilities:
-    1. Zero-Parameter Interactive Help (-Help / -h):
-       Displays complete syntax, parameter documentation, common Windows 10/11
-       feature names, usage examples, version, and author details when launched
-       without parameters, without triggering an unnecessary UAC prompt.
-    2. Enable & Disable Windows Optional Features:
-       Enables or disables one or multiple Windows features via the -Action
-       parameter ('Enable' / 'Disable' / 'List' / 'Details') or dedicated
-       switches (-Enable, -Disable, -List). Automatically resolves parent
-       feature dependencies (-All by default when enabling) and manages
-       reboot behavior safely (-NoRestart by default, or -Restart when requested).
-    3. Comprehensive Feature Details Listing:
-       Lists full details for each Windows Optional Feature (FeatureName,
-       DisplayName, State, RestartRequired, Description, and CustomProperties)
-       both in listing/inspection mode and before/after every Enable or Disable
-       operation. Combines DISM (Get-WindowsOptionalFeature) with CIM/WMI
-       (Win32_OptionalFeature) so localized DisplayName and Description are
-       always populated quickly and accurately.
-    4. Input Sanitization & Defensive Validation:
-       Protects against command injection, path traversal, and malformed
-       feature names or file paths.
-    5. Language-Independent UAC Auto-Elevation:
-       Verifies Administrator privileges using the well-known Windows SID
-       (S-1-5-32-544 / BuiltInAdministratorsSid) for 100% compatibility across
-       Polish ("Administratorzy") and English ("Administrators") Windows systems,
-       and automatically elevates via UAC while preserving all CLI parameters.
-    6. Detailed Audit Logging & Optional CSV/JSON Export:
-       Logs all operations with UTF-8 timestamps to:
-       C:\Logs\<yyyyMMdd_HHmmss>-Manage-WindowsOptionalFeatures-<ComputerName>-<UserName>.logs
-================================================================================
 .SYNOPSIS
     Lists details, enables, or disables Windows Optional Features in Windows 10/11.
 
