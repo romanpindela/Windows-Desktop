@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Unblocks PowerShell scripts (.ps1, .psm1, .psd1) in a specified directory recursively.
 .DESCRIPTION
@@ -12,9 +12,14 @@
 .PARAMETER HelpMe
     Displays the custom help menu.
 .EXAMPLE
-    .\unblock-powershell-scripts.ps1 -Path "C:\Users\Roman\Downloads\Scripts"
+    .\Unblock-PowerShellScripts.ps1 -Path "C:\Users\Roman\Downloads\Scripts"
 .EXAMPLE
-    .\unblock-powershell-scripts.ps1 -Path "." -Force
+    .\Unblock-PowerShellScripts.ps1 -Path "." -Force
+.NOTES
+    Author: Roman Pindela
+    Email: roman.pindela@gmail.com
+    GitHub: https://github.com/romanpindela
+    Version: 1.0.0
 #>
 
 [CmdletBinding()]
@@ -40,7 +45,7 @@ $AUTHOR_GITHUB  = "https://github.com/romanpindela"
 
 function Show-ScriptHelp {
     Write-Host "==========================================================================" -ForegroundColor Cyan
-    Write-Host " SKCRIPT: unblock-powershell-scripts.ps1" -ForegroundColor Cyan
+    Write-Host " SCRIPT: Unblock-PowerShellScripts.ps1" -ForegroundColor Cyan
     Write-Host " VERSION: $SCRIPT_VERSION" -ForegroundColor Cyan
     Write-Host " AUTHOR : $AUTHOR_NAME ($AUTHOR_EMAIL)" -ForegroundColor Cyan
     Write-Host " GITHUB : $AUTHOR_GITHUB" -ForegroundColor Cyan
@@ -51,13 +56,13 @@ function Show-ScriptHelp {
     
     Write-Host "`nUsage / Examples:" -ForegroundColor Yellow
     Write-Host "  1. Display help menu:"
-    Write-Host "     .\unblock-powershell-scripts.ps1 -Help" -ForegroundColor Green
+    Write-Host "     .\Unblock-PowerShellScripts.ps1 -Help" -ForegroundColor Green
     
     Write-Host "`n  2. Unblock files in a specific directory (with confirmation):"
-    Write-Host "     .\unblock-powershell-scripts.ps1 -Path 'C:\MyScripts'" -ForegroundColor Green
+    Write-Host "     .\Unblock-PowerShellScripts.ps1 -Path 'C:\MyScripts'" -ForegroundColor Green
     
     Write-Host "`n  3. Unblock files in current directory silently (Force):"
-    Write-Host "     .\unblock-powershell-scripts.ps1 -Path '.' -Force" -ForegroundColor Green
+    Write-Host "     .\Unblock-PowerShellScripts.ps1 -Path '.' -Force" -ForegroundColor Green
     Write-Host "==========================================================================" -ForegroundColor Cyan
 }
 
