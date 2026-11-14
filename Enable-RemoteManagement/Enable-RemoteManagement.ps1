@@ -1,4 +1,4 @@
-# Script: enable-remote-management.ps1
+﻿# Script: Enable-RemoteManagement.ps1
 
 <#
 .SYNOPSIS
@@ -12,6 +12,14 @@
     Defaults to 'Administrator'.
 .PARAMETER TrustedHostPattern
     The IP or hostname pattern to add to the WinRM TrustedHosts list (e.g., '*', '10.10.1.*').
+.PARAMETER ShowHelp
+    Displays this help screen and usage examples (aliases -h, -Help).
+.EXAMPLE
+    .\Enable-RemoteManagement.ps1
+    Enables PSRemoting with default firewall rules and authorizes Administrator.
+.EXAMPLE
+    .\Enable-RemoteManagement.ps1 -TargetUser 'rpindela' -TrustedHostPattern '10.10.1.*'
+    Enables PSRemoting, grants Remote Management Users access to rpindela, and adds 10.10.1.* to TrustedHosts.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
@@ -36,7 +44,7 @@ $ScriptVersion = "1.5.0"
 
 function Show-Help {
     Write-Host ""
-    Write-Host "enable-remote-management v$ScriptVersion" -ForegroundColor Cyan
+    Write-Host "Enable-RemoteManagement v$ScriptVersion" -ForegroundColor Cyan
     Write-Host "Local PSRemoting Setup & User Access Provisioning Utility"
     Write-Host ""
     Write-Host "DESCRIPTION"
@@ -44,7 +52,7 @@ function Show-Help {
     Write-Host "    grants remote entry rights, and displays a summary of all authorized accounts."
     Write-Host ""
     Write-Host "USAGE"
-    Write-Host "    .\enable-remote-management.ps1 -TargetUser <String> -TrustedHostPattern <String>"
+    Write-Host "    .\Enable-RemoteManagement.ps1 -TargetUser <String> -TrustedHostPattern <String>"
     Write-Host ""
     Write-Host "PARAMETERS"
     Write-Host "    -TargetUser          The user account to authorize (Local or Domain\User). Defaults to 'Administrator'."
@@ -58,10 +66,10 @@ function Show-Help {
     Write-Host ""
     Write-Host "EXAMPLES"
     Write-Host "    # Enable PSRemoting and grant access to the default Administrator:"
-    Write-Host "    .\enable-remote-management.ps1"
+    Write-Host "    .\Enable-RemoteManagement.ps1"
     Write-Host ""
     Write-Host "    # Grant remote access to a specific account (verifies existence first):"
-    Write-Host "    .\enable-remote-management.ps1 -TargetUser 'rpindela'"
+    Write-Host "    .\Enable-RemoteManagement.ps1 -TargetUser 'rpindela'"
     Write-Host ""
     Write-Host "CONTACT & INFO"
     Write-Host "    Author : Roman Pindela"
@@ -92,7 +100,7 @@ $ScriptSuccess = $false
 
 try {
     Write-Host ""
-    Write-Host "enable-remote-management v$ScriptVersion" -ForegroundColor Green
+    Write-Host "Enable-RemoteManagement v$ScriptVersion" -ForegroundColor Green
     Write-Host "Target Authorization User: $TargetUser"
     Write-Host "--------------------------------------------------"
 
