@@ -1,23 +1,24 @@
-﻿<#
-================================================================================
-  Script Name : Uninstall-Applications.ps1
-  Author      : Roman Pindela
-  Contact     : roman.pindela@gmail.com
-  GitHub      : https://github.com/romanpindela
-  Version     : 1.0.0
-  Release Date: 2026-10-12
-  License     : MIT
+﻿# ================================================================================
+#   Script Name : Uninstall-Applications.ps1
+#   Author      : Roman Pindela
+#   Contact     : roman.pindela@gmail.com
+#   GitHub      : https://github.com/romanpindela
+#   Version     : 1.0.0
+#   Release Date: 2026-10-12
+#   License     : MIT
+#
+#   DESCRIPTION:
+#     Enterprise automation tool for searching, auditing, and uninstalling
+#     workstation applications on Windows (x64 / x86 architectures).
+#     Combines high-performance native .NET Registry inspection with the
+#     Windows Package Manager (WinGet) and Windows Installer (MSI) engines.
+#     Provides detailed progress tracking, post-uninstallation verification,
+#     cross-language Windows support (English/Polish), seamless Exchange Online
+#     administrator connection, and structured activity logging.
+#
+# ================================================================================
 
-  DESCRIPTION:
-    Enterprise automation tool for searching, auditing, and uninstalling
-    workstation applications on Windows (x64 / x86 architectures).
-    Combines high-performance native .NET Registry inspection with the
-    Windows Package Manager (WinGet) and Windows Installer (MSI) engines.
-    Provides detailed progress tracking, post-uninstallation verification,
-    cross-language Windows support (English/Polish), seamless Exchange Online
-    administrator connection, and structured activity logging.
-
-================================================================================
+<#
 .SYNOPSIS
     Audits, filters, and uninstalls software packages using WinGet, MSI, and native uninstallers.
 
