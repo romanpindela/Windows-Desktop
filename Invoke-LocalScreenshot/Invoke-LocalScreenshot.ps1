@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Captures a local screenshot of the primary display.
 .DESCRIPTION
@@ -6,6 +6,8 @@
     Designed for local execution or via Task Scheduler.
 .PARAMETER OutputDirectory
     The directory where the screenshot will be saved. Defaults to 'C:\temp'.
+.PARAMETER ShowHelp
+    Displays help and usage details (aliases -h, -Help).
 .EXAMPLE
     .\Invoke-LocalScreenshot.ps1 -OutputDirectory "C:\Screenshots"
 .NOTES
