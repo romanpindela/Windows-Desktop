@@ -1,9 +1,9 @@
-<#
+﻿<#
 .SYNOPSIS
     Searches and replaces text or regular expressions across multiple files safely.
 
 .DESCRIPTION
-    replace-text-in-files performs mass search-and-replace operations in text files
+    Update-TextInFiles performs mass search-and-replace operations in text files
     within a specified directory tree.
 
     Key Features:
@@ -99,7 +99,7 @@
     Path to an output report file (.csv or .json) recording execution details for each processed file.
 
 .PARAMETER EnableLogging
-    Enables execution logging to C:\Logs\<YYYYMMDD-HHmmss>-replace-text-in-files-<HostName>-<UserName>.log.
+    Enables execution logging to C:\Logs\<YYYYMMDD-HHmmss>-Update-TextInFiles-<HostName>-<UserName>.log.
 
 .PARAMETER Help
     Displays the interactive help guide and examples.
@@ -118,23 +118,23 @@
     - Mode               : 'Execute' or 'WhatIf'
 
 .EXAMPLE
-    .\replace-text-in-files.ps1 -Path ".\Docs" -Filter "*.md" -FindText "#stary-tag" -ReplaceWith "" -Recurse
+    .\Update-TextInFiles.ps1 -Path ".\Docs" -Filter "*.md" -FindText "#stary-tag" -ReplaceWith "" -Recurse
     Recursively removes '#stary-tag' from all Markdown files under the '.\Docs' folder.
 
 .EXAMPLE
-    .\replace-text-in-files.ps1 -Path "C:\Projekty" -Filter "*.json" -FindText 'v(\d+)\.(\d+)\.(\d+)' -ReplaceWith 'v2.$2.$3' -UseRegex -ShowDiff -WhatIf
+    .\Update-TextInFiles.ps1 -Path "C:\Projekty" -Filter "*.json" -FindText 'v(\d+)\.(\d+)\.(\d+)' -ReplaceWith 'v2.$2.$3' -UseRegex -ShowDiff -WhatIf
     Simulates regex version replacement with visual diff preview without modifying disk.
 
 .EXAMPLE
-    .\replace-text-in-files.ps1 -Path "D:\Configs" -Filter "*.config", "*.xml" -FindText "(?s)<connectionString>.*?</connectionString>" -ReplaceWith "<connectionString>Server=new-db</connectionString>" -UseRegex -RegexSingleline -BackupDirectory "D:\Backups" -ExportReportPath ".\report.json"
+    .\Update-TextInFiles.ps1 -Path "D:\Configs" -Filter "*.config", "*.xml" -FindText "(?s)<connectionString>.*?</connectionString>" -ReplaceWith "<connectionString>Server=new-db</connectionString>" -UseRegex -RegexSingleline -BackupDirectory "D:\Backups" -ExportReportPath ".\report.json"
     Replaces multiline connection blocks across config and XML files, routing backups to D:\Backups and exporting audit report.
 
 .EXAMPLE
-    .\replace-text-in-files.ps1 -Path ".\Source" -Filter "*.cs" -FindText '\b[a-z0-9._%+-]+@company\.com\b' -MatchEvaluator { param($m) $m.Value.ToLower() } -ShowDiff
+    .\Update-TextInFiles.ps1 -Path ".\Source" -Filter "*.cs" -FindText '\b[a-z0-9._%+-]+@company\.com\b' -MatchEvaluator { param($m) $m.Value.ToLower() } -ShowDiff
     Dynamically normalizes company email addresses to lowercase using a ScriptBlock evaluator.
 
 .NOTES
-    Script Name : replace-text-in-files.ps1
+    Script Name : Update-TextInFiles.ps1
     Author      : Roman Pindela
     Contact     : roman.pindela@gmail.com
     GitHub      : https://github.com/romanpindela
@@ -218,7 +218,7 @@ param (
 
 # --- SCRIPT CONSTANTS & METADATA ---
 $SCRIPT_INFO = @{
-    Name        = "replace-text-in-files"
+    Name        = "Update-TextInFiles"
     Version     = "1.1.0"
     Author      = "Roman Pindela"
     Contact     = "roman.pindela@gmail.com"
@@ -397,16 +397,16 @@ PARAMETERS:
 
 PRACTICAL EXAMPLES:
   1. Remove old tag from Markdown files:
-     .\replace-text-in-files.ps1 -Path ".\Docs" -Filter "*.md" -FindText "#old-tag" -ReplaceWith "" -Recurse
+     .\Update-TextInFiles.ps1 -Path ".\Docs" -Filter "*.md" -FindText "#old-tag" -ReplaceWith "" -Recurse
 
   2. Simulate Regex replacement with visual diff (-ShowDiff -WhatIf):
-     .\replace-text-in-files.ps1 -Path "C:\Projekty" -Filter "*.json" -FindText 'v\d+\.\d+\.\d+' -ReplaceWith 'v2.0.0' -UseRegex -ShowDiff -WhatIf
+     .\Update-TextInFiles.ps1 -Path "C:\Projekty" -Filter "*.json" -FindText 'v\d+\.\d+\.\d+' -ReplaceWith 'v2.0.0' -UseRegex -ShowDiff -WhatIf
 
   3. Multiline XML/Config block replacement with dedicated backup directory and JSON report:
-     .\replace-text-in-files.ps1 -Path "D:\Configs" -Filter "*.config", "*.xml" -FindText "(?s)<connectionString>.*?</connectionString>" -ReplaceWith "<connectionString>Server=new-db</connectionString>" -UseRegex -RegexSingleline -BackupDirectory "D:\Backups" -ExportReportPath ".\audit.json"
+     .\Update-TextInFiles.ps1 -Path "D:\Configs" -Filter "*.config", "*.xml" -FindText "(?s)<connectionString>.*?</connectionString>" -ReplaceWith "<connectionString>Server=new-db</connectionString>" -UseRegex -RegexSingleline -BackupDirectory "D:\Backups" -ExportReportPath ".\audit.json"
 
   4. Dynamic normalization using a ScriptBlock evaluator:
-     .\replace-text-in-files.ps1 -Path ".\Source" -Filter "*.cs" -FindText '\b[a-z0-9._%+-]+@company\.com\b' -MatchEvaluator { param(`$m) `$m.Value.ToLower() } -ShowDiff
+     .\Update-TextInFiles.ps1 -Path ".\Source" -Filter "*.cs" -FindText '\b[a-z0-9._%+-]+@company\.com\b' -MatchEvaluator { param(`$m) `$m.Value.ToLower() } -ShowDiff
 ================================================================================
 "@ -ForegroundColor Yellow
 }
@@ -634,7 +634,7 @@ $currentIndex = 0
 foreach ($file in $eligibleFiles) {
     $currentIndex++
     $percent = if ($totalScanned -gt 0) { [math]::Min(100, [int](($currentIndex / $totalScanned) * 100)) } else { 100 }
-    Write-Progress -Activity "replace-text-in-files" -Status "Processing file $currentIndex of ${totalScanned} - $($file.Name)" -PercentComplete $percent
+    Write-Progress -Activity "Update-TextInFiles" -Status "Processing file $currentIndex of ${totalScanned} - $($file.Name)" -PercentComplete $percent
 
     $relPath = if ($file.FullName.StartsWith($resolvedPath, [System.StringComparison]::OrdinalIgnoreCase)) {
         $file.FullName.Substring($resolvedPath.Length).TrimStart('\', '/')
@@ -855,7 +855,7 @@ foreach ($file in $eligibleFiles) {
     }
 }
 
-Write-Progress -Activity "replace-text-in-files" -Completed
+Write-Progress -Activity "Update-TextInFiles" -Completed
 
 # 10. Audit Report Export
 if (-not [string]::IsNullOrWhiteSpace($ExportReportPath)) {
@@ -884,7 +884,7 @@ $mode = if ($WhatIfPreference) { "WhatIf" } else { "Execute" }
 
 # 11. Summary Output
 Write-Host "`n================================================================================" -ForegroundColor Cyan
-Write-Host " replace-text-in-files - Operation Summary ($mode)" -ForegroundColor Cyan
+Write-Host " Update-TextInFiles - Operation Summary ($mode)" -ForegroundColor Cyan
 Write-Host "================================================================================" -ForegroundColor Cyan
 Write-Host " Path               : $resolvedPath" -ForegroundColor White
 Write-Host " Files Scanned      : $totalScanned" -ForegroundColor White
