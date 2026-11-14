@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Smartly retrieves files, multiple files, or entire directories from a remote computer securely.
 .DESCRIPTION
@@ -13,6 +13,14 @@
     Array of remote file or directory paths to copy. Accepts comma-separated values.
 .PARAMETER LocalPath
     The destination base directory path on the local computer.
+.PARAMETER ShowHelp
+    Displays help and usage examples (aliases -h, -Help).
+.EXAMPLE
+    .\Copy-FromSession.ps1 -ComputerName 'SRV1' -RemotePath 'C:\remote_temp\data.txt' -LocalPath 'C:\local_temp\'
+    Copies a single file from remote server SRV1 to the local destination directory.
+.EXAMPLE
+    .\Copy-FromSession.ps1 -ComputerName 'SRV1' -RemotePath 'C:\RemoteFolder' -LocalPath 'C:\local_temp\'
+    Recursively copies an entire directory from remote server SRV1 to the local destination directory.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
