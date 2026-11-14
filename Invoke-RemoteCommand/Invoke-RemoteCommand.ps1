@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Executes a custom command on a remote machine.
 .DESCRIPTION
@@ -8,6 +8,16 @@
     The target remote computer hostname or IP.
 .PARAMETER RemoteCommand
     The string command to execute (e.g., "whoami", "ipconfig").
+.PARAMETER Credential
+    Optional PSCredential object for remote WinRM authentication.
+.PARAMETER ShowHelp
+    Displays help and usage details (aliases -h, -Help).
+.EXAMPLE
+    .\Invoke-RemoteCommand.ps1 -ComputerName '10.10.1.4'
+    Prompts for credentials and a command string, then runs it on 10.10.1.4.
+.EXAMPLE
+    .\Invoke-RemoteCommand.ps1 -ComputerName 'SRV1' -RemoteCommand 'whoami'
+    Prompts for credentials and runs whoami on SRV1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
