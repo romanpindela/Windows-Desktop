@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Smartly copies files, multiple files, or entire directories from the local computer to a remote session securely.
 .DESCRIPTION
@@ -13,6 +13,14 @@
     Array of local file or directory paths to copy. Accepts comma-separated values.
 .PARAMETER RemotePath
     The destination base directory path on the remote computer.
+.PARAMETER ShowHelp
+    Displays help and usage examples (aliases -h, -Help).
+.EXAMPLE
+    .\Copy-ToSession.ps1 -ComputerName 'SRV1' -LocalPath 'C:\temp\data.txt' -RemotePath 'C:\remote_temp\'
+    Copies a single local file to the remote destination directory on SRV1.
+.EXAMPLE
+    .\Copy-ToSession.ps1 -ComputerName 'SRV1' -LocalPath 'C:\LocalFolder' -RemotePath 'C:\remote_temp\'
+    Recursively copies an entire local directory to the remote destination directory on SRV1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com
@@ -35,18 +43,18 @@ param (
 )
 
 function Show-ScriptHelp {
-    Write-Host "`n=== SCRIPT: copy-to-session ===" -ForegroundColor Cyan
+    Write-Host "`n=== SCRIPT: Copy-ToSession ===" -ForegroundColor Cyan
     Write-Host "Description: Intelligently copies files or whole folders to a remote server using PSSession."
     Write-Host "Author: Roman Pindela (roman.pindela@gmail.com) | https://github.com/romanpindela"
     Write-Host "Version: 1.1.0"
     Write-Host "`nUsage Examples:"
     Write-Host "  # Copying a single file:"
-    Write-Host "  .\copy-to-session.ps1 -ComputerName 'SRV1' -LocalPath 'C:\temp\data.txt' -RemotePath 'C:\remote_temp\'"
+    Write-Host "  .\Copy-ToSession.ps1 -ComputerName 'SRV1' -LocalPath 'C:\temp\data.txt' -RemotePath 'C:\remote_temp\'"
     Write-Host "  `n  # Copying multiple files at once:"
-    Write-Host "  .\copy-to-session.ps1 -ComputerName 'SRV1' -LocalPath 'C:\temp\a.txt', 'C:\temp\b.txt' -RemotePath 'C:\remote_temp\'"
+    Write-Host "  .\Copy-ToSession.ps1 -ComputerName 'SRV1' -LocalPath 'C:\temp\a.txt', 'C:\temp\b.txt' -RemotePath 'C:\remote_temp\'"
     Write-Host "  `n  # Copying an entire directory with its contents:"
-    Write-Host "  .\copy-to-session.ps1 -ComputerName 'SRV1' -LocalPath 'C:\LocalFolder' -RemotePath 'C:\remote_temp\'"
-    Write-Host "`n  .\copy-to-session.ps1 -h`n"
+    Write-Host "  .\Copy-ToSession.ps1 -ComputerName 'SRV1' -LocalPath 'C:\LocalFolder' -RemotePath 'C:\remote_temp\'"
+    Write-Host "`n  .\Copy-ToSession.ps1 -h`n"
 }
 
 if ($ShowHelp -or [string]::IsNullOrWhiteSpace($ComputerName) -or -not $LocalPath -or [string]::IsNullOrWhiteSpace($RemotePath)) {
