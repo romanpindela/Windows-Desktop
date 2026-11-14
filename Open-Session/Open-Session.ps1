@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Open an interactive PowerShell Remoting session.
 
@@ -9,14 +9,20 @@
 .PARAMETER ComputerName
     Hostname or IP address of the target computer.
 
-.EXAMPLE
-    .\open-session.ps1 SERVER01
+.PARAMETER Help
+    Displays this help screen and exits.
+
+.PARAMETER H
+    Short switch to display help and exit.
 
 .EXAMPLE
-    .\open-session.ps1 10.10.1.4
+    .\Open-Session.ps1 SERVER01
 
 .EXAMPLE
-    .\open-session.ps1 -Help
+    .\Open-Session.ps1 10.10.1.4
+
+.EXAMPLE
+    .\Open-Session.ps1 -Help
 
 .NOTES
     Version : 1.0.0
@@ -36,7 +42,7 @@ $ScriptVersion = "1.0.0"
 function Show-Help {
 
     Write-Host ""
-    Write-Host "OPEN-SESSION v$ScriptVersion" -ForegroundColor Cyan
+    Write-Host "Open-Session v$ScriptVersion" -ForegroundColor Cyan
     Write-Host "Interactive PowerShell Remoting Session Utility"
     Write-Host ""
 
@@ -46,7 +52,7 @@ function Show-Help {
     Write-Host ""
 
     Write-Host "USAGE"
-    Write-Host "    .\open-session.ps1 <ComputerName>"
+    Write-Host "    .\Open-Session.ps1 <ComputerName>"
     Write-Host ""
 
     Write-Host "PARAMETERS"
@@ -55,8 +61,8 @@ function Show-Help {
     Write-Host ""
 
     Write-Host "EXAMPLES"
-    Write-Host "    .\open-session.ps1 SERVER01"
-    Write-Host "    .\open-session.ps1 10.10.1.4"
+    Write-Host "    .\Open-Session.ps1 SERVER01"
+    Write-Host "    .\Open-Session.ps1 10.10.1.4"
     Write-Host ""
 
     Write-Host "OPTIONS"
