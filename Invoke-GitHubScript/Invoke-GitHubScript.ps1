@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     A simple launcher to download and execute a PowerShell script from GitHub with optional arguments.
 .DESCRIPTION
@@ -18,11 +18,11 @@
     Local directory where the downloaded script will be stored. Default: C:\PowerShell.
 .EXAMPLE
     # Run with default URL and -AutoDiscover parameter:
-    .\run-from-github.ps1
+    .\Invoke-GitHubScript.ps1
 
 .EXAMPLE
     # Run a custom script with custom parameters:
-    .\run-from-github.ps1 -UrlToDownload "https://github.com/romanpindela/Microsoft-365/blob/main/SharePoint/Sync-SharePointLibrary/Sync-SharePointLibrary.ps1" -ScriptArgs "-AutoDiscover -All"
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Microsoft-365/blob/main/SharePoint/Sync-SharePointLibrary/Sync-SharePointLibrary.ps1" -ScriptArgs "-AutoDiscover -All"
 .NOTES
     Version: 1.2.0
     Author: Roman Pindela
