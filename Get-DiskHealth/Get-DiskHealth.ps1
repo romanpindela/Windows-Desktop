@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Advanced SSD/HDD Health and SMART Diagnostics Tool.
 .DESCRIPTION
@@ -7,8 +7,21 @@
     diagnostic using native Windows Storage Reliable Counters.
 .PARAMETER Help
     Displays help information.
+.PARAMETER H
+    Short switch to display help information.
+.PARAMETER ExportHtml
+    Exports the diagnostics report as an HTML file to C:\temp\.
+.PARAMETER ExportPath
+    Specifies a custom directory or file path for the exported HTML report.
 .EXAMPLE
-    .\get-disk-health.ps1
+    .\Get-DiskHealth.ps1
+    Runs physical disk topology and SMART diagnostics in the console.
+.EXAMPLE
+    .\Get-DiskHealth.ps1 -ExportHtml
+    Runs diagnostics and saves an HTML report to C:\temp\.
+.EXAMPLE
+    .\Get-DiskHealth.ps1 -ExportPath "D:\Reports\MyServer.html"
+    Runs diagnostics and saves an HTML report to a custom file path.
 .NOTES
     Version : 1.0.0
     Author  : Roman Pindela
@@ -27,7 +40,7 @@ $ScriptVersion = "1.0.0"
 
 function Show-Help {
     Write-Host ""
-    Write-Host "GET-DISK-HEALTH v$ScriptVersion" -ForegroundColor Cyan
+    Write-Host "Get-DiskHealth v$ScriptVersion" -ForegroundColor Cyan
     Write-Host "Advanced SSD/HDD Diagnostics Tool"
     Write-Host ""
     Write-Host "DESCRIPTION"
@@ -45,11 +58,11 @@ function Show-Help {
     Write-Host "        Optional. Specifies a custom directory or file path for the HTML report."
     Write-Host ""
     Write-Host "EXAMPLES"
-    Write-Host "    .\get-disk-health.ps1"
+    Write-Host "    .\Get-DiskHealth.ps1"
     Write-Host "        Runs the standard diagnostics and displays results in the console."
-    Write-Host "    .\get-disk-health.ps1 -ExportHtml"
+    Write-Host "    .\Get-DiskHealth.ps1 -ExportHtml"
     Write-Host "        Runs diagnostics and automatically exports to C:\temp\."
-    Write-Host "    .\get-disk-health.ps1 -ExportPath 'D:\Reports\MyServer.html'"
+    Write-Host "    .\Get-DiskHealth.ps1 -ExportPath 'D:\Reports\MyServer.html'"
     Write-Host "        Runs diagnostics and exports to the explicitly specified file."
     Write-Host ""
     Write-Host "AUTHOR"
