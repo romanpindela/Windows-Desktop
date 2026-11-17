@@ -79,6 +79,14 @@ Performing bulk find-and-replace across codebases, configuration trees, or docum
 
 ![Search & Replace Execution Results](assets/Replace_results.jpg)
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Update-TextInFiles/Update-TextInFiles.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Update-TextInFiles/Update-TextInFiles.ps1" -ScriptArgs "-Help"
+```
+
 ## Author
 
 - **Roman Pindela**

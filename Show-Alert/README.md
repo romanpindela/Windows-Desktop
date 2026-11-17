@@ -44,6 +44,20 @@ Broadcasting urgent IT maintenance or security notices to logged-on desktop user
 .\Invoke-InteractiveScript.ps1 -ComputerName '10.10.1.96' -ScriptPath '.\Show-Alert.ps1' -ArgumentList '-Message "Please save your work and reboot."'
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+# Invoke-InteractiveScript.ps1
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Show-Alert/Invoke-InteractiveScript.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Show-Alert/Invoke-InteractiveScript.ps1" -ScriptArgs "-Help"
+
+# Show-Alert.ps1
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Show-Alert/Show-Alert.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Show-Alert/Show-Alert.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters (`Show-Alert.ps1`)
 
 | Parameter | Alias | Type | Default | Description |

@@ -1,4 +1,4 @@
-﻿# ================================================================================
+# ================================================================================
 #   Script Name : Restore-DefaultKeyboardClassFilters.ps1
 #   Author      : Roman Pindela
 #   Contact     : roman.pindela@gmail.com
@@ -102,6 +102,11 @@
 .EXAMPLE
     .\Restore-DefaultKeyboardClassFilters.ps1 -BackupOnly
     Creates an export (.reg) of the keyboard class key without altering any values.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restore-DefaultKeyboardClassFilters/Restore-DefaultKeyboardClassFilters.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restore-DefaultKeyboardClassFilters/Restore-DefaultKeyboardClassFilters.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Restore-DefaultKeyboardClassFilters.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

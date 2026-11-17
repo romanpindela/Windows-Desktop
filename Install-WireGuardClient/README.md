@@ -52,6 +52,14 @@ Rolling out WireGuard VPN to end-user workstations manually involves installing 
 .\Install-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -ActivateTunnel -DryRun
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-WireGuardClient/Install-WireGuardClient.ps1" -ScriptArgs "-Install"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-WireGuardClient/Install-WireGuardClient.ps1" -ScriptArgs "-Install"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

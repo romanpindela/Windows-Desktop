@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Restart the Windows Print Spooler service and clear stuck print jobs.
 
@@ -25,6 +25,11 @@
 
 .EXAMPLE
     .\Restart-PrintSpooler.ps1 -SkipPrinterResume
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restart-PrintSpooler/Restart-PrintSpooler.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restart-PrintSpooler/Restart-PrintSpooler.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Restart-PrintSpooler.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Version : 1.2.0

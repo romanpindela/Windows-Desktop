@@ -127,6 +127,11 @@
     .\Add-NetworkPrinter.ps1 -PrinterIP "10.10.1.71" -PrinterName "Konica Minolta C224e" -PrintTestPage
     Installs the printer from system drivers and immediately prints a test page.
 
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Add-NetworkPrinter/Add-NetworkPrinter.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Add-NetworkPrinter/Add-NetworkPrinter.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Add-NetworkPrinter.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
+
 .NOTES
     Author      : Roman Pindela
     Contact     : roman.pindela@gmail.com

@@ -1,4 +1,4 @@
-﻿# ================================================================================
+# ================================================================================
 #   Script Name : Manage-WindowsOptionalFeatures.ps1
 #   Author      : Roman Pindela
 #   Contact     : roman.pindela@gmail.com
@@ -185,6 +185,11 @@
 .EXAMPLE
     .\Manage-WindowsOptionalFeatures.ps1 -Action Disable -FeatureName "WorkFolders-Client", "Printing-XPSServices-Features" -Force
     Disables Work Folders Client and XPS Services without interactive prompts.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-WindowsOptionalFeatures/Manage-WindowsOptionalFeatures.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-WindowsOptionalFeatures/Manage-WindowsOptionalFeatures.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Manage-WindowsOptionalFeatures.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Author      : Roman Pindela

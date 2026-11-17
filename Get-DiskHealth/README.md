@@ -43,6 +43,14 @@ Checking SSD/HDD health on Windows often requires third-party GUI tools or manua
 .\Get-DiskHealth.ps1 -ExportPath "D:\Reports\MyServer.html"
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Get-DiskHealth/Get-DiskHealth.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Get-DiskHealth/Get-DiskHealth.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

@@ -117,6 +117,11 @@
     .\Optimize-WindowsDefender.ps1 -RestoreConfig "C:\Logs\20261107-DefenderConfig-Backup.json"
     Restores preferences and exclusions from a previously saved JSON snapshot.
 
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Optimize-WindowsDefender/Optimize-WindowsDefender.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Optimize-WindowsDefender/Optimize-WindowsDefender.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Optimize-WindowsDefender.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
+
 .NOTES
     Author:       Roman Pindela
     Email:        roman.pindela@gmail.com

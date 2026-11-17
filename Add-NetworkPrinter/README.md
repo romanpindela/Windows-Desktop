@@ -66,6 +66,14 @@ Unblock-File -Path .\Add-NetworkPrinter.ps1
 .\Add-NetworkPrinter.ps1 -PrinterIP "10.10.1.71" -PrinterName "Konica Minolta C224e" -DriverName "KONICA MINOLTA Universal PCL" -PortName "Konica_Office_Port" -PrintTestPage
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Add-NetworkPrinter/Add-NetworkPrinter.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Add-NetworkPrinter/Add-NetworkPrinter.ps1" -ScriptArgs "-Help"
+```
+
 ---
 
 ## Key Features

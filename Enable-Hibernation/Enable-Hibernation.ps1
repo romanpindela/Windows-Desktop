@@ -1,4 +1,4 @@
-﻿# ================================================================================
+# ================================================================================
 #   Script Name : Enable-Hibernation.ps1
 #   Author      : Roman Pindela
 #   Contact     : roman.pindela@gmail.com
@@ -42,6 +42,11 @@
     .\Enable-Hibernation.ps1 -EnableHibernation -LogPath "C:\Logs\hibernation.txt"
 .EXAMPLE
     .\Enable-Hibernation.ps1 -h
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-Hibernation/Enable-Hibernation.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-Hibernation/Enable-Hibernation.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Enable-Hibernation.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

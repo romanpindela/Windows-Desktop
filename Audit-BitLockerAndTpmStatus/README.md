@@ -62,6 +62,14 @@ $audit.Volumes | Where-Object { $_.ProtectionStatus -ne 'On' } | Select-Object M
 .\Audit-BitLockerAndTpmStatus.ps1 -Help
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-BitLockerAndTpmStatus/Audit-BitLockerAndTpmStatus.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-BitLockerAndTpmStatus/Audit-BitLockerAndTpmStatus.ps1" -ScriptArgs "-Help"
+```
+
 ---
 
 ## Key Capabilities

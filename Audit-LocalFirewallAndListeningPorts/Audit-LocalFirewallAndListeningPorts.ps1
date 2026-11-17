@@ -85,6 +85,11 @@
     $audit.HighRiskRules | Format-Table -AutoSize
     Pipes audit findings directly into downstream PowerShell objects for SIEM or automation scripts.
 
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-LocalFirewallAndListeningPorts/Audit-LocalFirewallAndListeningPorts.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-LocalFirewallAndListeningPorts/Audit-LocalFirewallAndListeningPorts.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Audit-LocalFirewallAndListeningPorts.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
+
 .NOTES
     Author:       Roman Pindela
     Email:        roman.pindela@gmail.com

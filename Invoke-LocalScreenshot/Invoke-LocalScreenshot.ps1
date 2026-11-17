@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Captures a local screenshot of the primary display.
 .DESCRIPTION
@@ -10,6 +10,11 @@
     Displays help and usage details (aliases -h, -Help).
 .EXAMPLE
     .\Invoke-LocalScreenshot.ps1 -OutputDirectory "C:\Screenshots"
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-LocalScreenshot/Invoke-LocalScreenshot.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-LocalScreenshot/Invoke-LocalScreenshot.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Invoke-LocalScreenshot.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

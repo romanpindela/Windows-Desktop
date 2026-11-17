@@ -43,6 +43,14 @@ Copying files, log bundles, or directories back from remote Windows machines oft
 .\Copy-FromSession.ps1 -ComputerName 'SRV1' -RemotePath 'C:\RemoteFolder' -LocalPath 'C:\local_temp\'
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Copy-FromSession/Copy-FromSession.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Copy-FromSession/Copy-FromSession.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

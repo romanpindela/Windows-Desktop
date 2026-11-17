@@ -52,6 +52,14 @@ Connecting Hyper-V Manager (`virtmgmt.msc`) from a Windows client to a standalon
 .\Enable-HyperVRemoteManagement.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -DryRun
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-HyperVRemoteManagement/Enable-HyperVRemoteManagement.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-HyperVRemoteManagement/Enable-HyperVRemoteManagement.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

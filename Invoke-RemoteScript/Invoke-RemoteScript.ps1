@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Executes a local PowerShell script file on a remote machine.
 .DESCRIPTION
@@ -21,6 +21,11 @@
 .EXAMPLE
     .\Invoke-RemoteScript.ps1 -ComputerName '10.10.1.5' -ScriptPath '.\Deploy.ps1' -ArgumentList 'Prod', 123
     Executes Deploy.ps1 on 10.10.1.5 with positional arguments.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-RemoteScript/Invoke-RemoteScript.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-RemoteScript/Invoke-RemoteScript.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Invoke-RemoteScript.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

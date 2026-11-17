@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Manages the automatic upgrade from Windows 10 to Windows 11.
 .DESCRIPTION
@@ -20,6 +20,11 @@
 .EXAMPLE
     .\Block-Win11Upgrade.ps1 -ShowHelp
     Displays help and usage examples.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Block-Win11Upgrade/Block-Win11Upgrade.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Block-Win11Upgrade/Block-Win11Upgrade.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Block-Win11Upgrade.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

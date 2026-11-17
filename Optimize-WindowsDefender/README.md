@@ -85,6 +85,14 @@ Developer and administrative workstations running heavy Git, Node.js, .NET, Rust
 
 ![Optimization Execution Summary](assets/Optimization.jpg)
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Optimize-WindowsDefender/Optimize-WindowsDefender.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Optimize-WindowsDefender/Optimize-WindowsDefender.ps1" -ScriptArgs "-Help"
+```
+
 ## Author
 
 - **Roman Pindela**

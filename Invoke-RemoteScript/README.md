@@ -41,6 +41,14 @@ $Credential = Get-Credential
 .\Invoke-RemoteScript.ps1 -ComputerName '10.10.1.5' -ScriptPath '.\Deploy.ps1' -ArgumentList 'Prod', 123 -Credential $Credential
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-RemoteScript/Invoke-RemoteScript.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-RemoteScript/Invoke-RemoteScript.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Audits members of the local Administrators security group (S-1-5-32-544), detects orphaned SIDs,
     classifies local/domain/Entra ID accounts, identifies security anomalies, logs to C:\Logs,
@@ -80,6 +80,11 @@
 .EXAMPLE
     .\Audit-LocalAdministrators.ps1 -Audit -PassThru | Where-Object { $_.RiskLevel -in @('High', 'Critical') }
     Pipes audit records for high-risk accounts to downstream PowerShell filtering.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-LocalAdministrators/Audit-LocalAdministrators.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-LocalAdministrators/Audit-LocalAdministrators.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Audit-LocalAdministrators.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Author:       Roman Pindela

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Resets current-user keyboard settings to Polish (Programmers) layout and disables accessibility shortcuts.
 .DESCRIPTION
@@ -8,6 +8,11 @@
 .EXAMPLE
     .\Restore-KeyboardSettings.ps1
     Resets keyboard layout, accessibility shortcuts, and repeat settings for the current user.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restore-KeyboardSettings/Restore-KeyboardSettings.ps1" -ScriptArgs ""
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restore-KeyboardSettings/Restore-KeyboardSettings.ps1" -ScriptArgs ""
+    Downloads and executes Restore-KeyboardSettings.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     GitHub: https://github.com/romanpindela

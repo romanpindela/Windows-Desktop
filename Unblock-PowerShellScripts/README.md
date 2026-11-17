@@ -41,6 +41,14 @@ PowerShell scripts and modules (`.ps1`, `.psm1`, `.psd1`) downloaded from GitHub
 .\Unblock-PowerShellScripts.ps1 -Path "." -Force
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Unblock-PowerShellScripts/Unblock-PowerShellScripts.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Unblock-PowerShellScripts/Unblock-PowerShellScripts.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

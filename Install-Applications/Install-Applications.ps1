@@ -1,4 +1,4 @@
-﻿# ================================================================================
+# ================================================================================
 #   Script Name : Install-Applications.ps1
 #   Author      : Roman Pindela
 #   Contact     : roman.pindela@gmail.com
@@ -75,6 +75,11 @@
     .\Install-Applications.ps1 -v -l ""
 .EXAMPLE
     .\Install-Applications.ps1 -h
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-Applications/Install-Applications.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-Applications/Install-Applications.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Install-Applications.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

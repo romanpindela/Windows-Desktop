@@ -46,6 +46,14 @@ Preparing Windows workstations for ZUS Płatnik manually requires checking `.NET
 .\Install-PlatnikZus.ps1 -PrepareAndDownload -Download InstallerOnly -InstallerUrl "https://example.com/install.exe"
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-PlatnikZus/Install-PlatnikZus.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-PlatnikZus/Install-PlatnikZus.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

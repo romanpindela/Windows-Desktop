@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Automated Windows Health Checker and Repair Tool (DISM & SFC).
 .DESCRIPTION
@@ -17,6 +17,11 @@
     .\Invoke-WindowsRepair.ps1 -Action Scan -LogPath "C:\CustomLogs\Repair.txt"
 .EXAMPLE
     .\Invoke-WindowsRepair.ps1 -Help
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-WindowsRepair/Invoke-WindowsRepair.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-WindowsRepair/Invoke-WindowsRepair.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Invoke-WindowsRepair.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

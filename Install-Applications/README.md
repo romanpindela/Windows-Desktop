@@ -51,6 +51,14 @@ Manual software provisioning on new or re-imaged Windows workstations is slow, i
 .\Install-Applications.ps1 -VerifyInstalledApps -LogPath "C:\Reports\InstalledApps.txt"
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-Applications/Install-Applications.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-Applications/Install-Applications.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters Reference
 
 | Parameter | Aliases | Mode | Description |

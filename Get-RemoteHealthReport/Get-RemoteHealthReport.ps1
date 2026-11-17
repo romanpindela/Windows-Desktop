@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Advanced Deep System Audit Tool for Enterprise Environments.
 .DESCRIPTION
@@ -19,6 +19,11 @@
 .EXAMPLE
     .\Get-RemoteHealthReport.ps1 -ComputerName "PC-01" -ExportToCsv
     Audits a remote computer and exports the findings to CSV.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Get-RemoteHealthReport/Get-RemoteHealthReport.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Get-RemoteHealthReport/Get-RemoteHealthReport.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Get-RemoteHealthReport.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

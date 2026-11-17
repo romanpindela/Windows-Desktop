@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Prepares the system environment and downloads the necessary installers for ZUS Płatnik.
 .DESCRIPTION
@@ -37,6 +37,11 @@
     .\Install-PlatnikZus.ps1 -Help
     
     Displays the help screen with information about the script, parameters, and examples. 
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-PlatnikZus/Install-PlatnikZus.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-PlatnikZus/Install-PlatnikZus.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Install-PlatnikZus.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Version: 1.1.0
     Author: Roman Pindela

@@ -52,6 +52,14 @@ Unpatched endpoints, stalled reboot loops, disabled Windows Update services, or 
 .\Audit-WindowsUpdateAndPatchStatus.ps1 -r -OfflineScanOnly -NoElevate -OutputDirectory "C:\Logs\PatchAudit"
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-WindowsUpdateAndPatchStatus/Audit-WindowsUpdateAndPatchStatus.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-WindowsUpdateAndPatchStatus/Audit-WindowsUpdateAndPatchStatus.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Type | Default | Description |

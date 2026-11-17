@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Searches and replaces text or regular expressions across multiple files safely.
 
@@ -132,6 +132,11 @@
 .EXAMPLE
     .\Update-TextInFiles.ps1 -Path ".\Source" -Filter "*.cs" -FindText '\b[a-z0-9._%+-]+@company\.com\b' -MatchEvaluator { param($m) $m.Value.ToLower() } -ShowDiff
     Dynamically normalizes company email addresses to lowercase using a ScriptBlock evaluator.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Update-TextInFiles/Update-TextInFiles.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Update-TextInFiles/Update-TextInFiles.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Update-TextInFiles.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Script Name : Update-TextInFiles.ps1

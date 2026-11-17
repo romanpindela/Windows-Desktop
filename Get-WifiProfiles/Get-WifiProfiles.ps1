@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Displays saved Wi-Fi profiles, passwords and active Wi-Fi configuration.
 
@@ -28,6 +28,11 @@
 .EXAMPLE
     .\Get-WifiProfiles.ps1 -Help
     Displays help and usage details.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Get-WifiProfiles/Get-WifiProfiles.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Get-WifiProfiles/Get-WifiProfiles.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Get-WifiProfiles.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

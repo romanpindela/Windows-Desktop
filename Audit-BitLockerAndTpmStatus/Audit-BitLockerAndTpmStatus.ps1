@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Audits TPM 2.0 hardware trust, UEFI Secure Boot, BitLocker volume encryption, and Active Directory /
     Microsoft Entra ID recovery key escrow for NIS2 and zero-trust data-at-rest compliance.
@@ -66,6 +66,11 @@
     $audit = .\Audit-BitLockerAndTpmStatus.ps1 -PassThru
     $audit.Volumes | Where-Object { $_.ProtectionStatus -ne 'On' }
     Retrieves full audit data as PSCustomObject and queries unprotected volumes.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-BitLockerAndTpmStatus/Audit-BitLockerAndTpmStatus.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-BitLockerAndTpmStatus/Audit-BitLockerAndTpmStatus.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Audit-BitLockerAndTpmStatus.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Author:       Roman Pindela

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Comprehensive management utility for Windows SMB Network Shares and NTFS permissions.
 
@@ -91,6 +91,11 @@
 .EXAMPLE
     .\Manage-SmbShareAccess.ps1 -Action Revoke -ShareName "Dane" -AccountName "DOMENA\b.kowalski" -WhatIf
     Simulates revoking access from SMB and NTFS without applying modifications.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-SmbShareAccess/Manage-SmbShareAccess.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-SmbShareAccess/Manage-SmbShareAccess.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Manage-SmbShareAccess.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Author:       Roman Pindela

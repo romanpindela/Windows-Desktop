@@ -41,6 +41,14 @@ $cred = Get-Credential
 .\Invoke-RemoteCommand.ps1 -ComputerName 'SRV1' -Credential $cred -RemoteCommand 'whoami'
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-RemoteCommand/Invoke-RemoteCommand.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-RemoteCommand/Invoke-RemoteCommand.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

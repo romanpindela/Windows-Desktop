@@ -40,6 +40,14 @@ Enabling PowerShell Remoting (`WinRM`) for non-built-in administrator or delegat
 .\Enable-RemoteManagement.ps1 -TargetUser 'rpindela' -TrustedHostPattern '10.10.1.*'
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-RemoteManagement/Enable-RemoteManagement.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-RemoteManagement/Enable-RemoteManagement.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

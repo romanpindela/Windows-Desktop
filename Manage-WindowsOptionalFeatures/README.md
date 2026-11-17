@@ -50,6 +50,14 @@ Enabling or disabling Windows Optional Features (such as Hyper-V, WSL 2, Windows
 .\Manage-WindowsOptionalFeatures.ps1 -Action Disable -FeatureName "SMB1Protocol", "WorkFolders-Client" -Force
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-WindowsOptionalFeatures/Manage-WindowsOptionalFeatures.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-WindowsOptionalFeatures/Manage-WindowsOptionalFeatures.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

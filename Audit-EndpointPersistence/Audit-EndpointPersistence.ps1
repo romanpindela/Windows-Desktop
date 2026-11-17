@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Audits and detects Windows Auto-Start Execution Points (ASEP) and persistence mechanisms,
     evaluating scheduled tasks, registry run keys, startup folders, and Windows services against
@@ -100,6 +100,11 @@
       - IsSigned        : Boolean Authenticode signature validation status
       - Signer          : Common Name or Subject of the signing certificate
       - FileExists      : Boolean indicating whether the binary exists on disk
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-EndpointPersistence/Audit-EndpointPersistence.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-EndpointPersistence/Audit-EndpointPersistence.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Audit-EndpointPersistence.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Author:       Roman Pindela

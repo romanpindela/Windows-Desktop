@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Executes a custom command on a remote machine.
 .DESCRIPTION
@@ -18,6 +18,11 @@
 .EXAMPLE
     .\Invoke-RemoteCommand.ps1 -ComputerName 'SRV1' -RemoteCommand 'whoami'
     Prompts for credentials and runs whoami on SRV1.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-RemoteCommand/Invoke-RemoteCommand.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-RemoteCommand/Invoke-RemoteCommand.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Invoke-RemoteCommand.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

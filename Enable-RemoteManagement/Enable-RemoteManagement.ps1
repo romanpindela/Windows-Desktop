@@ -1,4 +1,4 @@
-﻿# Script: Enable-RemoteManagement.ps1
+# Script: Enable-RemoteManagement.ps1
 
 <#
 .SYNOPSIS
@@ -20,6 +20,11 @@
 .EXAMPLE
     .\Enable-RemoteManagement.ps1 -TargetUser 'rpindela' -TrustedHostPattern '10.10.1.*'
     Enables PSRemoting, grants Remote Management Users access to rpindela, and adds 10.10.1.* to TrustedHosts.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-RemoteManagement/Enable-RemoteManagement.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-RemoteManagement/Enable-RemoteManagement.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Enable-RemoteManagement.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

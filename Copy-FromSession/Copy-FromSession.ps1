@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Smartly retrieves files, multiple files, or entire directories from a remote computer securely.
 .DESCRIPTION
@@ -21,6 +21,11 @@
 .EXAMPLE
     .\Copy-FromSession.ps1 -ComputerName 'SRV1' -RemotePath 'C:\RemoteFolder' -LocalPath 'C:\local_temp\'
     Recursively copies an entire directory from remote server SRV1 to the local destination directory.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Copy-FromSession/Copy-FromSession.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Copy-FromSession/Copy-FromSession.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Copy-FromSession.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

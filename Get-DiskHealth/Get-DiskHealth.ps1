@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Advanced SSD/HDD Health and SMART Diagnostics Tool.
 .DESCRIPTION
@@ -22,6 +22,11 @@
 .EXAMPLE
     .\Get-DiskHealth.ps1 -ExportPath "D:\Reports\MyServer.html"
     Runs diagnostics and saves an HTML report to a custom file path.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Get-DiskHealth/Get-DiskHealth.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Get-DiskHealth/Get-DiskHealth.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Get-DiskHealth.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Version : 1.0.0
     Author  : Roman Pindela

@@ -69,6 +69,14 @@ $audit = .\Audit-LocalFirewallAndListeningPorts.ps1 -PassThru
 $audit.ListeningEndpoints | Where-Object { -not $_.IsSigned -and $_.OwningProcess -notin @(0, 4) } | Format-Table Protocol, LocalPort, ProcessName, ExecutablePath -AutoSize
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-LocalFirewallAndListeningPorts/Audit-LocalFirewallAndListeningPorts.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-LocalFirewallAndListeningPorts/Audit-LocalFirewallAndListeningPorts.ps1" -ScriptArgs "-Help"
+```
+
 ---
 
 ## Parameter Reference

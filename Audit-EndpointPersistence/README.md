@@ -67,6 +67,14 @@ Adversaries, malware, and misconfigured installers frequently establish persiste
 .\Audit-EndpointPersistence.ps1 -Help
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-EndpointPersistence/Audit-EndpointPersistence.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-EndpointPersistence/Audit-EndpointPersistence.ps1" -ScriptArgs "-Help"
+```
+
 ---
 
 ## Audited Persistence Vectors & Capabilities

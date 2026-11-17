@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     A utility script to create Directory Junction points in Windows.
 .DESCRIPTION
@@ -12,6 +12,11 @@
 .EXAMPLE
     .\New-JunctionPoint.ps1 -JunctionPath 'C:\MyLink' -TargetPath 'D:\Data\Folder'
     Creates an NTFS Directory Junction at C:\MyLink pointing to D:\Data\Folder.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/New-JunctionPoint/New-JunctionPoint.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/New-JunctionPoint/New-JunctionPoint.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for New-JunctionPoint.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

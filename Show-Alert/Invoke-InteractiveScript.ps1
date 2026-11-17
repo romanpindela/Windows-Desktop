@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Executes a local PowerShell script interactively on a remote machine's desktop.
 .DESCRIPTION
@@ -18,6 +18,11 @@
 .EXAMPLE
     .\Invoke-InteractiveScript.ps1 -ComputerName '10.10.1.96' -ScriptPath '.\Show-Alert.ps1' -ArgumentList '-Message "Hello"'
     Executes Show-Alert.ps1 interactively in the logged-on user session on 10.10.1.96.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Show-Alert/Invoke-InteractiveScript.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Show-Alert/Invoke-InteractiveScript.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Invoke-InteractiveScript.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

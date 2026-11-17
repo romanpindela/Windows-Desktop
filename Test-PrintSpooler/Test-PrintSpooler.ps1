@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Diagnoses and repairs the Windows Print Spooler service.
 .DESCRIPTION
@@ -12,6 +12,11 @@
 .EXAMPLE
     .\Test-PrintSpooler.ps1 -ShowHelp
     Displays help and usage details.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Test-PrintSpooler/Test-PrintSpooler.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Test-PrintSpooler/Test-PrintSpooler.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Test-PrintSpooler.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

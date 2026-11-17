@@ -1,4 +1,4 @@
-﻿# ================================================================================
+# ================================================================================
 #   Script Name : Manage-PrinterDiscovery.ps1
 #   Author      : Roman Pindela
 #   Contact     : roman.pindela@gmail.com
@@ -82,6 +82,11 @@
 .EXAMPLE
     .\Manage-PrinterDiscovery.ps1 -Disable -LogPath "C:\Logs\printer_config.txt"
     Disables autodiscovery and writes execution details to a custom log file.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-PrinterDiscovery/Manage-PrinterDiscovery.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-PrinterDiscovery/Manage-PrinterDiscovery.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Manage-PrinterDiscovery.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Author      : Roman Pindela

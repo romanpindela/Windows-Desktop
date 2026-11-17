@@ -67,6 +67,14 @@ Unauthorized privilege escalation, lingering orphaned SIDs from deleted accounts
 .\Audit-LocalAdministrators.ps1 -Audit -PassThru | Where-Object { $_.RiskLevel -in @('High', 'Critical') }
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-LocalAdministrators/Audit-LocalAdministrators.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-LocalAdministrators/Audit-LocalAdministrators.ps1" -ScriptArgs "-Help"
+```
+
 ---
 
 ## Key Capabilities

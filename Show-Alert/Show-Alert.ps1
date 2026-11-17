@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Displays a graphical warning message to the user.
 .DESCRIPTION
@@ -16,6 +16,11 @@
 .EXAMPLE
     .\Show-Alert.ps1 -Message 'A system error occurred. Please log out.' -Title 'FAILURE'
     Displays a custom warning dialog on screen.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Show-Alert/Show-Alert.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Show-Alert/Show-Alert.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Show-Alert.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

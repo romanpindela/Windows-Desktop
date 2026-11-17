@@ -49,6 +49,14 @@ Corrupted or leftover third-party keyboard filter drivers (installed by macro ut
 .\Restore-DefaultKeyboardClassFilters.ps1 -Repair -BackupPath "D:\Backups\Registry" -LogPath "C:\Logs\KeyboardFix.txt" -Force
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restore-DefaultKeyboardClassFilters/Restore-DefaultKeyboardClassFilters.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restore-DefaultKeyboardClassFilters/Restore-DefaultKeyboardClassFilters.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

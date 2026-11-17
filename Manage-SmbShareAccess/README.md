@@ -54,6 +54,14 @@ Administering Windows file shares across separate SMB Share permissions and unde
 Invoke-Pester -Script ".\Tests\Manage-SmbShareAccess.Tests.ps1"
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-SmbShareAccess/Manage-SmbShareAccess.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-SmbShareAccess/Manage-SmbShareAccess.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

@@ -42,6 +42,14 @@ Diagnosing and repairing corrupted Windows Component Store files and protected s
 .\Invoke-WindowsRepair.ps1 -Action Sfc
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-WindowsRepair/Invoke-WindowsRepair.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Invoke-WindowsRepair/Invoke-WindowsRepair.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

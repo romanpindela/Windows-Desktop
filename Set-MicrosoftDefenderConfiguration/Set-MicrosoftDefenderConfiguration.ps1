@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Hardening, repair, and configuration script for Microsoft Defender Antivirus and Windows Security.
 
@@ -35,6 +35,11 @@
 .EXAMPLE
     .\Set-MicrosoftDefenderConfiguration.ps1 -Run -EnableLog -LogDirectory "D:\SecurityLogs"
     Applies configurations and stores the log file in a custom directory.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Set-MicrosoftDefenderConfiguration/Set-MicrosoftDefenderConfiguration.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Set-MicrosoftDefenderConfiguration/Set-MicrosoftDefenderConfiguration.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Set-MicrosoftDefenderConfiguration.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Author:        Roman Pindela

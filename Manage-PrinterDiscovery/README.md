@@ -49,6 +49,14 @@ On shared office and enterprise networks, Windows automatically discovers broadc
 .\Manage-PrinterDiscovery.ps1 disable -LogPath "C:\Logs\PrinterDiscoverySetup.txt"
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-PrinterDiscovery/Manage-PrinterDiscovery.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Manage-PrinterDiscovery/Manage-PrinterDiscovery.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

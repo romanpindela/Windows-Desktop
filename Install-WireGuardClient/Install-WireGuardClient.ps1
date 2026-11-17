@@ -1,4 +1,4 @@
-﻿# ================================================================================
+# ================================================================================
 #   Script Name : Install-WireGuardClient.ps1
 #   Author      : Roman Pindela
 #   Contact     : roman.pindela@gmail.com
@@ -179,6 +179,11 @@
     .\Install-WireGuardClient.ps1 -ConfigPath "C:\VPN\office-vpn.conf" -DryRun
     Simulates installing WireGuard and validating/importing 'office-vpn.conf'
     without making any changes to the system.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-WireGuardClient/Install-WireGuardClient.ps1" -ScriptArgs "-Install"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Install-WireGuardClient/Install-WireGuardClient.ps1" -ScriptArgs "-Install"
+    Downloads and executes Install-WireGuardClient.ps1 (-Install) directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Author      : Roman Pindela

@@ -37,6 +37,14 @@ Applications or user workflows often expect data at fixed local directories even
 .\New-JunctionPoint.ps1 -JunctionPath 'C:\MyLink' -TargetPath 'D:\Data\Folder'
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/New-JunctionPoint/New-JunctionPoint.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/New-JunctionPoint/New-JunctionPoint.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

@@ -43,6 +43,14 @@ Misconfigured endpoints, leftover Group Policy or registry overrides, or malware
 .\Set-MicrosoftDefenderConfiguration.ps1 -Run -EnableLog -LogDirectory "D:\SecurityLogs"
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Set-MicrosoftDefenderConfiguration/Set-MicrosoftDefenderConfiguration.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Set-MicrosoftDefenderConfiguration/Set-MicrosoftDefenderConfiguration.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Open an interactive PowerShell Remoting session.
 
@@ -23,6 +23,11 @@
 
 .EXAMPLE
     .\Open-Session.ps1 -Help
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Open-Session/Open-Session.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Open-Session/Open-Session.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Open-Session.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Version : 1.0.0

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Unblocks PowerShell scripts (.ps1, .psm1, .psd1) in a specified directory recursively.
 .DESCRIPTION
@@ -15,6 +15,11 @@
     .\Unblock-PowerShellScripts.ps1 -Path "C:\Users\Roman\Downloads\Scripts"
 .EXAMPLE
     .\Unblock-PowerShellScripts.ps1 -Path "." -Force
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Unblock-PowerShellScripts/Unblock-PowerShellScripts.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Unblock-PowerShellScripts/Unblock-PowerShellScripts.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Unblock-PowerShellScripts.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

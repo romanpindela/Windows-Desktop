@@ -77,6 +77,14 @@ Removing unwanted applications across Windows workstations manually is tedious a
 
 ![Uninstalling Applications](assets/Uninstalling_apps.jpg)
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Uninstall-Applications/Uninstall-Applications.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Uninstall-Applications/Uninstall-Applications.ps1" -ScriptArgs "-Help"
+```
+
 ## Author
 
 - **Roman Pindela**

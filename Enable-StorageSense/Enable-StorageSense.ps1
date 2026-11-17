@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Configures Windows Storage Sense policies and triggers system disk cleanup.
 .DESCRIPTION
@@ -17,6 +17,11 @@
 .EXAMPLE
     .\Enable-StorageSense.ps1 -Help
     Displays interactive help without making changes.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-StorageSense/Enable-StorageSense.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-StorageSense/Enable-StorageSense.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Enable-StorageSense.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 .NOTES
     Author: Roman Pindela
     Email: roman.pindela@gmail.com

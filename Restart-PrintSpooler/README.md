@@ -40,6 +40,14 @@ Corrupted or stalled print jobs frequently jam the Windows Print Spooler queue (
 .\Restart-PrintSpooler.ps1 -SkipPrinterResume
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restart-PrintSpooler/Restart-PrintSpooler.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restart-PrintSpooler/Restart-PrintSpooler.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |

@@ -99,6 +99,11 @@
     .\Audit-WindowsUpdateAndPatchStatus.ps1 -r -OfflineScanOnly -NoElevate -OutputDirectory "C:\Temp\Audit"
     Runs an offline-cache-only audit without attempting UAC elevation, saving reports to C:\Temp\Audit.
 
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-WindowsUpdateAndPatchStatus/Audit-WindowsUpdateAndPatchStatus.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Audit-WindowsUpdateAndPatchStatus/Audit-WindowsUpdateAndPatchStatus.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Audit-WindowsUpdateAndPatchStatus.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
+
 .NOTES
     Author:       Roman Pindela
     Email:        roman.pindela@gmail.com

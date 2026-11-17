@@ -1,4 +1,4 @@
-﻿# ================================================================================
+# ================================================================================
 #   Script Name : Enable-HyperVRemoteManagement.ps1
 #   Author      : Roman Pindela
 #   Contact     : roman.pindela@gmail.com
@@ -211,6 +211,11 @@
     .\Enable-HyperVRemoteManagement.ps1 -ServerName "HV-SRV01" -ServerIP "10.10.1.10" -DryRun
     Simulates all client configuration changes (hosts, WinRM, CredSSP, GPO)
     without modifying the system.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-HyperVRemoteManagement/Enable-HyperVRemoteManagement.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-HyperVRemoteManagement/Enable-HyperVRemoteManagement.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Enable-HyperVRemoteManagement.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Author      : Roman Pindela

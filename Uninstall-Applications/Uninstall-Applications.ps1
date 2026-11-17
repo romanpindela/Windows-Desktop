@@ -1,4 +1,4 @@
-﻿# ================================================================================
+# ================================================================================
 #   Script Name : Uninstall-Applications.ps1
 #   Author      : Roman Pindela
 #   Contact     : roman.pindela@gmail.com
@@ -103,6 +103,11 @@
 .EXAMPLE
     .\Uninstall-Applications.ps1 -Filter "Office" -AdminUserPrincipalName "admin@contoso.onmicrosoft.com"
     Connects to Exchange Online as the specified admin and lists installed Office applications.
+
+.EXAMPLE
+    .\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Uninstall-Applications/Uninstall-Applications.ps1" -ScriptArgs "-Help"
+    C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Uninstall-Applications/Uninstall-Applications.ps1" -ScriptArgs "-Help"
+    Downloads and displays help for Uninstall-Applications.ps1 directly from GitHub using Invoke-GitHubScript.ps1.
 
 .NOTES
     Author: Roman Pindela

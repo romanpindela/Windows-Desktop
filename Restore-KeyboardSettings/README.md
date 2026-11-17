@@ -36,6 +36,14 @@ Get-Help .\Restore-KeyboardSettings.ps1 -Full
 .\Restore-KeyboardSettings.ps1
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restore-KeyboardSettings/Restore-KeyboardSettings.ps1" -ScriptArgs ""
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Restore-KeyboardSettings/Restore-KeyboardSettings.ps1" -ScriptArgs ""
+```
+
 ## Author
 
 - **Roman Pindela**

@@ -43,6 +43,14 @@ On Windows 10 and 11 systems, hibernation may be disabled at the kernel level (`
 .\Enable-Hibernation.ps1 -e -LogPath "C:\Logs\hibernation_setup.txt"
 ```
 
+### Run Directly from GitHub (via `Invoke-GitHubScript.ps1`)
+
+```powershell
+.\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-Hibernation/Enable-Hibernation.ps1" -ScriptArgs "-Help"
+# or
+C:\PowerShell\Invoke-GitHubScript.ps1 -UrlToDownload "https://github.com/romanpindela/Windows-Desktop/blob/main/Enable-Hibernation/Enable-Hibernation.ps1" -ScriptArgs "-Help"
+```
+
 ### Parameters
 
 | Parameter | Alias | Type | Default | Description |
