@@ -217,6 +217,10 @@ begin {
 
     $script:ScriptName       = 'Diagnose-NetworkAndDns'
     $script:ScriptVersion    = '1.0.0'
+    $script:ScriptAuthor     = 'Roman Pindela'
+    $script:ScriptEmail      = 'roman.pindela@gmail.com'
+    $script:ScriptGitHub     = 'https://github.com/romanpindela'
+    $script:LastModified     = '2026-11-19'
     $script:SessionTimestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $script:LogFilePath      = $null
     $script:EffectiveLogDir  = $LogDirectory
@@ -231,8 +235,11 @@ begin {
 
         Write-Host ''
         Write-Host '================================================================================' -ForegroundColor Cyan
-        Write-Host " $($script:ScriptName) v$($script:ScriptVersion) - Network, DNS & VPN Diagnostics" -ForegroundColor White
+        Write-Host " $($script:ScriptName).ps1 v$($script:ScriptVersion) - Network, DNS & VPN Diagnostics" -ForegroundColor White
         Write-Host '================================================================================' -ForegroundColor Cyan
+        Write-Host "Author: $($script:ScriptAuthor) | Email: $($script:ScriptEmail) | GitHub: $($script:ScriptGitHub)" -ForegroundColor DarkGray
+        Write-Host "Version: $($script:ScriptVersion) | Last Modified: $($script:LastModified)" -ForegroundColor DarkGray
+        Write-Host ''
         Write-Host 'Diagnoses default gateways, DNS comparison (local vs 1.1.1.1 / 8.8.8.8), VPN DNS' -ForegroundColor Gray
         Write-Host 'leak indicators, TCP ports (443/445/3389/5985), routing, and Path MTU, with an' -ForegroundColor Gray
         Write-Host 'optional safe -Repair mode for DNS, ARP, and Winsock remediation.' -ForegroundColor Gray
@@ -1031,6 +1038,7 @@ begin {
         Write-Host ''
         Write-Host '================================================================================' -ForegroundColor Cyan
         Write-Host " NETWORK & DNS DIAGNOSTIC REPORT | $($Report.ComputerName) | $($Report.Timestamp)" -ForegroundColor White
+        Write-Host " $($script:ScriptName).ps1 v$($script:ScriptVersion) | Author: $($script:ScriptAuthor) ($($script:ScriptGitHub))" -ForegroundColor DarkGray
         Write-Host '================================================================================' -ForegroundColor Cyan
 
         # 1. Adapters & VPN

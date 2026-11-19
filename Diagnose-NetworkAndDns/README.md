@@ -2,6 +2,7 @@
 
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%20%7C%207%2B-blue.svg?logo=powershell)](https://microsoft.com/powershell)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20%7C%20Server-0078D6.svg?logo=windows)](https://www.microsoft.com/windows)
+[![Version](https://img.shields.io/badge/Version-1.0.0-brightgreen.svg)]()
 [![Category](https://img.shields.io/badge/Category-Networking%20%26%20VPN-0ea5e9.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -145,8 +146,10 @@ Screenshots and sample HTML report captures can be stored in the local `assets/`
 
 ---
 
-## Author
+## Author & Metadata
 
-* **Roman Pindela**
+* **Author:** Roman Pindela
 * **Email:** roman.pindela@gmail.com
 * **GitHub:** [https://github.com/romanpindela](https://github.com/romanpindela)
+* **Version:** `1.0.0` (SemVer)
+* **Last Modified:** `2026-11-19`

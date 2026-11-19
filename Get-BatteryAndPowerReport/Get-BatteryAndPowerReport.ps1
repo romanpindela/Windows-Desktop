@@ -185,6 +185,10 @@ begin {
 
     $script:ScriptName       = 'Get-BatteryAndPowerReport'
     $script:ScriptVersion    = '1.0.0'
+    $script:ScriptAuthor     = 'Roman Pindela'
+    $script:ScriptEmail      = 'roman.pindela@gmail.com'
+    $script:ScriptGitHub     = 'https://github.com/romanpindela'
+    $script:LastModified     = '2026-11-19'
     $script:SessionTimestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $script:LogFilePath      = $null
     $script:EffectiveLogDir  = $LogDirectory
@@ -199,8 +203,11 @@ begin {
 
         Write-Host ''
         Write-Host '================================================================================' -ForegroundColor Cyan
-        Write-Host " $($script:ScriptName) v$($script:ScriptVersion) - Battery Health & Modern Standby Audit" -ForegroundColor White
+        Write-Host " $($script:ScriptName).ps1 v$($script:ScriptVersion) - Battery Health & Modern Standby Audit" -ForegroundColor White
         Write-Host '================================================================================' -ForegroundColor Cyan
+        Write-Host "Author: $($script:ScriptAuthor) | Email: $($script:ScriptEmail) | GitHub: $($script:ScriptGitHub)" -ForegroundColor DarkGray
+        Write-Host "Version: $($script:ScriptVersion) | Last Modified: $($script:LastModified)" -ForegroundColor DarkGray
+        Write-Host ''
         Write-Host 'Evaluates battery health (DesignCapacity vs FullChargeCapacity, cycle count),' -ForegroundColor Gray
         Write-Host 'Modern Standby (S0) status, wake-armed devices, and recent wake causes, with' -ForegroundColor Gray
         Write-Host 'safe options to disable unwanted wake devices.' -ForegroundColor Gray
@@ -717,6 +724,7 @@ begin {
         Write-Host ''
         Write-Host '================================================================================' -ForegroundColor Cyan
         Write-Host " BATTERY & MODERN STANDBY REPORT | $($Report.ComputerName) | $($Report.Timestamp)" -ForegroundColor White
+        Write-Host " $($script:ScriptName).ps1 v$($script:ScriptVersion) | Author: $($script:ScriptAuthor) ($($script:ScriptGitHub))" -ForegroundColor DarkGray
         Write-Host '================================================================================' -ForegroundColor Cyan
 
         # 1. Battery Health
