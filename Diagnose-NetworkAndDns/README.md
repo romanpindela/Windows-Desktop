@@ -125,9 +125,13 @@ $net.DnsDiagnostics | Select-Object VpnDetected, DnsLeakRisk, DnsLeakNotes
 
 ---
 
-## Assets
+## Screenshots & Visual Verification
 
-Screenshots and sample HTML report captures can be stored in the local `assets/` directory (`Diagnose-NetworkAndDns/assets/`).
+### 1. Standard Execution & Interactive Help (`.\Diagnose-NetworkAndDns.ps1`)
+![Standard Execution & Interactive Help](assets/Standard_run.jpg)
+
+### 2. Full Network, DNS & Path MTU Diagnostics (`.\Diagnose-NetworkAndDns.ps1 -Run`)
+![Full Network, DNS & Path MTU Diagnostics](assets/diagnosis.jpg)
 
 ---
 

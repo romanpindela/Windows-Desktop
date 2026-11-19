@@ -109,9 +109,13 @@ $readiness | Select-Object ComputerName, OverallVerdict, PassCount, WarnCount, F
 
 ---
 
-## Assets
+## Screenshots & Visual Verification
 
-Screenshots and sample printable HTML handover certificates can be stored in `Invoke-WorkstationReadinessCheck/assets/`.
+### 1. Standard Execution & Interactive Help (`.\Invoke-WorkstationReadinessCheck.ps1`)
+![Standard Execution & Interactive Help](assets/Standard_run.jpg)
+
+### 2. Full Workstation Readiness Checklist (`.\Invoke-WorkstationReadinessCheck.ps1 -Run`)
+![Full Workstation Readiness Checklist](assets/Diagnosis.jpg)
 
 ---
 

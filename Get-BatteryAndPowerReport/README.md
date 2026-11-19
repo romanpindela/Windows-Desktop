@@ -119,9 +119,13 @@ $pwr.BatterySummary.Batteries | Select-Object BatteryName, HealthPercent, WearLe
 
 ---
 
-## Assets
+## Screenshots & Visual Verification
 
-Screenshots and sample HTML report captures can be stored in `Get-BatteryAndPowerReport/assets/`.
+### 1. Standard Execution & Interactive Help (`.\Get-BatteryAndPowerReport.ps1`)
+![Standard Execution & Interactive Help](assets/Standard_run.jpg)
+
+### 2. Battery Health, Modern Standby & Wake Audit (`.\Get-BatteryAndPowerReport.ps1 -Run`)
+![Battery Health, Modern Standby & Wake Audit](assets/Diagnosis.jpg)
 
 ---
 
