@@ -209,9 +209,13 @@ Runs `C:\GitHub\Dev\Update-AllGitRepos\Update-AllGitRepos.ps1 -r` (in working di
 
 ---
 
-## Assets Reference
+## Screenshots & Assets
 
-Static visual assets, diagrams, or screenshots belong in the [`assets/`](assets/) directory.
+### Registering `Update-AllGitRepos` with Smart DailyGuard (`-OncePerDay`)
+
+![Registering Scheduled Script Task](assets/Registering_script.jpg)
+
+All static visual assets and screenshots are stored in the [`assets/`](assets/) directory.
 
 ---
 
