@@ -2,7 +2,7 @@
 
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B%20%7C%207%2B-5391FE?logo=powershell&logoColor=white)](https://learn.microsoft.com/powershell/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20%7C%20Server-0078D6?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
-[![Version](https://img.shields.io/badge/Version-1.0.0-brightgreen.svg)](#changelog)
+[![Version](https://img.shields.io/badge/Version-1.0.1-brightgreen.svg)](#changelog)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE)
 
 ## Overview
@@ -231,6 +231,9 @@ Static visual assets, diagrams, or screenshots belong in the [`assets/`](assets/
 ---
 
 ## Changelog
+
+### `1.0.1` (2026-11-27)
+* Fixed PowerShell here-string interpolation and quote escaping inside `New-DailyGuardWrapper` (`-OncePerDay`).
 
 ### `1.0.0` (2026-11-27)
 * Initial production release supporting Daily, Weekly, Monthly (days 1..31 + LastDayOfMonth), Logon, Startup, Workstation Unlock, and Wake-from-Hibernation triggers.

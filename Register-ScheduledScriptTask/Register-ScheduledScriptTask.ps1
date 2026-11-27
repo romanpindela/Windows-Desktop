@@ -159,7 +159,7 @@
     Email:         roman.pindela@gmail.com
     GitHub:        https://github.com/romanpindela
     Repository:    Windows-Desktop
-    Version:       1.0.0
+    Version:       1.0.1
     Last Modified: 2026-11-27
     Requires:      Windows 10/11 / Windows Server, PowerShell 5.1+ or PowerShell 7+
 #>
@@ -273,7 +273,7 @@ begin {
     $ErrorActionPreference = 'Stop'
 
     $Script:ScriptName    = 'Register-ScheduledScriptTask'
-    $Script:ScriptVersion = '1.0.0'
+    $Script:ScriptVersion = '1.0.1'
     $Script:AuthorName    = 'Roman Pindela'
     $Script:AuthorEmail   = 'roman.pindela@gmail.com'
     $Script:AuthorGitHub  = 'https://github.com/romanpindela'
@@ -701,7 +701,8 @@ try {
     # 2. Enforce optional earliest time gate (-At)
     if (-not [string]::IsNullOrWhiteSpace(`$notBeforeTime)) {
         `$gateParts = `$notBeforeTime.Split(':')
-        `$gateTime  = Get-Date -Hour ([int]`$gateParts[0]) -Minute ([int]`$gateParts[1]) -Second $(if (`$gateParts.Count -ge 3) { '[int]$gateParts[2]' } else { '0' })
+        `$gateSec   = if (`$gateParts.Count -ge 3) { [int]`$gateParts[2] } else { 0 }
+        `$gateTime  = Get-Date -Hour ([int]`$gateParts[0]) -Minute ([int]`$gateParts[1]) -Second `$gateSec
         if (`$now -lt `$gateTime) {
             Write-GuardLog -Level 'SKIP' -Message ("Current time ({0}) is before earliest gate ({1}). Waiting for later trigger." -f `$now.ToString('HH:mm:ss'), `$notBeforeTime)
             exit 0
@@ -731,7 +732,7 @@ try {
     Write-GuardLog -Level 'INFO' -Message "Starting task '`$taskName' -> '`$targetScript' `$targetArgs (WorkDir: '`$workDir')"
     Set-Location -LiteralPath `$workDir
 
-    `$invocationArgs = "-NoProfile -ExecutionPolicy Bypass -File `"`$targetScript`""
+    `$invocationArgs = '-NoProfile -ExecutionPolicy Bypass -File "{0}"' -f `$targetScript
     if (-not [string]::IsNullOrWhiteSpace(`$targetArgs)) {
         `$invocationArgs = "`$invocationArgs `$targetArgs"
     }
@@ -754,16 +755,6 @@ catch {
     exit 1
 }
 "@
-
-        # Fix the minor inline subexpression in gateTime inside the generated guard script
-        $wrapperContent = $wrapperContent.Replace(
-            '$gateTime  = Get-Date -Hour ([int]$gateParts[0]) -Minute ([int]$gateParts[1]) -Second 0',
-            '$gateSec   = if ($gateParts.Count -ge 3) { [int]$gateParts[2] } else { 0 }' + [Environment]::NewLine + '        $gateTime  = Get-Date -Hour ([int]$gateParts[0]) -Minute ([int]$gateParts[1]) -Second $gateSec'
-        )
-        $wrapperContent = $wrapperContent.Replace(
-            '$gateTime  = Get-Date -Hour ([int]$gateParts[0]) -Minute ([int]$gateParts[1]) -Second [int]$gateParts[2]',
-            '$gateSec   = if ($gateParts.Count -ge 3) { [int]$gateParts[2] } else { 0 }' + [Environment]::NewLine + '        $gateTime  = Get-Date -Hour ([int]$gateParts[0]) -Minute ([int]$gateParts[1]) -Second $gateSec'
-        )
 
         if (-not (Test-Path -LiteralPath $GuardDirectory)) {
             New-Item -Path $GuardDirectory -ItemType Directory -Force | Out-Null
